@@ -12,6 +12,11 @@ all:
 	@echo $(GREEN)✅ Successfully started! $(NC)
 .PHONY: all
 
+dev: prune
+	@echo $(BLUE)🚧 Development containers are starting... $(NC)
+	@docker-compose -f ./docker-compose.dev.yml up -d --build
+.PHONY: dev
+
 down:
 	@docker-compose -f ./docker-compose.yml down
 .PHONY: down
@@ -27,7 +32,7 @@ prune: stop
 
 stop:
 	@if [ $$(docker ps -q | wc -l) -gt 0 ]; then \
-		echo $(BLUE) Stopping containers... $(NC) \
+		echo $(BLUE)🛑 Stopping containers... $(NC); \
 		docker stop $$(docker ps -q); \
 	else \
 		echo $(YELLOW)No running containers found. $(NC); \
