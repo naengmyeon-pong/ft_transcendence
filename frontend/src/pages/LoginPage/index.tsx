@@ -8,8 +8,10 @@ import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
+import Svg42Logo from './Logo';
 
 function LoginPage() {
+  // TODO: 백엔드 통신 API 맞춰서 수정
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
@@ -18,67 +20,33 @@ function LoginPage() {
       password: data.get('password'),
     });
   };
-  return (
-    // <div style={{height: '100vh'}}>
-    //   <div>
-    //     <Avatar
-    //       alt="프로필 사진"
-    //       src={`${process.env.PUBLIC_URL}/Naengmyeon.png`}
-    //     />
-    //   </div>
-    //   <Typography>Welcome to</Typography>
-    //   <Typography>Naengmyeon pong</Typography>
-    //   <TextField
-    //     margin="normal"
-    //     name="username"
-    //     label="아이디"
-    //     required
-    //     autoFocus
-    //     autoComplete="username"
-    //   />
-    //   <TextField
-    //     margin="normal"
-    //     name="password"
-    //     label="비밀번호"
-    //     type="password"
-    //     autoComplete="current-password"
-    //     required
-    //   />
-    //   <Button variant="contained" size="large" type="submit">
-    //     Login
-    //   </Button>
-    //   <Button
-    //     sx={{
-    //       marginTop: '10px',
-    //       width: '300px',
-    //       backgroundColor: '#323232',
-    //     }}
-    //     variant="contained"
-    //     size="large"
-    //     // onClick={signFortyTwo}
-    //   >
-    //     sign up with 42
-    //   </Button>
-    // </div>
 
-    <>
+  return (
+    <React.Fragment>
       <Avatar
         sx={{m: 1}}
         alt="logo"
         src={`${process.env.PUBLIC_URL}/logo.jpeg`}
       />
-      <Typography component="h1" variant="h5">
-        Sign in
-      </Typography>
+
+      <Box sx={{textAlign: 'center'}}>
+        <Typography component="h1" variant="h5">
+          Welcome to
+        </Typography>
+        <Typography component="h1" variant="h5" sx={{fontWeight: 'bold'}}>
+          Naengmyeon pong
+        </Typography>
+      </Box>
+
       <Box component="form" onSubmit={handleSubmit} noValidate sx={{mt: 1}}>
         <TextField
           margin="normal"
           required
           fullWidth
-          id="email"
-          label="Email Address"
-          name="email"
-          autoComplete="email"
+          id="username"
+          label="Intra ID"
+          name="username"
+          autoComplete="text"
           autoFocus
         />
         <TextField
@@ -93,25 +61,36 @@ function LoginPage() {
         />
         <FormControlLabel
           control={<Checkbox value="remember" color="primary" />}
-          label="Remember me"
+          label="비밀번호 기억하기"
         />
         <Button type="submit" fullWidth variant="contained" sx={{mt: 3, mb: 2}}>
-          Sign In
+          로그인
+        </Button>
+        <Button
+          type="submit"
+          fullWidth
+          variant="contained"
+          sx={{
+            mb: 2,
+            backgroundColor: '#424242',
+            ':hover': {
+              backgroundColor: 'black',
+            },
+          }}
+        >
+          {/* TODO: 로고를 텍스트에서 왼쪽으로 떨어뜨리기 */}
+          <Svg42Logo />
+          회원가입
         </Button>
         <Grid container>
           <Grid item xs>
             <Link href="#" variant="body2">
-              Forgot password?
-            </Link>
-          </Grid>
-          <Grid item>
-            <Link href="#" variant="body2">
-              {"Don't have an account? Sign Up"}
+              비밀번호를 잊으셨나요?
             </Link>
           </Grid>
         </Grid>
       </Box>
-    </>
+    </React.Fragment>
   );
 }
 
