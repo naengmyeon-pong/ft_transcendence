@@ -3,25 +3,25 @@ module.exports = {
     browser: true,
     es2021: true,
   },
-  extends: ["google", "plugin:react/recommended", "prettier"],
+  extends: ['./node_modules/gts', 'plugin:react/recommended', 'prettier'],
   overrides: [
     {
       env: {
         node: true,
       },
-      files: [".eslintrc.{js,cjs}"],
+      files: ['.eslintrc.{js,cjs}'],
       parserOptions: {
-        sourceType: "script",
+        sourceType: 'script',
       },
     },
   ],
   parserOptions: {
-    ecmaVersion: "latest",
-    sourceType: "module",
+    ecmaVersion: 'latest',
+    sourceType: 'module',
   },
-  plugins: ["react", "html"],
+  plugins: ['react', 'html'],
   rules: {
-    "require-jsdoc": 0,
-    "prettier/prettier": "error",
+    'require-jsdoc': 0,
+    'prettier/prettier': 'error',
   },
 };
