@@ -7,6 +7,7 @@ module.exports = {
   },
   plugins: ['@typescript-eslint/eslint-plugin'],
   extends: [
+    './node_modules/gts',
     'plugin:@typescript-eslint/recommended',
     'plugin:prettier/recommended',
   ],
