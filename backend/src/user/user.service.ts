@@ -31,7 +31,7 @@ export class UserService {
     const grant_type = 'authorization_code';
     const client_uid = process.env.INTRA_API_UID;
     const client_secret = process.env.INTRA_API_SECRET;
-    const redirect_uri = 'http://localhost:3000/user/42api/oauth_ok';
+    const redirect_uri = 'http://localhost:3001/user/42api/oauth_ok';
     const tokenUrl = api_url + '?grant_type=' + grant_type + '&client_id=' + client_uid + '&client_secret=' + client_secret + '&code=' + code + '&redirect_uri=' + redirect_uri;
     console.log("code :" , code);
     // let res;

@@ -20,7 +20,7 @@ export class UserController {
   }
   
   @Get('/42api')
-  @Redirect('https://api.intra.42.fr/oauth/authorize?client_id=u-s4t2ud-3d94fb385e79fd3ae1927dc2023fb428b19b190eeb581049231ea9dd301e17fa&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fuser%2F42api%2Foauth_ok&response_type=code')
+  @Redirect('https://api.intra.42.fr/oauth/authorize?client_id=u-s4t2ud-3d94fb385e79fd3ae1927dc2023fb428b19b190eeb581049231ea9dd301e17fa&redirect_uri=http%3A%2F%2Flocalhost%3A3001%2Fuser%2F42api%2Foauth_ok&response_type=code')
   api() {
     console.log('redirect to 42api');
   }

@@ -5,17 +5,19 @@ import { BoardsModule } from './boards/boards.module';
 import { typeORMConfig, userTypeORMconf } from './configs/typeorm.config';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
+import { SignupModule } from './signup/signup.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      cache: true,
-      isGlobal: true,
-    }),
-    // TypeOrmModule.forRoot(typeORMConfig),
-    TypeOrmModule.forRoot(userTypeORMconf),
-    UserModule,
-    BoardsModule,
+    // ConfigModule.forRoot({
+    //   cache: true,
+    //   isGlobal: true,
+    // }),
+    // // TypeOrmModule.forRoot(typeORMConfig),
+    // TypeOrmModule.forRoot(userTypeORMconf),
+    // UserModule,
+    // BoardsModule,
+    SignupModule,
     // AuthModule
   ],
 })
