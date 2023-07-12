@@ -20,7 +20,7 @@ import { UserRepository } from './user.repository';
     TypeOrmModule.forFeature([User])
   ],
   controllers: [UserController],
-  providers: [UserService, JwtStrategy, UserRepository],
-  exports: [JwtStrategy, PassportModule, UserRepository]
+  providers: [UserService, JwtStrategy],
+  exports: [JwtStrategy, PassportModule, TypeOrmModule]
 })
 export class UserModule {}

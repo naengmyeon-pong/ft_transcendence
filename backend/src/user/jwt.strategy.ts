@@ -9,10 +9,10 @@ import { Repository } from "typeorm";
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
     constructor(
-        @InjectRepository(UserRepository)
-        // @InjectRepository(User)
-        private userRepository : UserRepository
-        // private userRepository : Repository<User>
+        // @InjectRepository(UserRepository)
+        // private userRepository : UserRepository
+        @InjectRepository(User)
+        private userRepository : Repository<User>
     ){
         super({
             secretOrKey: 'Secret1234',
@@ -21,7 +21,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     async validate(payload) {
-        const { user_id} = payload;
+        const {user_id} = payload;
         const user: User = await this.userRepository.findOneBy({user_id});
 
         if (!user) {
@@ -29,6 +29,5 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         }
         return user;
     }
-
 
 }

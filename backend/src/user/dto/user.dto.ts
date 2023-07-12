@@ -19,7 +19,7 @@ export class userDto {
   @MaxLength(10)
   user_nickname : string;
 
-  memo : string;
+  user_image : string;
 
-
+  second_auth : boolean;
 }
