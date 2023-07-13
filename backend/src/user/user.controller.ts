@@ -22,8 +22,6 @@ export class UserController {
 
   @Post('/changePw')
   updateUserPw(
-    // @Body('user_id') user_id : string,
-    // @Body('user_pw') user_pw : string
     @Body(ValidationPipe) userAuthDto : userAuthDto
     ) : Promise<User> {
       return this.userService.updateUserPw(userAuthDto);

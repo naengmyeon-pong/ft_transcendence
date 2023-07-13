@@ -21,6 +21,6 @@ import { UserRepository } from './user.repository';
   ],
   controllers: [UserController],
   providers: [UserService, JwtStrategy],
-  exports: [JwtStrategy, PassportModule, TypeOrmModule]
+  exports: [JwtStrategy, PassportModule, TypeOrmModule, UserService]
 })
 export class UserModule {}

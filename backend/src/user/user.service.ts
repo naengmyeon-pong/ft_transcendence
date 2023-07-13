@@ -14,6 +14,10 @@ export class UserService {
     private jwtService: JwtService
   ){}
 
+  async findUser(user_id : string) : Promise<User> {
+    return await this.userRepository.findOneBy({user_id});
+  }
+
   async findOne(user_id : string) : Promise<User> {
     const found = await this.userRepository.findOneBy({user_id});
     if (!found) {

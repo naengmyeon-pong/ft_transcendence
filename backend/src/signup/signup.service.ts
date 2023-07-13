@@ -1,15 +1,12 @@
-import { ConflictException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { ConflictException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import axios from 'axios';
-import { User } from 'src/user/user.entitiy';
-import { Repository } from 'typeorm';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class SignupService {
-  // constructor(
-  //   @InjectRepository(User)
-  //   private userRepository : Repository<User>
-  // ) {}
+  constructor(
+    private userService : UserService
+  ) {}
 
   async getAccessToken(code: string): Promise<string> {
     const api_token_uri = process.env.INTRA_TOKEN_URI;
@@ -23,7 +20,6 @@ export class SignupService {
       method: 'post',
       url: tokenUrl
     })
-
     return response.data.access_token;
   }
 
@@ -33,15 +29,22 @@ export class SignupService {
 
     const response = await axios.get(api_uri,{
       headers: {Authorization: `Bearer ${accessToken}`}
-    })
-    try {
-      const ret = {
-      "user_id" : response.data.login,
-      "user_image" : response.data.image.link
-      };
-      return JSON.stringify(ret);
-    } catch (error) {
-      console.log("error", error);
+    });
+    const user = await this.userService.findUser(response.data.login);
+
+    if (!user) {
+      try {
+        const ret = {
+        "user_id" : response.data.login,
+        "user_image" : response.data.image.link
+        };
+        return JSON.stringify(ret);
+      } catch (error) {
+        console.log("error", error);
+        throw new InternalServerErrorException();
+      }
+    } else {
+      throw new ConflictException(`${response.data.login} is already our member!`);
     }
   }
 

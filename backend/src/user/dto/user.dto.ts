@@ -7,9 +7,9 @@ export class userDto {
   
   @IsNotEmpty()
   @IsString()
-  @MinLength(4)
-  @MaxLength(15)
-  @Matches(/^[a-zA-Z0-9]*$/, {
+  @MinLength(8)
+  @MaxLength(20)
+  @Matches(/^(?=.*\d)(?=.*[a-zA-Z])(?=.*[@#$%^&+=]).*$/, {
     message : 'password only accepts english and number'
   })
   user_pw : string;
