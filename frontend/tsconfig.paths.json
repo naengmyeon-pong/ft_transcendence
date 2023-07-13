@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "baseUrl": "src",
+    "paths": {
+      "@apiManager/*": ["api/*"]
+    }
+  }
+}

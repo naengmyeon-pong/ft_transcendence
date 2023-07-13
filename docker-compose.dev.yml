@@ -11,8 +11,10 @@ services:
       - 3000:3000
     restart: on-failure:3
     volumes:
-      - /app/node_modules
+      # - /app/node_modules
       - ./frontend:/app
+    env_file:
+      - .env
     networks:
       - naengmyeon_pong_network
 
@@ -41,7 +43,7 @@ services:
     depends_on:
       - db
     volumes:
-      - /app/node_modules
+      # - /app/node_modules
       - ./backend:/app
     env_file:
       - .env
