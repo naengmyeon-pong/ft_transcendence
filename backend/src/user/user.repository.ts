@@ -11,5 +11,5 @@ export class UserRepository extends Repository<User> {
   ){
       super (userRepository.target, userRepository.manager, userRepository.queryRunner);
   }
-  
+
 }

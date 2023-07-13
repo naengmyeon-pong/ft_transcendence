@@ -7,8 +7,6 @@ export class userAuthDto {
   
   @IsNotEmpty()
   @IsString()
-  @MinLength(4)
-  @MaxLength(15)
   @Matches(/^[a-zA-Z0-9]*$/, {
     message : 'password only accepts english and number'
   })
