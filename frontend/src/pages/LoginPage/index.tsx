@@ -85,7 +85,7 @@ function LoginPage() {
         </Button>
         <Grid container>
           <Grid item xs>
-            <Link href="#" variant="body2">
+            <Link href="/password-reset" variant="body2">
               비밀번호를 잊으셨나요?
             </Link>
           </Grid>
