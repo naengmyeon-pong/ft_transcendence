@@ -12,26 +12,32 @@ import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardHeader from '@mui/material/CardHeader';
+import apiManager from '@apiManager/apiManager';
 
 function SignupPage() {
-  // const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-  //   event.preventDefault();
-  //   const data = new FormData(event.currentTarget);
-  //   console.log({
-  //     email: data.get('email'),
-  //     password: data.get('password'),
-  //   });
-  // };
   const {state} = useLocation();
-  const {user_id, user_image} = state;
+  const {user_id} = state;
+  const user_image =
+    state.user_image === null
+      ? `${process.env.PUBLIC_URL}/logo.jpeg`
+      : state.user_image;
 
   const [password, setPassword] = useState('');
+  const [nickname, setNickname] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const navigate = useNavigate();
 
+  // 8~20자 제한
   function isValidPasswordLength(password: string): boolean {
-    // 8~20자 제한
     if (password.length > 7 && password.length < 21) {
+      return true;
+    }
+    return false;
+  }
+
+  // 2~8자 제한
+  function isValidNicknameLength(nickname: string): boolean {
+    if (nickname.length >= 2 && nickname.length <= 8) {
       return true;
     }
     return false;
@@ -44,18 +50,45 @@ function SignupPage() {
   }
 
   //성공했을경우만 버튼이 활성화가 됩니다
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    console.log(data.get('password'), data.get('passwordConfirm'));
+    const data = {
+      user_id: user_id,
+      user_pw: password,
+      user_nickname: nickname,
+      user_image: user_image,
+    };
+    console.log(data);
+    const response = await apiManager.post('/signup', data);
+    try {
+      console.log(response);
+    } catch (error) {
+      console.log(error);
+    }
     // TODO: 위치지정
-    navigate('/');
+    // navigate('/');
     //실패했을 경우 지정해줘야함
   };
+
+  async function handleDuplicatedNickname() {
+    const response = await apiManager.get(
+      `/signup/nickname?user_id=${user_id}&nickname=${nickname}`
+    );
+    try {
+      console.log(response);
+    } catch (error: unknown) {
+      console.log(error);
+    }
+  }
+
+  function handleNickname(e: React.ChangeEvent<HTMLInputElement>) {
+    setNickname(e.target.value);
+  }
 
   function handlePassword(e: React.ChangeEvent<HTMLInputElement>) {
     setPassword(e.target.value);
   }
+
   function handleConfirmPassword(e: React.ChangeEvent<HTMLInputElement>) {
     setConfirmPassword(e.target.value);
   }
@@ -70,15 +103,7 @@ function SignupPage() {
           <Grid item xs={12}>
             <Card variant="outlined">
               <CardHeader
-                avatar={
-                  <Avatar
-                    src={
-                      user_image === null
-                        ? `${process.env.PUBLIC_URL}/logo.jpeg`
-                        : user_image
-                    }
-                  />
-                }
+                avatar={<Avatar src={user_image} />}
                 title="프로필 사진"
                 subheader="기본 이미지는 인트라 이미지로 설정됩니다"
               />
@@ -101,6 +126,9 @@ function SignupPage() {
           </Grid>
           <Grid item xs={9}>
             <TextField
+              error={
+                nickname !== '' && isValidNicknameLength(nickname) === false
+              }
               autoComplete="given-name"
               name="nickanme"
               required
@@ -108,11 +136,15 @@ function SignupPage() {
               id="nickanme"
               label="닉네임"
               helperText="2 ~ 8자 이내로 설정"
+              // helperTextColor=(nickname !== '' && isValidNicknameLength(nickname) === false) ? 'red' : 'green'
+              onChange={handleNickname}
               autoFocus
             />
           </Grid>
           <Grid item xs={3} container justifyContent="flex-end">
-            <Button variant="text">중복 확인</Button>
+            <Button variant="text" onClick={handleDuplicatedNickname}>
+              중복 확인
+            </Button>
           </Grid>
           <Grid item xs={12}>
             <TextField
@@ -229,6 +261,7 @@ function SignupPage() {
             isValidPasswordRule(password) === false
           }
           fullWidth
+          type="submit"
           variant="contained"
           sx={{mt: 3, mb: 2}}
         >
