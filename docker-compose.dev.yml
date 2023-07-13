@@ -13,6 +13,8 @@ services:
     volumes:
       # - /app/node_modules
       - ./frontend:/app
+    env_file:
+      - .env
     networks:
       - naengmyeon_pong_network
 
