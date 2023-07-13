@@ -67,7 +67,8 @@ function LoginPage() {
           로그인
         </Button>
         <Button
-          type="submit"
+          component={Link}
+          href={process.env.REACT_APP_OAUTH_URL}
           fullWidth
           variant="contained"
           sx={{
