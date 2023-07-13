@@ -1,4 +1,6 @@
-import React from 'react';
+import React, {useEffect} from 'react';
+import {useState} from 'react';
+import {useLocation, useNavigate} from 'react-router-dom';
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
@@ -10,16 +12,87 @@ import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardHeader from '@mui/material/CardHeader';
+import apiManager from '@apiManager/apiManager';
 
 function SignupPage() {
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const {state} = useLocation();
+  const {user_id} = state;
+  const user_image =
+    state.user_image === null
+      ? `${process.env.PUBLIC_URL}/logo.jpeg`
+      : state.user_image;
+
+  const [password, setPassword] = useState('');
+  const [nickname, setNickname] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const navigate = useNavigate();
+
+  // 8~20자 제한
+  function isValidPasswordLength(password: string): boolean {
+    if (password.length > 7 && password.length < 21) {
+      return true;
+    }
+    return false;
+  }
+
+  // 2~8자 제한
+  function isValidNicknameLength(nickname: string): boolean {
+    if (nickname.length >= 2 && nickname.length <= 8) {
+      return true;
+    }
+    return false;
+  }
+
+  function isValidPasswordRule(password: string): boolean {
+    // 대문자, 소문자, 특수문자 각각 하나 이상
+    const regex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^\d\sa-zA-Z])[\S]{8,}$/;
+    return regex.test(password);
+  }
+
+  //성공했을경우만 버튼이 활성화가 됩니다
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get('email'),
-      password: data.get('password'),
-    });
+    const data = {
+      user_id: user_id,
+      user_pw: password,
+      user_nickname: nickname,
+      user_image: user_image,
+    };
+    console.log(data);
+    const response = await apiManager.post('/signup', data);
+    try {
+      console.log(response);
+    } catch (error) {
+      console.log(error);
+    }
+    // TODO: 위치지정
+    // navigate('/');
+    //실패했을 경우 지정해줘야함
   };
+
+  async function handleDuplicatedNickname() {
+    const response = await apiManager.get(
+      `/signup/nickname?user_id=${user_id}&nickname=${nickname}`
+    );
+    try {
+      console.log(response);
+    } catch (error: unknown) {
+      console.log(error);
+    }
+  }
+
+  function handleNickname(e: React.ChangeEvent<HTMLInputElement>) {
+    setNickname(e.target.value);
+  }
+
+  function handlePassword(e: React.ChangeEvent<HTMLInputElement>) {
+    setPassword(e.target.value);
+  }
+
+  function handleConfirmPassword(e: React.ChangeEvent<HTMLInputElement>) {
+    setConfirmPassword(e.target.value);
+  }
+
   return (
     <React.Fragment>
       <Typography component="h1" variant="h5">
@@ -30,7 +103,7 @@ function SignupPage() {
           <Grid item xs={12}>
             <Card variant="outlined">
               <CardHeader
-                avatar={<Avatar src={'인트라이미지'} />}
+                avatar={<Avatar src={user_image} />}
                 title="프로필 사진"
                 subheader="기본 이미지는 인트라 이미지로 설정됩니다"
               />
@@ -47,12 +120,39 @@ function SignupPage() {
               id="intraId"
               name="intraId"
               label="Intra ID"
-              defaultValue="API에서 가져온 인트라ID"
+              defaultValue={user_id}
               variant="filled"
             />
           </Grid>
+          <Grid item xs={9}>
+            <TextField
+              error={
+                nickname !== '' && isValidNicknameLength(nickname) === false
+              }
+              autoComplete="given-name"
+              name="nickanme"
+              required
+              fullWidth
+              id="nickanme"
+              label="닉네임"
+              helperText="2 ~ 8자 이내로 설정"
+              // helperTextColor=(nickname !== '' && isValidNicknameLength(nickname) === false) ? 'red' : 'green'
+              onChange={handleNickname}
+              autoFocus
+            />
+          </Grid>
+          <Grid item xs={3} container justifyContent="flex-end">
+            <Button variant="text" onClick={handleDuplicatedNickname}>
+              중복 확인
+            </Button>
+          </Grid>
           <Grid item xs={12}>
             <TextField
+              error={
+                password !== '' &&
+                (!isValidPasswordLength(password) ||
+                  !isValidPasswordRule(password))
+              }
               required
               fullWidth
               id="password"
@@ -60,10 +160,19 @@ function SignupPage() {
               label="비밀번호"
               type="password"
               autoComplete="current-password"
+              onChange={handlePassword}
+              helperText={
+                isValidPasswordLength(password) === false && password !== ''
+                  ? '비밀번호는 8 ~ 20 사이입니다.'
+                  : isValidPasswordRule(password) === false && password !== ''
+                  ? '비밀번호는 영문 대/소문자, 숫자, 특수문자 조합이여야 합니다.'
+                  : ''
+              }
             />
           </Grid>
           <Grid item xs={12}>
             <TextField
+              error={confirmPassword !== '' && password !== confirmPassword}
               required
               fullWidth
               id="passwordConfirm"
@@ -71,6 +180,12 @@ function SignupPage() {
               label="비밀번호 재확인"
               type="password"
               autoComplete="current-password"
+              onChange={handleConfirmPassword}
+              helperText={
+                confirmPassword !== '' && password !== confirmPassword
+                  ? '비밀번호가 일치하지 않습니다.'
+                  : ''
+              }
             />
           </Grid>
           <Grid item xs={12}>
@@ -80,19 +195,22 @@ function SignupPage() {
               <ListItem color="success">
                 <ListItemIcon>
                   <CheckIcon
-                    // color={
-                    //   isLengthGood && firstPassword !== ''
-                    //     ? 'success'
-                    //     : 'disabled'
-                    // }
-                    color="success"
+                    color={
+                      isValidPasswordLength(password) ? 'success' : 'disabled'
+                    }
                   ></CheckIcon>
                 </ListItemIcon>
-                {/* TODO: 규칙 준수 여부에 따라 텍스트 색상 변경 */}
                 <ListItemText
                   disableTypography
                   secondary={
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography
+                      variant="body2"
+                      color={
+                        isValidPasswordLength(password)
+                          ? 'success.main'
+                          : 'text.secondary'
+                      }
+                    >
                       8 ~ 20자 사이
                     </Typography>
                   }
@@ -101,38 +219,28 @@ function SignupPage() {
               <ListItem>
                 <ListItemIcon>
                   <CheckIcon
-                    // color={
-                    //   isRuleGood && firstPassword !== '' ? 'success' : 'disabled'
-                    // }
-                    color="success"
+                    color={
+                      isValidPasswordRule(password) ? 'success' : 'disabled'
+                    }
                   ></CheckIcon>
                 </ListItemIcon>
-                {/* TODO: 규칙 준수 여부에 따라 텍스트 색상 변경 */}
                 <ListItemText
                   disableTypography
                   secondary={
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography
+                      variant="body2"
+                      color={
+                        isValidPasswordRule(password)
+                          ? 'success.main'
+                          : 'text.secondary'
+                      }
+                    >
                       영문 대/소문자, 숫자, 특수문자 조합
                     </Typography>
                   }
                 />
               </ListItem>
             </List>
-          </Grid>
-          <Grid item xs={9}>
-            <TextField
-              autoComplete="given-name"
-              name="nickanme"
-              required
-              fullWidth
-              id="nickanme"
-              label="닉네임"
-              helperText="2 ~ 8자 이내로 설정"
-              autoFocus
-            />
-          </Grid>
-          <Grid item xs={3} container justifyContent="flex-end">
-            <Button variant="text">중복 확인</Button>
           </Grid>
           <Grid item xs={10}>
             <Typography variant="body1" component="div">
@@ -146,7 +254,17 @@ function SignupPage() {
             <Checkbox />
           </Grid>
         </Grid>
-        <Button type="submit" fullWidth variant="contained" sx={{mt: 3, mb: 2}}>
+        <Button
+          disabled={
+            password !== confirmPassword ||
+            isValidPasswordLength(password) === false ||
+            isValidPasswordRule(password) === false
+          }
+          fullWidth
+          type="submit"
+          variant="contained"
+          sx={{mt: 3, mb: 2}}
+        >
           회원가입
         </Button>
       </Box>

@@ -1,25 +1,31 @@
-import { IsNotEmpty, IsString, Matches, MaxLength, MinLength } from "class-validator";
+import {
+  IsNotEmpty,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
-export class userDto {
+export class UserDto {
   @IsNotEmpty()
   @IsString()
-  user_id : string;
-  
+  user_id: string;
+
   @IsNotEmpty()
   @IsString()
   @MinLength(8)
   @MaxLength(20)
-  @Matches(/^(?=.*\d)(?=.*[a-zA-Z])(?=.*[@#$%^&+=]).*$/, {
-    message : 'password only accepts english and number'
+  @Matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^\d\sa-zA-Z])[\S]{8,}$/, {
+    message: 'password only accepts english and number',
   })
-  user_pw : string;
-  
+  user_pw: string;
+
   @IsNotEmpty()
   @IsString()
   @MaxLength(10)
-  user_nickname : string;
+  user_nickname: string;
 
-  user_image : string;
+  user_image: string;
 
-  second_auth : boolean;
+  is_2fa_enabled: boolean;
 }
