@@ -36,7 +36,7 @@ function SignupPage() {
 
   // 8~20자 제한
   function isValidPasswordLength(password: string): boolean {
-    if (password.length > 7 && password.length < 21) {
+    if (8 <= password.length && password.length <= 20) {
       return true;
     }
     return false;
@@ -44,7 +44,7 @@ function SignupPage() {
 
   // 2~8자 제한
   function isValidNicknameLength(nickname: string): boolean {
-    if (nickname.length >= 2 && nickname.length <= 8) {
+    if (2 <= nickname.length && nickname.length <= 8) {
       return true;
     }
     return false;
