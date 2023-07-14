@@ -21,6 +21,16 @@ import DialogTitle from '@mui/material/DialogTitle';
 import apiManager from '@apiManager/apiManager';
 import Alert from '@mui/material/Alert';
 
+const ALLOWED_IMAGE_FILE_EXTENSION = 'image/jpg, image/jpeg, image/png';
+const ALLOWED_IMAGE_FILE_EXTENSIONS_STRING = ALLOWED_IMAGE_FILE_EXTENSION.split(
+  ','
+)
+  .map(extension => {
+    return extension.split('/')[1];
+  })
+  .join(' ');
+const FILE_SIZE_MAX_LIMIT = 1 * 1024 * 1024; // 1MB
+
 function SignupPage() {
   const {state} = useLocation();
   const {user_id} = state;
@@ -56,6 +66,7 @@ function SignupPage() {
     return regex.test(password);
   };
 
+  const [uploadImageFile, setUploadImageFile] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [openErrorSnackbar, setOpenErrorSnackbar] = useState(false);
@@ -75,6 +86,80 @@ function SignupPage() {
     }
 
     setOpenSnackbar(false);
+  };
+
+  const extractFileExtension = (name: string): string => {
+    const lastCommaIndex = name.lastIndexOf('.');
+    if (lastCommaIndex === -1) {
+      return '';
+    }
+    return name.substring(lastCommaIndex + 1).toLowerCase();
+  };
+
+  const isAllowedImageExtension = (extension: string): boolean => {
+    if (
+      ALLOWED_IMAGE_FILE_EXTENSION.indexOf(extension) === -1 ||
+      extension === ''
+    ) {
+      return false;
+    }
+    return true;
+  };
+
+  const isValidImageExtension = ({name}: {name: string}): boolean => {
+    const extension = extractFileExtension(name);
+
+    if (isAllowedImageExtension(extension) === false) {
+      return false;
+    }
+    return true;
+  };
+
+  const isFileSizeExceeded = (size: number): boolean => {
+    if (size > FILE_SIZE_MAX_LIMIT) {
+      return true;
+    }
+    return false;
+  };
+
+  const handleUploadFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const target = e.target;
+    const files = target.files;
+    console.log(target.files);
+    if (files === undefined) {
+      return;
+    }
+
+    const file = files?.[0];
+    if (file === undefined || file === null) {
+      return;
+    }
+
+    console.log(file);
+    if (isValidImageExtension(file) === false) {
+      target.value = '';
+      // TODO: snackbar 표시하기
+      console.log(
+        `확장자는 ${ALLOWED_IMAGE_FILE_EXTENSIONS_STRING}만 가능합니다.`
+      );
+      return;
+    }
+
+    if (isFileSizeExceeded(file.size) === true) {
+      target.value = '';
+      // TODO: snackbar 표시하기
+      console.log(
+        `파일 크기는 ${FILE_SIZE_MAX_LIMIT / 1024 / 1024}MB 이하로 제한됩니다.`
+      );
+      return;
+    }
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onloadend = () => {
+      if (typeof reader.result === 'string') {
+        setUploadImageFile(reader.result);
+      }
+    };
   };
 
   const handleErrorSnackbarClose = (
@@ -160,13 +245,22 @@ function SignupPage() {
           <Grid item xs={12}>
             <Card variant="outlined">
               <CardHeader
-                avatar={<Avatar src={user_image} />}
+                avatar={<Avatar src={uploadImageFile || user_image} />}
                 title="프로필 사진"
                 subheader="기본 이미지는 인트라 이미지로 설정됩니다"
               />
               <Box display="flex" justifyContent="flex-end">
                 <Button sx={{color: 'grey'}}>제거</Button>
-                <Button>업로드</Button>
+                <label htmlFor="file-upload-button">
+                  <input
+                    type="file"
+                    id="file-upload-button"
+                    accept={ALLOWED_IMAGE_FILE_EXTENSION}
+                    onChange={handleUploadFile}
+                    hidden
+                  />
+                  <Button component="span">업로드</Button>
+                </label>
               </Box>
             </Card>
           </Grid>
