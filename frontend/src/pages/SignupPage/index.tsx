@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React from 'react';
 import {useState} from 'react';
 import {useLocation, useNavigate} from 'react-router-dom';
 import Avatar from '@mui/material/Avatar';
@@ -12,7 +12,14 @@ import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardHeader from '@mui/material/CardHeader';
+import Snackbar from '@mui/material/Snackbar';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
 import apiManager from '@apiManager/apiManager';
+import Alert from '@mui/material/Alert';
 
 function SignupPage() {
   const {state} = useLocation();
@@ -49,6 +56,23 @@ function SignupPage() {
     return regex.test(password);
   }
 
+  const [openDialog, setOpenDialog] = useState(false);
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [openErrorSnackbar, setOpenErrorSnackbar] = useState(false);
+  const [isUniqueNickname, setIsUniqueNickname] = useState(false);
+
+  const handleDialogClose = () => {
+    setOpenDialog(false);
+  };
+
+  const handleSnackbarClose = () => {
+    setOpenSnackbar(false);
+  };
+
+  const handleErrorSnackbarClose = () => {
+    setOpenErrorSnackbar(false);
+  };
+
   //성공했을경우만 버튼이 활성화가 됩니다
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -71,17 +95,28 @@ function SignupPage() {
   };
 
   async function handleDuplicatedNickname() {
+    if (isValidNicknameLength(nickname) === false) {
+      setOpenSnackbar(true);
+      return;
+    }
+    setOpenDialog(true);
     const response = await apiManager.get(
       `/signup/nickname?user_id=${user_id}&nickname=${nickname}`
     );
     try {
+      if (response.data === true) {
+        setIsUniqueNickname(true);
+      } else {
+        setIsUniqueNickname(false);
+      }
       console.log(response);
     } catch (error: unknown) {
       console.log(error);
+      setOpenErrorSnackbar(true);
     }
   }
 
-  function handleNickname(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleNicknameInput(e: React.ChangeEvent<HTMLInputElement>) {
     setNickname(e.target.value);
   }
 
@@ -98,6 +133,7 @@ function SignupPage() {
       <Typography component="h1" variant="h5">
         회원가입
       </Typography>
+
       <Box component="form" onSubmit={handleSubmit} noValidate sx={{mt: 1}}>
         <Grid container spacing={2}>
           <Grid item xs={12}>
@@ -113,6 +149,7 @@ function SignupPage() {
               </Box>
             </Card>
           </Grid>
+
           <Grid item xs={12}>
             <TextField
               disabled
@@ -124,6 +161,7 @@ function SignupPage() {
               variant="filled"
             />
           </Grid>
+
           <Grid item xs={9}>
             <TextField
               error={
@@ -136,8 +174,7 @@ function SignupPage() {
               id="nickanme"
               label="닉네임"
               helperText="2 ~ 8자 이내로 설정"
-              // helperTextColor=(nickname !== '' && isValidNicknameLength(nickname) === false) ? 'red' : 'green'
-              onChange={handleNickname}
+              onChange={handleNicknameInput}
               autoFocus
             />
           </Grid>
@@ -145,7 +182,43 @@ function SignupPage() {
             <Button variant="text" onClick={handleDuplicatedNickname}>
               중복 확인
             </Button>
+            <Snackbar
+              open={openSnackbar}
+              anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}
+              autoHideDuration={6000}
+              onClose={handleSnackbarClose}
+            >
+              <Alert
+                onClose={handleSnackbarClose}
+                severity="error"
+                sx={{width: '100%'}}
+              >
+                닉네임의 길이를 확인해주세요. (현재 길이: {nickname.length}자)
+              </Alert>
+            </Snackbar>
+            <Dialog
+              open={openDialog}
+              onClose={handleDialogClose}
+              aria-labelledby="alert-dialog-title"
+              aria-describedby="alert-dialog-description"
+            >
+              <DialogTitle id="alert-dialog-title">중복 확인</DialogTitle>
+              <DialogContent>
+                <DialogContentText id="alert-dialog-description">
+                  {nickname}
+                  {isUniqueNickname === true
+                    ? ' 은(는) 사용 가능합니다.'
+                    : ' 은(는) 사용 불가능합니다.'}
+                </DialogContentText>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={handleDialogClose} autoFocus>
+                  닫기
+                </Button>
+              </DialogActions>
+            </Dialog>
           </Grid>
+
           <Grid item xs={12}>
             <TextField
               error={
@@ -170,6 +243,7 @@ function SignupPage() {
               }
             />
           </Grid>
+
           <Grid item xs={12}>
             <TextField
               error={confirmPassword !== '' && password !== confirmPassword}
@@ -188,6 +262,7 @@ function SignupPage() {
               }
             />
           </Grid>
+
           <Grid item xs={12}>
             <List
               sx={{width: '100%', maxWidth: 360, bgcolor: 'background.paper'}}
@@ -242,6 +317,7 @@ function SignupPage() {
               </ListItem>
             </List>
           </Grid>
+
           <Grid item xs={10}>
             <Typography variant="body1" component="div">
               2차 인증 활성화
@@ -254,6 +330,7 @@ function SignupPage() {
             <Checkbox />
           </Grid>
         </Grid>
+
         <Button
           disabled={
             password !== confirmPassword ||
@@ -267,6 +344,20 @@ function SignupPage() {
         >
           회원가입
         </Button>
+        <Snackbar
+          open={openErrorSnackbar}
+          anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}
+          autoHideDuration={6000}
+          onClose={handleErrorSnackbarClose}
+        >
+          <Alert
+            onClose={handleErrorSnackbarClose}
+            severity="warning"
+            sx={{width: '100%'}}
+          >
+            오류가 발생했습니다. 다시 한번 시도해주세요.
+          </Alert>
+        </Snackbar>
       </Box>
     </React.Fragment>
   );
