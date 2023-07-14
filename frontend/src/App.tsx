@@ -8,6 +8,9 @@ import AuthPage from './pages/AuthPage';
 import SignupPage from './pages/SignupPage';
 import PasswordResetPage from './pages/PasswordResetPage';
 import NotFoundPage from './pages/NotFoundPage';
+import MainPage from 'layout/Buffer/MainPage/MainPage';
+import Ranking from 'layout/Buffer/Ranking';
+import MainLayout from 'layout/MainLayout';
 
 function App() {
   return (
@@ -19,6 +22,10 @@ function App() {
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/password-reset" element={<PasswordResetPage />} />
+        </Route>
+        <Route element={<MainLayout />}>
+          <Route path="/menu/mainPage" element={<MainPage />} />
+          <Route path="/menu/ranking" element={<Ranking />} />
         </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
