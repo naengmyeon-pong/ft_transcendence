@@ -88,6 +88,7 @@ function SignupPage() {
       console.log(response);
     } catch (error) {
       console.log(error);
+      setOpenErrorSnackbar(true);
     }
     // TODO: 위치지정
     // navigate('/');
