@@ -1,5 +1,5 @@
 import React from 'react';
-import {useState} from 'react';
+import {useState, useRef} from 'react';
 import {useLocation, useNavigate} from 'react-router-dom';
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
@@ -66,6 +66,8 @@ function SignupPage() {
     return regex.test(password);
   };
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [uploadImageFile, setUploadImageFile] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const [openSnackbar, setOpenSnackbar] = useState(false);
@@ -86,6 +88,16 @@ function SignupPage() {
     }
 
     setOpenSnackbar(false);
+  };
+
+  const handleUploadImageRemoval = () => {
+    if (uploadImageFile === '') {
+      return;
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''; // Reset the input value
+    }
+    setUploadImageFile('');
   };
 
   const extractFileExtension = (name: string): string => {
@@ -250,7 +262,14 @@ function SignupPage() {
                 subheader="기본 이미지는 인트라 이미지로 설정됩니다"
               />
               <Box display="flex" justifyContent="flex-end">
-                <Button sx={{color: 'grey'}}>제거</Button>
+                {uploadImageFile && (
+                  <Button
+                    onClick={handleUploadImageRemoval}
+                    sx={{color: 'grey'}}
+                  >
+                    제거
+                  </Button>
+                )}
                 <label htmlFor="file-upload-button">
                   <input
                     type="file"
@@ -258,6 +277,7 @@ function SignupPage() {
                     accept={ALLOWED_IMAGE_FILE_EXTENSION}
                     onChange={handleUploadFile}
                     hidden
+                    ref={fileInputRef}
                   />
                   <Button component="span">업로드</Button>
                 </label>
