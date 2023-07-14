@@ -6,5 +6,5 @@ export class isUserAuth {
   user_id: string;
 
   @Column({default: false})
-  isAuth: boolean;
+  isNickSame: boolean;
 }

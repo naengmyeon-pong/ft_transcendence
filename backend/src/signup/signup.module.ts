@@ -9,6 +9,7 @@ import {SignupService} from './signup.service';
 import {UserRepository} from 'src/user/user.repository';
 import {isUserAuth} from 'src/signup/signup.entity';
 import {isUserAuthRepository} from 'src/signup/signup.repository';
+import {JwtStrategy} from 'src/user/jwt.strategy';
 
 @Module({
   imports: [
@@ -19,11 +20,23 @@ import {isUserAuthRepository} from 'src/signup/signup.repository';
         expiresIn: 60 * 60,
       },
     }),
+    JwtModule.register({
+      secret: 'Intra42',
+      signOptions: {
+        expiresIn: 60 * 2,
+      },
+    }),
     TypeOrmModule.forFeature([User]),
     TypeOrmModule.forFeature([isUserAuth]),
   ],
   controllers: [SignupController],
-  providers: [SignupService, UserService, UserRepository, isUserAuthRepository],
+  providers: [
+    SignupService,
+    UserService,
+    UserRepository,
+    isUserAuthRepository,
+    JwtStrategy,
+  ],
   exports: [TypeOrmModule],
 })
 export class SignupModule {}

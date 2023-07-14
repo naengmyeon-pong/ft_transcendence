@@ -12,6 +12,8 @@ import {UserAuthDto} from './dto/userAuth.dto';
 import {JwtService} from '@nestjs/jwt';
 import {UserRepository} from './user.repository';
 import {isUserAuthRepository} from 'src/signup/signup.repository';
+import * as bcrypt from 'bcryptjs';
+import {Payload} from './payload';
 
 @Injectable()
 export class UserService {
@@ -33,25 +35,28 @@ export class UserService {
   async create(userDto: UserDto): Promise<void> {
     const {user_id, user_pw, user_nickname, user_image, is_2fa_enabled} =
       userDto;
+
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(user_pw, salt);
     const userSignUpAuth = await this.userAuthRepository.findOneBy({user_id});
-    if (!userSignUpAuth || userSignUpAuth.isAuth === false) {
+    if (!userSignUpAuth || userSignUpAuth.isNickSame === false) {
       throw new UnauthorizedException(
         'Please auth through our main signup page.'
       );
     }
     const user = this.userRepository.create({
       user_id,
-      user_pw,
+      user_pw: hashedPassword,
       user_nickname,
       user_image,
       is_2fa_enabled,
     });
+
     try {
       await this.userRepository.save(user);
       await this.userAuthRepository.delete({user_id: user.user_id});
     } catch (error) {
       if (error.code === '23505') {
-        console.log(error);
         throw new ConflictException(
           `${userDto.user_id} is already our member. plese sign in.`
         );
@@ -68,7 +73,7 @@ export class UserService {
     }
   }
 
-  async updateUserPw(userAuthDto: UserAuthDto): Promise<User> {
+  async changePw(userAuthDto: UserAuthDto): Promise<User> {
     const user = await this.findOne(userAuthDto.user_id);
 
     user.user_pw = userAuthDto.user_pw;
@@ -77,12 +82,11 @@ export class UserService {
   }
 
   async signIn(userAuthDto: UserAuthDto): Promise<string> {
-    const user: Promise<User> = this.findOne(userAuthDto.user_id);
-    if (await user.then(found => found.user_pw === userAuthDto.user_pw)) {
+    const user = await this.findOne(userAuthDto.user_id);
+    if (user && (await bcrypt.compare(userAuthDto.user_pw, user.user_pw))) {
       // user token create. (secret + Payload)
-      const payload = {user_id: userAuthDto.user_id};
-      const accessToken = await this.jwtService.sign(payload);
-
+      const payload: Payload = {user_id: userAuthDto.user_id};
+      const accessToken = this.jwtService.sign(payload);
       return accessToken;
     }
     throw new UnauthorizedException('login failed');

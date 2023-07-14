@@ -2,13 +2,8 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
   Param,
-  Patch,
   Post,
-  Query,
-  Redirect,
-  Req,
   ValidationPipe,
 } from '@nestjs/common';
 import {UserService} from './user.service';
@@ -33,12 +28,12 @@ export class UserController {
   }
 
   @Post('/changePw')
-  updateUserPw(@Body(ValidationPipe) userAuthDto: UserAuthDto): Promise<User> {
-    return this.userService.updateUserPw(userAuthDto);
+  changeUserPw(@Body(ValidationPipe) userAuthDto: UserAuthDto): Promise<User> {
+    return this.userService.changePw(userAuthDto);
   }
 
-  // @Post('/signin')
-  // signIn(@Body() userAuthDto: UserAuthDto): Promise<string> {
-  //   return this.userService.signIn(userAuthDto);
-  // }
+  @Post('/signin')
+  signIn(@Body() userAuthDto: UserAuthDto): Promise<string> {
+    return this.userService.signIn(userAuthDto);
+  }
 }

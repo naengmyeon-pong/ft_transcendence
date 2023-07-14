@@ -1,15 +1,17 @@
 import {
   Controller,
   Get,
-  Param,
   Post,
   Body,
   Query,
   ValidationPipe,
+  UseGuards,
 } from '@nestjs/common';
 import {SignupService} from './signup.service';
 import {UserDto} from 'src/user/dto/user.dto';
 import {UserService} from 'src/user/user.service';
+import {AuthGuard} from '@nestjs/passport';
+
 @Controller('signup')
 export class SignupController {
   constructor(
@@ -32,6 +34,7 @@ export class SignupController {
   }
 
   @Post()
+  @UseGuards(AuthGuard('jwt'))
   async signup(@Body(ValidationPipe) userinfo: UserDto): Promise<void> {
     return await this.userService.create(userinfo);
   }
