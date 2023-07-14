@@ -87,11 +87,16 @@ export class SignupController {
   @Post()
   @ApiOperation({
     summary: '유저 정보를 DB에 저장하는 API',
-    description: '전달받은 body의 유저 정보를 DB에 저장한다.',
+    description:
+      'JWT 토큰을 확인한 후 전달받은 body의 유저 정보를 DB에 저장한다.<br />JWT 토큰은 반드시 Bearer 형식으로 전달해야한다.',
   })
   @ApiResponse({
     status: 201,
     description: '유저 정보를 정상적으로 저장한 경우',
+  })
+  @ApiResponse({
+    status: 401,
+    description: '유저가 JWT 토큰 없이 접근하는 경우',
   })
   @ApiResponse({
     status: 409,

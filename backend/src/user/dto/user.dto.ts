@@ -51,7 +51,7 @@ export class UserDto {
   @ApiProperty({
     example: 'false',
     description: '2차 인증 사용 여부',
-    required: true,
+    required: false,
   })
   is_2fa_enabled: boolean;
 }
