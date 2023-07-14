@@ -35,67 +35,76 @@ function SignupPage() {
   const navigate = useNavigate();
 
   // 8~20자 제한
-  function isValidPasswordLength(password: string): boolean {
+  const isValidPasswordLength = (password: string): boolean => {
     if (8 <= password.length && password.length <= 20) {
       return true;
     }
     return false;
-  }
+  };
 
   // 2~8자 제한
-  function isValidNicknameLength(nickname: string): boolean {
+  const isValidNicknameLength = (nickname: string): boolean => {
     if (2 <= nickname.length && nickname.length <= 8) {
       return true;
     }
     return false;
-  }
+  };
 
-  function isValidPasswordRule(password: string): boolean {
+  const isValidPasswordRule = (password: string): boolean => {
     // 대문자, 소문자, 특수문자 각각 하나 이상
     const regex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^\d\sa-zA-Z])[\S]{8,}$/;
     return regex.test(password);
-  }
+  };
 
   const [openDialog, setOpenDialog] = useState(false);
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [openErrorSnackbar, setOpenErrorSnackbar] = useState(false);
   const [isUniqueNickname, setIsUniqueNickname] = useState(false);
+  const [is2faEnabled, setIs2faEnabled] = useState(false);
 
   const handleDialogClose = () => {
     setOpenDialog(false);
   };
 
-  const handleSnackbarClose = () => {
+  const handleSnackbarClose = (
+    event?: React.SyntheticEvent | Event,
+    reason?: string
+  ) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+
     setOpenSnackbar(false);
   };
 
-  const handleErrorSnackbarClose = () => {
+  const handleErrorSnackbarClose = (
+    event?: React.SyntheticEvent | Event,
+    reason?: string
+  ) => {
+    if (reason === 'clickaway') {
+      return;
+    }
     setOpenErrorSnackbar(false);
   };
 
-  //성공했을경우만 버튼이 활성화가 됩니다
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const data = {
-      user_id: user_id,
-      user_pw: password,
-      user_nickname: nickname,
-      user_image: user_image,
-    };
-    console.log(data);
-    const response = await apiManager.post('/signup', data);
-    try {
-      console.log(response);
-    } catch (error) {
-      console.log(error);
-      setOpenErrorSnackbar(true);
-    }
-    // TODO: 위치지정
-    // navigate('/');
-    //실패했을 경우 지정해줘야함
+  const handle2FA = () => {
+    setIs2faEnabled(!is2faEnabled);
   };
 
-  async function handleDuplicatedNickname() {
+  const handleNicknameInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNickname(e.target.value);
+    setIsUniqueNickname(false);
+  };
+
+  const handlePassword = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+  };
+
+  const handleConfirmPassword = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setConfirmPassword(e.target.value);
+  };
+
+  const handleDuplicatedNickname = async () => {
     if (isValidNicknameLength(nickname) === false) {
       setOpenSnackbar(true);
       return;
@@ -115,19 +124,30 @@ function SignupPage() {
       console.log(error);
       setOpenErrorSnackbar(true);
     }
-  }
+  };
 
-  function handleNicknameInput(e: React.ChangeEvent<HTMLInputElement>) {
-    setNickname(e.target.value);
-  }
-
-  function handlePassword(e: React.ChangeEvent<HTMLInputElement>) {
-    setPassword(e.target.value);
-  }
-
-  function handleConfirmPassword(e: React.ChangeEvent<HTMLInputElement>) {
-    setConfirmPassword(e.target.value);
-  }
+  //성공했을경우만 버튼이 활성화가 됩니다
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const data = {
+      user_id: user_id,
+      user_pw: password,
+      user_nickname: nickname,
+      user_image: user_image,
+      is_2fa_enabled: is2faEnabled,
+    };
+    console.log(data);
+    // const response = await apiManager.post('/signup', data);
+    // try {
+    //   console.log(response);
+    // } catch (error) {
+    //   console.log(error);
+    //   setOpenErrorSnackbar(true);
+    // }
+    // TODO: 위치지정
+    // navigate('/');
+    //실패했을 경우 지정해줘야함
+  };
 
   return (
     <React.Fragment>
@@ -186,7 +206,7 @@ function SignupPage() {
             <Snackbar
               open={openSnackbar}
               anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}
-              autoHideDuration={6000}
+              autoHideDuration={3000}
               onClose={handleSnackbarClose}
             >
               <Alert
@@ -328,15 +348,16 @@ function SignupPage() {
             </Typography>
           </Grid>
           <Grid item xs={2} container>
-            <Checkbox />
+            <Checkbox onChange={handle2FA} checked={is2faEnabled} />
           </Grid>
         </Grid>
 
         <Button
           disabled={
             password !== confirmPassword ||
-            isValidPasswordLength(password) === false ||
-            isValidPasswordRule(password) === false
+            isUniqueNickname === false ||
+            (isValidPasswordLength(password) === false &&
+              isValidPasswordRule(password) === false)
           }
           fullWidth
           type="submit"
