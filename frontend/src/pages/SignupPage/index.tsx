@@ -68,7 +68,8 @@ function SignupPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [uploadImageFile, setUploadImageFile] = useState('');
+  const [uploadFile, setUploadFile] = useState<File>();
+  const [previewUploadImage, setPreviewUploadImage] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [openErrorSnackbar, setOpenErrorSnackbar] = useState(false);
@@ -91,13 +92,13 @@ function SignupPage() {
   };
 
   const handleUploadImageRemoval = () => {
-    if (uploadImageFile === '') {
+    if (previewUploadImage === '') {
       return;
     }
     if (fileInputRef.current) {
       fileInputRef.current.value = ''; // Reset the input value
     }
-    setUploadImageFile('');
+    setPreviewUploadImage('');
   };
 
   const extractFileExtension = (name: string): string => {
@@ -169,9 +170,10 @@ function SignupPage() {
     reader.readAsDataURL(file);
     reader.onloadend = () => {
       if (typeof reader.result === 'string') {
-        setUploadImageFile(reader.result);
+        setPreviewUploadImage(reader.result);
       }
     };
+    setUploadFile(file);
   };
 
   const handleErrorSnackbarClose = (
@@ -257,12 +259,12 @@ function SignupPage() {
           <Grid item xs={12}>
             <Card variant="outlined">
               <CardHeader
-                avatar={<Avatar src={uploadImageFile || user_image} />}
+                avatar={<Avatar src={previewUploadImage || user_image} />}
                 title="프로필 사진"
                 subheader="기본 이미지는 인트라 이미지로 설정됩니다"
               />
               <Box display="flex" justifyContent="flex-end">
-                {uploadImageFile && (
+                {previewUploadImage && (
                   <Button
                     onClick={handleUploadImageRemoval}
                     sx={{color: 'grey'}}
