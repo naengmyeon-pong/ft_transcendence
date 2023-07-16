@@ -20,7 +20,7 @@ export default function ConnectUserList() {
             anchorOrigin={{vertical: 'bottom', horizontal: 'right'}}
             variant="dot"
           >
-            <Avatar alt="friend profile memo" src="/Naengmyeon.png" />
+            <Avatar alt="friend profile memo" src="/logo.jpeg" />
           </Badge>
         </ListItemAvatar>
         <ListItemText

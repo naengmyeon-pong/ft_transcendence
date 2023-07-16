@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   AppBar,
+  Avatar,
   Box,
   Button,
   IconButton,
@@ -32,6 +33,7 @@ const customTheme = createTheme({
 const otherMenu = ['게임하기', '전체랭킹', '채팅목록'];
 const userMenu = ['알람', '마이페이지', '로그아웃'];
 
+// TODO: 각 항목마다 링크, 사이즈 작을경우 대처, 마이페이지, 로그아웃이 필요합니다
 function FtAppBar() {
   console.log('AppBar');
   const [anchorElOther, setAnchorElOther] = useState<null | HTMLElement>(null);
@@ -115,11 +117,7 @@ function FtAppBar() {
             href="/"
             sx={{flexGrow: 1, display: {xs: 'flex', sm: 'none'}}}
           >
-            <img
-              src="/Naengmyeon.png"
-              style={{objectFit: 'cover', width: '40px'}}
-              alt="냉면사진"
-            />
+            <Avatar alt="friend profile memo" src="/logo.jpeg" />
           </Typography>
           <Box sx={{display: {xs: 'block', sm: 'none'}}}>
             <IconButton
@@ -167,20 +165,18 @@ function FtAppBar() {
             href="/"
             sx={{display: {xs: 'none', sm: 'flex'}}}
           >
-            <img
-              src="/Naengmyeon.png"
-              style={{objectFit: 'cover', width: '40px'}}
-              alt="냉면사진"
-            />
+            <Avatar alt="friend profile memo" src="/logo.jpeg" />
           </Typography>
           <Box sx={{flexGrow: 1, display: {xs: 'none', sm: 'flex'}}}>
-            <Link to="/">
+            <Link to="/menu/mainPage">
               <Button>게임하기</Button>
             </Link>
             <Link to="/menu/ranking">
               <Button>전체랭킹</Button>
             </Link>
-            <Button>채팅목록</Button>
+            <Link to="/menu/chatList">
+              <Button>채팅목록</Button>
+            </Link>
           </Box>
           <Box sx={{flexGrow: 0, display: {xs: 'none', sm: 'flex'}}}>
             <Button>

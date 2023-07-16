@@ -14,8 +14,10 @@ function MainLayout() {
         <Box>
           <FtSideBar />
         </Box>
-        <Box>
+        <Box width="80vw" paddingLeft="150px">
+          {/* 게임하기, 전체랭킹, 채팅목록 */}
           <Outlet />
+          {/* 개인 채팅창 위치 */}
         </Box>
       </Box>
     </>
