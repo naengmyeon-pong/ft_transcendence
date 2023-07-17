@@ -66,7 +66,7 @@ function ShowRoomList({chatList}: ComponentProps) {
         <TableHead>
           <TableRow>
             <TableCell>
-              <Typography variant="h5">공개/비공개</Typography>
+              <Typography variant="h5">암호여부</Typography>
             </TableCell>
             <TableCell>
               <Typography variant="h5">인원</Typography>
@@ -83,11 +83,13 @@ function ShowRoomList({chatList}: ComponentProps) {
           {chatList.map(row => {
             return (
               <TableRow key={row.roomName} onClick={e => enterRoom(e, row)}>
-                <TableCell>
+                <TableCell width="15%">
+                  {/* <TableCell> */}
                   <Typography variant="h6">
                     {row.passwordState ? <LockIcon /> : ''}
                   </Typography>
                 </TableCell>
+                {/* <TableCell width="10%"> */}
                 <TableCell>
                   <Typography variant="h6">
                     {`${row.currentNum}/${row.maxNum}`}

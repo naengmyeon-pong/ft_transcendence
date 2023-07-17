@@ -1,5 +1,5 @@
 import apiManager from '@apiManager/apiManager';
-import {Box, List, ListItem, Typography} from '@mui/material';
+import {Box, Button, Grid, List, ListItem, Typography} from '@mui/material';
 import React, {useEffect, useState} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 
@@ -42,42 +42,60 @@ function ChatRoom() {
 
   return (
     <>
-      <Box>
-        <h1>방제: {roomName}</h1>
-      </Box>
-      <Box>
-        <Box>
-          <Typography variant="body1">방장: {owner?.nickName}</Typography>
-        </Box>
-        <Box>
-          <Typography variant="body1">채팅방 관리자</Typography>
-          <ul>
-            {/* <ListItem> */}
-            {adminUser.map(node => {
-              return (
-                // <ListItem key={node.nickName}>
-                <li key={node.nickName}>{node.nickName}</li>
-                // {/* <Typography variant="body2"></Typography> */}
-                // </ListItem>
-              );
-            })}
-          </ul>
-        </Box>
-        <Box>
-          <Typography variant="body1">채팅 참여자</Typography>
-          <ul>
-            {/* <ListItem> */}
-            {users.map(node => {
-              return (
-                // <ListItem key={node.nickName}>
-                <li key={node.nickName}>{node.nickName}</li>
-                // {/* <Typography variant="body2"></Typography> */}
-                // </ListItem>
-              );
-            })}
-          </ul>
-        </Box>
-      </Box>
+      {/* <Box display="flex" justifyContent="center"> */}
+      <Grid container spacing={2}>
+        {/* 채팅창 구역*/}
+        <Grid item xs={7}>
+          <Typography variant="body1">{roomName}</Typography>
+          <Box>
+            <Typography>안녕하세요 여러분</Typography>
+            <Typography>반갑습니다. 저도 관리자 할 수 있나요?</Typography>
+            <Typography>
+              관리자는 구독 회원만 가능합니다. 구독 회원이 되려면 빙글맨 유튜브
+              구독, 좋아요, 알람 설정 인증 부탁드립니다.
+            </Typography>
+          </Box>
+        </Grid>
+        <Grid item xs={3}>
+          <Box>
+            <Box>
+              <Typography variant="body1">방장: {owner?.nickName}</Typography>
+            </Box>
+            <Box>
+              <Typography variant="body1">채팅방 관리자</Typography>
+              <ul>
+                {/* <ListItem> */}
+                {adminUser.map(node => {
+                  return (
+                    // <ListItem key={node.nickName}>
+                    <li key={node.nickName}>{node.nickName}</li>
+                    // {/* <Typography variant="body2"></Typography> */}
+                    // </ListItem>
+                  );
+                })}
+              </ul>
+            </Box>
+            <Box>
+              <Typography variant="body1">채팅 참여자</Typography>
+              <ul>
+                {/* <ListItem> */}
+                {users.map(node => {
+                  return (
+                    // <ListItem key={node.nickName}>
+                    <li key={node.nickName}>{node.nickName}</li>
+                    // {/* <Typography variant="body2"></Typography> */}
+                    // </ListItem>
+                  );
+                })}
+              </ul>
+            </Box>
+          </Box>
+          <Box display="flex" justifyContent="center">
+            <Button>초대하기</Button>
+            <Button>나가기</Button>
+          </Box>
+        </Grid>
+      </Grid>
     </>
   );
 }

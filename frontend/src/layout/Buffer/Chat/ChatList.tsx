@@ -1,4 +1,4 @@
-import React, {forwardRef, useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import apiManager from '@apiManager/apiManager';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
@@ -42,7 +42,8 @@ function ChatList() {
     <>
       {/* <Demo /> */}
       <Box>
-        <Box display="flex" justifyContent="center">
+        <Box display="flex" justifyContent="center" marginRight="200px">
+          {/* <Box> */}
           <h1>채팅목록</h1>
           {/* 클릭시 서버로부터 목록을 새로 받아옵니다 */}
           <Button onClick={refershChatList}>
@@ -52,6 +53,7 @@ function ChatList() {
         {/* 채팅목록을 출력하는 컴포넌트입니다 */}
         <ShowRoomList chatList={chatList} />
         <Box display="flex" justifyContent="center">
+          {/* <Box> */}
           <Button
             size="large"
             variant="contained"
