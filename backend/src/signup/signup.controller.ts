@@ -6,11 +6,14 @@ import {
   Query,
   ValidationPipe,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import {SignupService} from './signup.service';
 import {UserDto} from 'src/user/dto/user.dto';
 import {UserService} from 'src/user/user.service';
 import {AuthGuard} from '@nestjs/passport';
+import {FileInterceptor} from '@nestjs/platform-express';
 import {
   ApiTags,
   ApiOperation,
@@ -86,7 +89,8 @@ export class SignupController {
   }
 
   @Post()
-  @UseGuards(AuthGuard('jwt'))
+  // @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(FileInterceptor('user_image'))
   @ApiOperation({
     summary: '유저 정보를 DB에 저장하는 API',
     description:
@@ -108,7 +112,52 @@ export class SignupController {
     status: 500,
     description: 'DB 저장에 실패한 경우',
   })
-  async signup(@Body(ValidationPipe) userinfo: UserDto): Promise<void> {
-    return await this.userService.create(userinfo);
+  async signup(
+    @Body(ValidationPipe) userinfo: UserDto,
+    @UploadedFile() file: Express.Multer.File
+  ): Promise<void> {
+    return await this.userService.create(userinfo, file.path);
   }
+
+  @Post('/file')
+  @UseInterceptors(FileInterceptor('user_image'))
+  async downfile(@UploadedFile() file: Express.Multer.File) {
+    return file.path;
+  }
+
+  // @Post()
+  // @UseGuards(AuthGuard('jwt'))
+  // @ApiOperation({
+  //   summary: '유저 정보를 DB에 저장하는 API',
+  //   description:
+  //     'JWT 토큰을 확인한 후 전달받은 body의 유저 정보를 DB에 저장한다.<br />JWT 토큰은 반드시 Bearer 형식으로 전달해야한다.',
+  // })
+  // @ApiResponse({
+  //   status: 201,
+  //   description: '유저 정보를 정상적으로 저장한 경우',
+  // })
+  // @ApiResponse({
+  //   status: 401,
+  //   description: '유저가 JWT 토큰 없이 접근하는 경우',
+  // })
+  // @ApiResponse({
+  //   status: 409,
+  //   description: '회원 가입 정보가 존재하는 경우',
+  // })
+  // @ApiResponse({
+  //   status: 500,
+  //   description: 'DB 저장에 실패한 경우',
+  // })
+  // async signup(@Body(ValidationPipe) userinfo: UserDto): Promise<void> {
+  //   return await this.userService.create(userinfo);
+  // }
+
+  // @UseInterceptors(FileInterceptor('file'))
+  // @Post('/file')
+  // async downfile(@UploadedFile() file: Express.Multer.File) {
+  //   if (!file) {
+  //     throw new BadRequestException();
+  //   }
+  //   return file.path;
+  // }
 }

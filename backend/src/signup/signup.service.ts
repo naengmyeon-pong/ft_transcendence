@@ -82,7 +82,7 @@ export class SignupService {
         user_id: response.data.login,
         user_image: response.data.image.link,
         is_already_signup: true,
-        signupJwt: undefined,
+        signupJwt: null,
       };
       return JSON.stringify(ret);
     }
