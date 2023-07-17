@@ -1,5 +1,4 @@
 import {
-  ConflictException,
   Injectable,
   InternalServerErrorException,
   BadRequestException,
@@ -9,12 +8,17 @@ import axios from 'axios';
 import {InjectRepository} from '@nestjs/typeorm';
 import {UserRepository} from 'src/user/user.repository';
 import {isUserAuthRepository} from './signup.repository';
+import {isUserAuth} from './signup.entity';
+import {JwtService} from '@nestjs/jwt';
+import {Payload} from 'src/user/payload';
+
 @Injectable()
 export class SignupService {
   constructor(
     @InjectRepository(UserRepository)
     private userRepository: UserRepository,
-    private userAuthRepository: isUserAuthRepository
+    private userAuthRepository: isUserAuthRepository,
+    private jwtService: JwtService
   ) {}
 
   async getAccessToken(code: string): Promise<string> {
@@ -50,14 +54,23 @@ export class SignupService {
     });
     if (!user) {
       try {
-        const userAuth = this.userAuthRepository.create({
+        const userAuth: isUserAuth = this.userAuthRepository.create({
           user_id: response.data.login,
         });
         await this.userAuthRepository.save(userAuth);
 
+        const payload: Payload = {
+          user_id: userAuth.user_id,
+        };
+        const signupJwt = this.jwtService.sign(payload, {
+          secret: 'Intra42',
+          expiresIn: 60 * 2,
+        });
         const ret = {
           user_id: response.data.login,
           user_image: response.data.image.link,
+          is_already_signup: false,
+          signupJwt: signupJwt,
         };
         return JSON.stringify(ret);
       } catch (error) {
@@ -65,9 +78,13 @@ export class SignupService {
         throw new InternalServerErrorException();
       }
     } else {
-      throw new ConflictException(
-        `${response.data.login} is already our member!`
-      );
+      const ret = {
+        user_id: response.data.login,
+        user_image: response.data.image.link,
+        is_already_signup: true,
+        signupJwt: undefined,
+      };
+      return JSON.stringify(ret);
     }
   }
 
@@ -83,11 +100,11 @@ export class SignupService {
       });
       if (!existNickname) {
         console.log('You can use it');
-        userSignUpAuth.isAuth = true;
+        userSignUpAuth.isNickSame = true;
         await this.userAuthRepository.save(userSignUpAuth);
         return true;
       }
-      userSignUpAuth.isAuth = false;
+      userSignUpAuth.isNickSame = false;
       await this.userAuthRepository.save(userSignUpAuth);
       return false;
     }
