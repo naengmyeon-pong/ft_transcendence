@@ -14,6 +14,7 @@ import {UserRepository} from './user.repository';
 import {isUserAuthRepository} from 'src/signup/signup.repository';
 import * as bcrypt from 'bcryptjs';
 import {Payload} from './payload';
+import * as fs from 'fs';
 
 @Injectable()
 export class UserService {
@@ -32,7 +33,7 @@ export class UserService {
     return found;
   }
 
-  async create(userDto: UserDto): Promise<void> {
+  async create(userDto: UserDto, path: string): Promise<void> {
     const {user_id, user_pw, user_nickname, user_image, is_2fa_enabled} =
       userDto;
 
@@ -40,29 +41,34 @@ export class UserService {
     const hashedPassword = await bcrypt.hash(user_pw, salt);
     const userSignUpAuth = await this.userAuthRepository.findOneBy({user_id});
     if (!userSignUpAuth || userSignUpAuth.isNickSame === false) {
+      fs.unlink(path, err => {
+        if (err) throw new InternalServerErrorException();
+      });
       throw new UnauthorizedException(
         'Please auth through our main signup page.'
       );
     }
-    const user = this.userRepository.create({
-      user_id,
-      user_pw: hashedPassword,
-      user_nickname,
-      user_image,
-      is_2fa_enabled,
-    });
 
     try {
+      const user = this.userRepository.create({
+        user_id,
+        user_pw: hashedPassword,
+        user_nickname,
+        user_image: path,
+        is_2fa_enabled,
+      });
       await this.userRepository.save(user);
       await this.userAuthRepository.delete({user_id: user.user_id});
     } catch (error) {
-      if (error.code === '23505') {
-        throw new ConflictException(
-          `${userDto.user_id} is already our member. plese sign in.`
-        );
-      } else {
-        throw new InternalServerErrorException();
-      }
+      // fs.unlink(path, err => {
+      //   if (err) throw new InternalServerErrorException();
+      // });
+      // if (error.code === '23505') {
+      //   throw new ConflictException(
+      //     `${userDto.user_nickname} can't use. Please input another nickname`
+      //   );
+      // } else {
+      throw new InternalServerErrorException();
     }
   }
 
