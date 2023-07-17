@@ -170,10 +170,15 @@ function SignupPage() {
     reader.readAsDataURL(file);
     reader.onloadend = () => {
       if (typeof reader.result === 'string') {
-        setPreviewUploadImage(reader.result);
+        const base64data = reader.result;
+        setPreviewUploadImage(base64data);
       }
     };
-    setUploadFile(file);
+    const modifiedFileNameByUserId = new File([file], user_id, {
+      type: file.type,
+    });
+    console.log(modifiedFileNameByUserId);
+    setUploadFile(modifiedFileNameByUserId);
   };
 
   const handleErrorSnackbarClose = (
@@ -228,16 +233,24 @@ function SignupPage() {
   //성공했을경우만 버튼이 활성화가 됩니다
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const data = {
-      user_id: user_id,
-      user_pw: password,
-      user_nickname: nickname,
-      user_image: user_image,
-      is_2fa_enabled: is2faEnabled,
-    };
-    console.log(data);
-    // const response = await apiManager.post('/signup', data);
+
+    const formData = new FormData();
+
+    formData.append('user_id', user_id);
+    formData.append('user_pw', password);
+    formData.append('user_nickname', nickname);
+    formData.append('is_2fa_enabled', is2faEnabled.toString());
+    if (uploadFile !== undefined) {
+      formData.append('user_image', uploadFile);
+    }
+
+    console.log(formData);
     // try {
+    //   const response = await apiManager.post('/signup', formData, {
+    //     headers: {
+    //       'Content-Type': 'multipart/form-data',
+    //     },
+    //   });
     //   console.log(response);
     // } catch (error) {
     //   console.log(error);
