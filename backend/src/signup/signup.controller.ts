@@ -1,15 +1,16 @@
 import {
   Controller,
   Get,
-  Param,
   Post,
   Body,
   Query,
   ValidationPipe,
+  UseGuards,
 } from '@nestjs/common';
 import {SignupService} from './signup.service';
 import {UserDto} from 'src/user/dto/user.dto';
 import {UserService} from 'src/user/user.service';
+import {AuthGuard} from '@nestjs/passport';
 import {
   ApiTags,
   ApiOperation,
@@ -85,6 +86,7 @@ export class SignupController {
   }
 
   @Post()
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({
     summary: '유저 정보를 DB에 저장하는 API',
     description:
