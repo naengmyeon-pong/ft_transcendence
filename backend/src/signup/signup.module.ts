@@ -10,6 +10,8 @@ import {UserRepository} from 'src/user/user.repository';
 import {isUserAuth} from 'src/signup/signup.entity';
 import {isUserAuthRepository} from 'src/signup/signup.repository';
 import {JwtStrategy} from 'src/user/jwt.strategy';
+import {MulterModule} from '@nestjs/platform-express';
+import {MulterConfigService} from 'src/imagefile/multer.config';
 
 @Module({
   imports: [
@@ -28,6 +30,9 @@ import {JwtStrategy} from 'src/user/jwt.strategy';
     }),
     TypeOrmModule.forFeature([User]),
     TypeOrmModule.forFeature([isUserAuth]),
+    MulterModule.registerAsync({
+      useClass: MulterConfigService,
+    }),
   ],
   controllers: [SignupController],
   providers: [
