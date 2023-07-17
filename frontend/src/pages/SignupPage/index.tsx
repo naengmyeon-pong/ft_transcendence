@@ -1,5 +1,5 @@
 import React from 'react';
-import {useState} from 'react';
+import {useState, useRef} from 'react';
 import {useLocation, useNavigate} from 'react-router-dom';
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
@@ -21,6 +21,16 @@ import DialogTitle from '@mui/material/DialogTitle';
 import apiManager from '@apiManager/apiManager';
 import Alert from '@mui/material/Alert';
 
+const ALLOWED_IMAGE_FILE_EXTENSION = 'image/jpg, image/jpeg, image/png';
+const ALLOWED_IMAGE_FILE_EXTENSIONS_STRING = ALLOWED_IMAGE_FILE_EXTENSION.split(
+  ','
+)
+  .map(extension => {
+    return extension.split('/')[1];
+  })
+  .join(' ');
+const FILE_SIZE_MAX_LIMIT = 1 * 1024 * 1024; // 1MB
+
 function SignupPage() {
   const {state} = useLocation();
   const {user_id} = state;
@@ -35,67 +45,170 @@ function SignupPage() {
   const navigate = useNavigate();
 
   // 8~20자 제한
-  function isValidPasswordLength(password: string): boolean {
+  const isValidPasswordLength = (password: string): boolean => {
     if (8 <= password.length && password.length <= 20) {
       return true;
     }
     return false;
-  }
+  };
 
   // 2~8자 제한
-  function isValidNicknameLength(nickname: string): boolean {
+  const isValidNicknameLength = (nickname: string): boolean => {
     if (2 <= nickname.length && nickname.length <= 8) {
       return true;
     }
     return false;
-  }
+  };
 
-  function isValidPasswordRule(password: string): boolean {
+  const isValidPasswordRule = (password: string): boolean => {
     // 대문자, 소문자, 특수문자 각각 하나 이상
     const regex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^\d\sa-zA-Z])[\S]{8,}$/;
     return regex.test(password);
-  }
+  };
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [uploadFile, setUploadFile] = useState<File>();
+  const [previewUploadImage, setPreviewUploadImage] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [openErrorSnackbar, setOpenErrorSnackbar] = useState(false);
   const [isUniqueNickname, setIsUniqueNickname] = useState(false);
+  const [is2faEnabled, setIs2faEnabled] = useState(false);
 
   const handleDialogClose = () => {
     setOpenDialog(false);
   };
 
-  const handleSnackbarClose = () => {
+  const handleSnackbarClose = (
+    event?: React.SyntheticEvent | Event,
+    reason?: string
+  ) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+
     setOpenSnackbar(false);
   };
 
-  const handleErrorSnackbarClose = () => {
+  const handleUploadImageRemoval = () => {
+    if (previewUploadImage === '') {
+      return;
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''; // Reset the input value
+    }
+    setPreviewUploadImage('');
+  };
+
+  const extractFileExtension = (name: string): string => {
+    const lastCommaIndex = name.lastIndexOf('.');
+    if (lastCommaIndex === -1) {
+      return '';
+    }
+    return name.substring(lastCommaIndex + 1).toLowerCase();
+  };
+
+  const isAllowedImageExtension = (extension: string): boolean => {
+    if (
+      ALLOWED_IMAGE_FILE_EXTENSION.indexOf(extension) === -1 ||
+      extension === ''
+    ) {
+      return false;
+    }
+    return true;
+  };
+
+  const isValidImageExtension = ({name}: {name: string}): boolean => {
+    const extension = extractFileExtension(name);
+
+    if (isAllowedImageExtension(extension) === false) {
+      return false;
+    }
+    return true;
+  };
+
+  const isFileSizeExceeded = (size: number): boolean => {
+    if (size > FILE_SIZE_MAX_LIMIT) {
+      return true;
+    }
+    return false;
+  };
+
+  const handleUploadFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const target = e.target;
+    const files = target.files;
+    console.log(target.files);
+    if (files === undefined) {
+      return;
+    }
+
+    const file = files?.[0];
+    if (file === undefined || file === null) {
+      return;
+    }
+
+    console.log(file);
+    if (isValidImageExtension(file) === false) {
+      target.value = '';
+      // TODO: snackbar 표시하기
+      console.log(
+        `확장자는 ${ALLOWED_IMAGE_FILE_EXTENSIONS_STRING}만 가능합니다.`
+      );
+      return;
+    }
+
+    if (isFileSizeExceeded(file.size) === true) {
+      target.value = '';
+      // TODO: snackbar 표시하기
+      console.log(
+        `파일 크기는 ${FILE_SIZE_MAX_LIMIT / 1024 / 1024}MB 이하로 제한됩니다.`
+      );
+      return;
+    }
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onloadend = () => {
+      if (typeof reader.result === 'string') {
+        const base64data = reader.result;
+        setPreviewUploadImage(base64data);
+      }
+    };
+    const modifiedFileNameByUserId = new File([file], user_id, {
+      type: file.type,
+    });
+    console.log(modifiedFileNameByUserId);
+    setUploadFile(modifiedFileNameByUserId);
+  };
+
+  const handleErrorSnackbarClose = (
+    event?: React.SyntheticEvent | Event,
+    reason?: string
+  ) => {
+    if (reason === 'clickaway') {
+      return;
+    }
     setOpenErrorSnackbar(false);
   };
 
-  //성공했을경우만 버튼이 활성화가 됩니다
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const data = {
-      user_id: user_id,
-      user_pw: password,
-      user_nickname: nickname,
-      user_image: user_image,
-    };
-    console.log(data);
-    const response = await apiManager.post('/signup', data);
-    try {
-      console.log(response);
-    } catch (error) {
-      console.log(error);
-      setOpenErrorSnackbar(true);
-    }
-    // TODO: 위치지정
-    // navigate('/');
-    //실패했을 경우 지정해줘야함
+  const handle2FA = () => {
+    setIs2faEnabled(!is2faEnabled);
   };
 
-  async function handleDuplicatedNickname() {
+  const handleNicknameInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNickname(e.target.value);
+    setIsUniqueNickname(false);
+  };
+
+  const handlePassword = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+  };
+
+  const handleConfirmPassword = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setConfirmPassword(e.target.value);
+  };
+
+  const handleDuplicatedNickname = async () => {
     if (isValidNicknameLength(nickname) === false) {
       setOpenSnackbar(true);
       return;
@@ -115,19 +228,38 @@ function SignupPage() {
       console.log(error);
       setOpenErrorSnackbar(true);
     }
-  }
+  };
 
-  function handleNicknameInput(e: React.ChangeEvent<HTMLInputElement>) {
-    setNickname(e.target.value);
-  }
+  //성공했을경우만 버튼이 활성화가 됩니다
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
 
-  function handlePassword(e: React.ChangeEvent<HTMLInputElement>) {
-    setPassword(e.target.value);
-  }
+    const formData = new FormData();
 
-  function handleConfirmPassword(e: React.ChangeEvent<HTMLInputElement>) {
-    setConfirmPassword(e.target.value);
-  }
+    formData.append('user_id', user_id);
+    formData.append('user_pw', password);
+    formData.append('user_nickname', nickname);
+    formData.append('is_2fa_enabled', is2faEnabled.toString());
+    if (uploadFile !== undefined) {
+      formData.append('user_image', uploadFile);
+    }
+
+    console.log(formData);
+    // try {
+    //   const response = await apiManager.post('/signup', formData, {
+    //     headers: {
+    //       'Content-Type': 'multipart/form-data',
+    //     },
+    //   });
+    //   console.log(response);
+    // } catch (error) {
+    //   console.log(error);
+    //   setOpenErrorSnackbar(true);
+    // }
+    // TODO: 위치지정
+    // navigate('/');
+    //실패했을 경우 지정해줘야함
+  };
 
   return (
     <React.Fragment>
@@ -140,13 +272,30 @@ function SignupPage() {
           <Grid item xs={12}>
             <Card variant="outlined">
               <CardHeader
-                avatar={<Avatar src={user_image} />}
+                avatar={<Avatar src={previewUploadImage || user_image} />}
                 title="프로필 사진"
                 subheader="기본 이미지는 인트라 이미지로 설정됩니다"
               />
               <Box display="flex" justifyContent="flex-end">
-                <Button sx={{color: 'grey'}}>제거</Button>
-                <Button>업로드</Button>
+                {previewUploadImage && (
+                  <Button
+                    onClick={handleUploadImageRemoval}
+                    sx={{color: 'grey'}}
+                  >
+                    제거
+                  </Button>
+                )}
+                <label htmlFor="file-upload-button">
+                  <input
+                    type="file"
+                    id="file-upload-button"
+                    accept={ALLOWED_IMAGE_FILE_EXTENSION}
+                    onChange={handleUploadFile}
+                    hidden
+                    ref={fileInputRef}
+                  />
+                  <Button component="span">업로드</Button>
+                </label>
               </Box>
             </Card>
           </Grid>
@@ -186,7 +335,7 @@ function SignupPage() {
             <Snackbar
               open={openSnackbar}
               anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}
-              autoHideDuration={6000}
+              autoHideDuration={3000}
               onClose={handleSnackbarClose}
             >
               <Alert
@@ -328,15 +477,16 @@ function SignupPage() {
             </Typography>
           </Grid>
           <Grid item xs={2} container>
-            <Checkbox />
+            <Checkbox onChange={handle2FA} checked={is2faEnabled} />
           </Grid>
         </Grid>
 
         <Button
           disabled={
             password !== confirmPassword ||
-            isValidPasswordLength(password) === false ||
-            isValidPasswordRule(password) === false
+            isUniqueNickname === false ||
+            (isValidPasswordLength(password) === false &&
+              isValidPasswordRule(password) === false)
           }
           fullWidth
           type="submit"
