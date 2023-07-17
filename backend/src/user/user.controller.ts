@@ -9,18 +9,12 @@ import {
 import {UserService} from './user.service';
 import {User} from './user.entitiy';
 import {ApiTags, ApiOperation, ApiQuery, ApiResponse} from '@nestjs/swagger';
-import {UserDto} from './dto/user.dto';
 import {UserAuthDto} from './dto/userAuth.dto';
 
 @Controller('user')
 @ApiTags('User')
 export class UserController {
   constructor(private userService: UserService) {}
-
-  @Post('/signup')
-  signup(@Body(ValidationPipe) userDto: UserDto): Promise<void> {
-    return this.userService.create(userDto);
-  }
 
   @Delete('/delete:user_id')
   @ApiQuery({
