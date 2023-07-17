@@ -6,13 +6,13 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   const config = new DocumentBuilder()
-    .setTitle('User, Board test')
-    .setDescription('testing....')
+    .setTitle('API 명세')
+    .setDescription('냉면퐁 API에 대한 설명을 담은 문서입니다.')
     .setVersion('1.0.0')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('swagger', app, document);
+  SwaggerModule.setup('api', app, document);
   app.enableCors();
   await app.listen(3001);
 }
