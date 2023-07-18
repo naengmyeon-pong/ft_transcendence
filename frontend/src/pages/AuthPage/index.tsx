@@ -19,7 +19,13 @@ function AuthPage() {
           const response = await apiManager.get(`/signup/auth?code=${token}`);
           console.log(response);
           if (response.status === HTTP_STATUS.OK) {
-            navigate('/signup', {state: response.data});
+            const {is_already_signup, signup_jwt} = response.data;
+            if (is_already_signup) {
+              navigate('/');
+            } else {
+              sessionStorage.setItem('accessToken', signup_jwt);
+              navigate('/signup', {state: response.data});
+            }
           }
         } catch (error) {
           console.log(error);
