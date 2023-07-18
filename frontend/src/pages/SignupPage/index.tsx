@@ -20,6 +20,7 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import apiManager from '@apiManager/apiManager';
 import Alert from '@mui/material/Alert';
+const HTTP_STATUS = require('http-status');
 
 const ALLOWED_IMAGE_FILE_EXTENSION = 'image/jpg, image/jpeg, image/png';
 const ALLOWED_IMAGE_FILE_EXTENSIONS_STRING = ALLOWED_IMAGE_FILE_EXTENSION.split(
@@ -30,14 +31,11 @@ const ALLOWED_IMAGE_FILE_EXTENSIONS_STRING = ALLOWED_IMAGE_FILE_EXTENSION.split(
   })
   .join(' ');
 const FILE_SIZE_MAX_LIMIT = 1 * 1024 * 1024; // 1MB
+const DEFAULT_PROFILE_IMAGE_PATH = `${process.env.PUBLIC_URL}/logo.jpeg`;
 
 function SignupPage() {
   const {state} = useLocation();
   const {user_id} = state;
-  const user_image =
-    state.user_image === null
-      ? `${process.env.PUBLIC_URL}/logo.jpeg`
-      : state.user_image;
 
   const [password, setPassword] = useState('');
   const [nickname, setNickname] = useState('');
@@ -119,15 +117,6 @@ function SignupPage() {
     return true;
   };
 
-  const isValidImageExtension = ({name}: {name: string}): boolean => {
-    const extension = extractFileExtension(name);
-
-    if (isAllowedImageExtension(extension) === false) {
-      return false;
-    }
-    return true;
-  };
-
   const isFileSizeExceeded = (size: number): boolean => {
     if (size > FILE_SIZE_MAX_LIMIT) {
       return true;
@@ -149,7 +138,8 @@ function SignupPage() {
     }
 
     console.log(file);
-    if (isValidImageExtension(file) === false) {
+    const extension = extractFileExtension(file.name);
+    if (isAllowedImageExtension(extension) === false) {
       target.value = '';
       // TODO: snackbar 표시하기
       console.log(
@@ -174,9 +164,13 @@ function SignupPage() {
         setPreviewUploadImage(base64data);
       }
     };
-    const modifiedFileNameByUserId = new File([file], user_id, {
-      type: file.type,
-    });
+    const modifiedFileNameByUserId = new File(
+      [file],
+      `${user_id}/${extension}`,
+      {
+        type: file.type,
+      }
+    );
     console.log(modifiedFileNameByUserId);
     setUploadFile(modifiedFileNameByUserId);
   };
@@ -240,22 +234,28 @@ function SignupPage() {
     formData.append('user_pw', password);
     formData.append('user_nickname', nickname);
     formData.append('is_2fa_enabled', is2faEnabled.toString());
-    if (uploadFile !== undefined) {
+    if (uploadFile === undefined) {
+      formData.append('user_image', '');
+    } else {
       formData.append('user_image', uploadFile);
     }
 
     console.log(formData);
-    // try {
-    //   const response = await apiManager.post('/signup', formData, {
-    //     headers: {
-    //       'Content-Type': 'multipart/form-data',
-    //     },
-    //   });
-    //   console.log(response);
-    // } catch (error) {
-    //   console.log(error);
-    //   setOpenErrorSnackbar(true);
-    // }
+    try {
+      // TODO: token 유효기간이 지나면 다시 회원가입 버튼 누르도록 리다이렉션 하기
+      const response = await apiManager.post('/signup', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      console.log(response);
+      if (HTTP_STATUS.CREATED) {
+        navigate('/');
+      }
+    } catch (error) {
+      console.log(error);
+      setOpenErrorSnackbar(true);
+    }
     // TODO: 위치지정
     // navigate('/');
     //실패했을 경우 지정해줘야함
@@ -272,9 +272,13 @@ function SignupPage() {
           <Grid item xs={12}>
             <Card variant="outlined">
               <CardHeader
-                avatar={<Avatar src={previewUploadImage || user_image} />}
+                avatar={
+                  <Avatar
+                    src={previewUploadImage || DEFAULT_PROFILE_IMAGE_PATH}
+                  />
+                }
                 title="프로필 사진"
-                subheader="기본 이미지는 인트라 이미지로 설정됩니다"
+                subheader="기본 이미지는 냉면 이미지로 설정됩니다."
               />
               <Box display="flex" justifyContent="flex-end">
                 {previewUploadImage && (
