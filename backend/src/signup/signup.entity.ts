@@ -1,10 +1,10 @@
 import {Column, Entity, PrimaryColumn} from 'typeorm';
 
 @Entity('userAuth')
-export class isUserAuth {
+export class IsUserAuth {
   @PrimaryColumn()
   user_id: string;
 
   @Column({default: false})
-  isNickSame: boolean;
+  is_nickname_same: boolean;
 }

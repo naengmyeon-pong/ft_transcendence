@@ -7,8 +7,8 @@ import {JwtModule} from '@nestjs/jwt';
 import {PassportModule} from '@nestjs/passport';
 import {JwtStrategy} from './jwt.strategy';
 import {UserRepository} from 'src/user/user.repository';
-import {isUserAuth} from 'src/signup/signup.entity';
-import {isUserAuthRepository} from 'src/signup/signup.repository';
+import {IsUserAuth} from 'src/signup/signup.entity';
+import {IsUserAuthRepository} from 'src/signup/signup.repository';
 
 @Module({
   imports: [
@@ -16,14 +16,14 @@ import {isUserAuthRepository} from 'src/signup/signup.repository';
     JwtModule.register({
       secret: 'Secret1234',
       signOptions: {
-        expiresIn: 60 * 60,
+        expiresIn: '1h',
       },
     }),
     TypeOrmModule.forFeature([User]),
-    TypeOrmModule.forFeature([isUserAuth]),
+    TypeOrmModule.forFeature([IsUserAuth]),
   ],
   controllers: [UserController],
-  providers: [UserService, JwtStrategy, UserRepository, isUserAuthRepository],
+  providers: [UserService, JwtStrategy, UserRepository, IsUserAuthRepository],
   exports: [JwtStrategy, PassportModule, TypeOrmModule, UserService],
 })
 export class UserModule {}

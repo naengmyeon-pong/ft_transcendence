@@ -3,8 +3,10 @@ import {ConfigModule} from '@nestjs/config';
 import {TypeOrmModule} from '@nestjs/typeorm';
 import {userTypeORMconf} from './configs/typeorm.config';
 import {UserModule} from './user/user.module';
-import {SignupModule} from './signup/signup.module';
-import Joi from 'joi';
+import {SignUpModule} from './signup/signup.module';
+import * as Joi from 'joi';
+import {ServeStaticModule} from '@nestjs/serve-static';
+import {join} from 'path';
 
 @Module({
   imports: [
@@ -29,8 +31,18 @@ import Joi from 'joi';
         REACT_APP_BACKEND_SERVER: Joi.string().required(),
       }),
     }),
+    ServeStaticModule.forRoot(
+      {
+        rootPath: join(__dirname, '..', 'assets'),
+        renderPath: '/images',
+      },
+      {
+        rootPath: join(__dirname, '..', 'assets'),
+        renderPath: '/users',
+      }
+    ),
     TypeOrmModule.forRoot(userTypeORMconf),
-    SignupModule,
+    SignUpModule,
     UserModule,
   ],
 })

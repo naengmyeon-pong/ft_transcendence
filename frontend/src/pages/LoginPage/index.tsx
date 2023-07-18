@@ -1,4 +1,5 @@
 import React from 'react';
+import {useNavigate} from 'react-router-dom';
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
@@ -8,17 +9,30 @@ import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
+
 import Svg42Logo from './Logo';
+import apiManager from '@apiManager/apiManager';
 
 function LoginPage() {
   // TODO: 백엔드 통신 API 맞춰서 수정
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const navigate = useNavigate();
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get('email'),
-      password: data.get('password'),
-    });
+    console.log();
+    const data = {
+      user_id: event.currentTarget.intraId.value,
+      user_pw: event.currentTarget.password.value,
+    };
+
+    try {
+      sessionStorage.removeItem('accessToken');
+      const response = await apiManager.post('/user/signin', data);
+      console.log(response.data);
+      sessionStorage.setItem('accessToken', response.data);
+      navigate('/main');
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -43,9 +57,9 @@ function LoginPage() {
           margin="normal"
           required
           fullWidth
-          id="username"
+          id="intraId"
+          name="intraId"
           label="Intra ID"
-          name="username"
           autoComplete="text"
           autoFocus
         />
@@ -53,10 +67,10 @@ function LoginPage() {
           margin="normal"
           required
           fullWidth
+          id="password"
           name="password"
           label="Password"
           type="password"
-          id="password"
           autoComplete="current-password"
         />
         <FormControlLabel

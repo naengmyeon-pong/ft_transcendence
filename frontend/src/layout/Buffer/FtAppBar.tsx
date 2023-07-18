@@ -116,9 +116,9 @@ function FtAppBar() {
             sx={{flexGrow: 1, display: {xs: 'flex', sm: 'none'}}}
           >
             <img
-              src="/Naengmyeon.png"
+              src="http://localhost:3001/images/logo.jpeg"
               style={{objectFit: 'cover', width: '40px'}}
-              alt="냉면사진"
+              alt="로고"
             />
           </Typography>
           <Box sx={{display: {xs: 'block', sm: 'none'}}}>
@@ -168,9 +168,9 @@ function FtAppBar() {
             sx={{display: {xs: 'none', sm: 'flex'}}}
           >
             <img
-              src="/Naengmyeon.png"
+              src="http://localhost:3001/images/logo.jpeg"
               style={{objectFit: 'cover', width: '40px'}}
-              alt="냉면사진"
+              alt="로고"
             />
           </Typography>
           <Box sx={{flexGrow: 1, display: {xs: 'none', sm: 'flex'}}}>
