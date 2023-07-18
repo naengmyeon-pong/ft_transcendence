@@ -5,7 +5,7 @@ function MainPage() {
   console.log('MainPage');
   return (
     <>
-      <Toolbar />
+      {/* <Toolbar /> */}
       <Box component="main" sx={{flexGrow: 1, p: 3}}>
         <Typography variant="h3" align="center">
           게임하기

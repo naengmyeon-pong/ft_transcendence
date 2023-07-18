@@ -9,8 +9,6 @@ import {JwtStrategy} from './jwt.strategy';
 import {UserRepository} from 'src/user/user.repository';
 import {isUserAuth} from 'src/signup/signup.entity';
 import {isUserAuthRepository} from 'src/signup/signup.repository';
-import {MulterModule} from '@nestjs/platform-express';
-import {MulterConfigService} from 'src/imagefile/multer.config';
 
 @Module({
   imports: [

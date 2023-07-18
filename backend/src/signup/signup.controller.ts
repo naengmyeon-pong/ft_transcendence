@@ -89,7 +89,7 @@ export class SignupController {
   }
 
   @Post()
-  // @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('signup'))
   @UseInterceptors(FileInterceptor('user_image'))
   @ApiOperation({
     summary: '유저 정보를 DB에 저장하는 API',
@@ -161,3 +161,7 @@ export class SignupController {
   //   return file.path;
   // }
 }
+/*
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoieW91c2tpbSIsImlhdCI6MTY4OTY1MTc1MywiZXhwIjoxNjg5NjUxODczfQ.UVkL9opnyXiZek3k0Z-c7NR9xjiNB-E937-v7qXjp1E
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoieW91c2tpbSIsImlhdCI6MTY4OTY1MTkzMiwiZXhwIjoxNjg5NjUyMDUyfQ.7DYC2bnGk3JkFA0GxNE12tFE008STykQUuZkuRzQK_Q
+*/

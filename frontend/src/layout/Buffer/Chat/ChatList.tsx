@@ -24,11 +24,9 @@ function ChatList() {
 
   async function refershChatList() {
     try {
-      const rep = await apiManager.get(
-        'https://0c369f19-3747-4af6-ada3-eb3c9d3921b0.mock.pstmn.io/chatList'
-      );
+      const rep = await apiManager.get('http://localhost:3003/rooms');
       const data = rep.data;
-      setChatList(data?.rooms);
+      setChatList(data);
     } catch (error) {
       console.log(error);
       setChatList([]);

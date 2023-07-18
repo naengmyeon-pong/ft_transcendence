@@ -8,24 +8,26 @@ import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
 function MainLayout() {
   return (
     <>
-      <CssBaseline />
-      <FtAppBar />
-      <Toolbar />
-      <Box display="flex">
-        <Box>
-          <FtSideBar />
-        </Box>
-        {/* <Box width="80vw" paddingLeft="150px"> */}
-        {/* <Box flexGrow="1"> */}
-        <Grid container justifyContent="center">
-          <Grid item xs={8}>
-            {/* <Box> */}
-            {/* 게임하기, 전체랭킹, 채팅목록 */}
-            <Outlet />
-            {/* 개인 채팅창 위치 */}
+      <Box height={'100vh'}>
+        <CssBaseline />
+        <FtAppBar />
+        <Toolbar />
+        <Box display="flex">
+          <Box>
+            <FtSideBar />
+          </Box>
+          {/* <Box width="80vw" paddingLeft="150px"> */}
+          {/* <Box flexGrow="1"> */}
+          <Grid container justifyContent="center">
+            <Grid item xs={8}>
+              {/* <Box> */}
+              {/* 게임하기, 전체랭킹, 채팅목록 */}
+              <Outlet />
+              {/* 개인 채팅창 위치 */}
+            </Grid>
           </Grid>
-        </Grid>
-        {/* </Box> */}
+          {/* </Box> */}
+        </Box>
       </Box>
     </>
   );

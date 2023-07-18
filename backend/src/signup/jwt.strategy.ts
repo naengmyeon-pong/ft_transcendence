@@ -6,7 +6,7 @@ import {isUserAuth} from './signup.entity';
 import {isUserAuthRepository} from './signup.repository';
 
 @Injectable()
-export class SingUpJwtStrategy extends PassportStrategy(Strategy, 'jwt') {
+export class SingUpJwtStrategy extends PassportStrategy(Strategy, 'signup') {
   constructor(private userAuthRepository: isUserAuthRepository) {
     super({
       secretOrKey: 'Intra42',
@@ -15,6 +15,7 @@ export class SingUpJwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   async validate(payload: Payload) {
+    console.log('validate');
     const authUser: isUserAuth = await this.userAuthRepository.findOneBy({
       user_id: payload.user_id,
     });
