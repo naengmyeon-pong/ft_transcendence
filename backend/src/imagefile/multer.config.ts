@@ -8,7 +8,7 @@ import * as fs from 'fs';
 export class MulterConfigService implements MulterOptionsFactory {
   dirPath: string;
   constructor() {
-    this.dirPath = path.join(process.cwd(), 'uploads');
+    this.dirPath = path.join(__dirname, '..', '..', 'assets', 'users');
     this.mkdir();
   }
 
@@ -20,6 +20,17 @@ export class MulterConfigService implements MulterOptionsFactory {
     }
   }
 
+  isFileImage(file: Express.Multer.File): boolean {
+    if (
+      file.mimetype === 'image/jpg' ||
+      file.mimetype === 'image/png' ||
+      file.mimetype === 'image/jpeg'
+    ) {
+      return true;
+    }
+    return false;
+  }
+
   createMulterOptions() {
     const dirPath = this.dirPath;
     const option = {
@@ -28,9 +39,10 @@ export class MulterConfigService implements MulterOptionsFactory {
           done(null, dirPath);
         },
         filename(req, file, done) {
-          const ext = path.extname(file.originalname);
+          // const ext = path.extname(file.originalname);
+          const ext = file.mimetype.split('/')[1];
           const name = req.body.user_id;
-          done(null, `${name}${ext}`);
+          done(null, `${name}.${ext}`);
         },
       }),
       fileFilter(req, file, done) {

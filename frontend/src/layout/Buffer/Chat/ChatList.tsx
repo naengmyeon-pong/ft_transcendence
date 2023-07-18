@@ -62,7 +62,10 @@ function ChatList() {
           </Button>
           <Modal open={createModal} onClose={handleCreateModalClose}>
             <Box>
-              <CreateRoomForm />
+              <CreateRoomForm
+                createModal={createModal}
+                setCreateModal={handleCreateModalClose}
+              />
             </Box>
           </Modal>
         </Box>

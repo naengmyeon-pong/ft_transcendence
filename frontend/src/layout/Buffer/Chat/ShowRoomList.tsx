@@ -8,12 +8,12 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
   TextField,
   Typography,
 } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
-import LockOpenIcon from '@mui/icons-material/LockOpen';
 import {useNavigate} from 'react-router-dom';
 
 interface ChatListData {
@@ -48,8 +48,27 @@ async function checkRoomPassword(roomName: string) {
 function ShowRoomList({chatList}: ComponentProps) {
   const navigate = useNavigate();
   const [passwordModal, setPasswordModal] = useState(false);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+
   const handlePasswordModalOpen = () => setPasswordModal(true);
   const handlePasswordModalClose = () => setPasswordModal(false);
+
+  const handleChangePage = (event: unknown, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const visibleRows = React.useMemo(
+    () => chatList.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
+    [page, rowsPerPage]
+  );
 
   function enterRoom(e: React.MouseEvent<unknown>, row: ChatListData) {
     e.preventDefault();
@@ -80,7 +99,8 @@ function ShowRoomList({chatList}: ComponentProps) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {chatList.map(row => {
+          {visibleRows.map(row => {
+            // {chatList.map(row => {
             return (
               <TableRow key={row.roomName} onClick={e => enterRoom(e, row)}>
                 <TableCell width="15%">
@@ -106,6 +126,15 @@ function ShowRoomList({chatList}: ComponentProps) {
           })}
         </TableBody>
       </Table>
+      <TablePagination
+        rowsPerPageOptions={[5, 10, 25]}
+        component="div"
+        count={chatList.length}
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+      />
       <Modal open={passwordModal} onClose={handlePasswordModalClose}>
         <Box sx={style}>
           <Typography variant="h4">비밀번호 입력</Typography>

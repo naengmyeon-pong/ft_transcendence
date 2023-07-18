@@ -117,7 +117,7 @@ function FtAppBar() {
             href="/"
             sx={{flexGrow: 1, display: {xs: 'flex', sm: 'none'}}}
           >
-            <Avatar alt="friend profile memo" src="/logo.jpeg" />
+            <Avatar alt="로고" src="http://localhost:3001/images/logo.jpeg" />
           </Typography>
           <Box sx={{display: {xs: 'block', sm: 'none'}}}>
             <IconButton
@@ -165,7 +165,7 @@ function FtAppBar() {
             href="/"
             sx={{display: {xs: 'none', sm: 'flex'}}}
           >
-            <Avatar alt="friend profile memo" src="/logo.jpeg" />
+            <Avatar alt="로고" src="http://localhost:3001/images/logo.jpeg" />
           </Typography>
           <Box sx={{flexGrow: 1, display: {xs: 'none', sm: 'flex'}}}>
             <Link to="/menu/mainPage">

@@ -3,16 +3,14 @@ import {JwtModule} from '@nestjs/jwt';
 import {PassportModule} from '@nestjs/passport';
 import {TypeOrmModule} from '@nestjs/typeorm';
 import {User} from 'src/user/user.entitiy';
-import {UserService} from 'src/user/user.service';
-import {SignupController} from './signup.controller';
-import {SignupService} from './signup.service';
+import {SignUpController} from './signup.controller';
+import {SignUpService} from './signup.service';
 import {UserRepository} from 'src/user/user.repository';
-import {isUserAuth} from 'src/signup/signup.entity';
-import {isUserAuthRepository} from 'src/signup/signup.repository';
-import {JwtStrategy} from 'src/user/jwt.strategy';
+import {IsUserAuth} from 'src/signup/signup.entity';
+import {IsUserAuthRepository} from 'src/signup/signup.repository';
 import {MulterModule} from '@nestjs/platform-express';
 import {MulterConfigService} from 'src/imagefile/multer.config';
-import {SingUpJwtStrategy} from './jwt.strategy';
+import {SignUpJwtStrategy} from './jwt.strategy';
 
 @Module({
   imports: [
@@ -20,23 +18,22 @@ import {SingUpJwtStrategy} from './jwt.strategy';
     JwtModule.register({
       secret: 'Intra42',
       signOptions: {
-        expiresIn: 60 * 60,
+        expiresIn: '2m',
       },
     }),
     TypeOrmModule.forFeature([User]),
-    TypeOrmModule.forFeature([isUserAuth]),
+    TypeOrmModule.forFeature([IsUserAuth]),
     MulterModule.registerAsync({
       useClass: MulterConfigService,
     }),
   ],
-  controllers: [SignupController],
+  controllers: [SignUpController],
   providers: [
-    SingUpJwtStrategy,
-    SignupService,
-    UserService,
+    SignUpJwtStrategy,
+    SignUpService,
     UserRepository,
-    isUserAuthRepository,
+    IsUserAuthRepository,
   ],
   exports: [TypeOrmModule],
 })
-export class SignupModule {}
+export class SignUpModule {}

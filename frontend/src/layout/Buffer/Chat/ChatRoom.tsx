@@ -8,6 +8,7 @@ import React, {
   useState,
 } from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
+import ChatInvite from './ChatInvite';
 
 interface UserType {
   nickName: string;
@@ -22,6 +23,7 @@ function ChatRoom() {
   const [adminUser, setAdminUser] = useState<UserType[]>([]);
   const [users, setUsers] = useState<UserType[]>([]);
   const [message, setMessage] = useState<string>('');
+  const [inviteModal, setInviteModal] = useState<boolean>(false);
 
   const onChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     setMessage(e.target.value);
@@ -35,6 +37,7 @@ function ChatRoom() {
       setOwner(rep.data?.owner);
       setAdminUser(rep.data?.adminUser);
       setUsers(rep.data?.users);
+      console.log(rep.data);
     } catch (error) {
       // TODO: 없는 채팅방으로 들어왔을 경우
       alert('존재하지 않는 채팅방입니다');
@@ -69,6 +72,14 @@ function ChatRoom() {
   useEffect(() => {
     roomUsers();
   }, []);
+
+  function handleInvite() {
+    setInviteModal(true);
+  }
+
+  function handleInviteClose() {
+    setInviteModal(false);
+  }
 
   return (
     <>
@@ -145,9 +156,17 @@ function ChatRoom() {
             </ul>
           </Box>
           <Box display="flex" justifyContent="flex-end">
-            <Button>초대하기</Button>
+            <Button onClick={handleInvite}>초대하기</Button>
             <Button>나가기</Button>
           </Box>
+          {inviteModal ? (
+            <ChatInvite
+              inviteModal={inviteModal}
+              handleInviteClose={handleInviteClose}
+            />
+          ) : (
+            <></>
+          )}
         </Grid>
       </Grid>
     </>

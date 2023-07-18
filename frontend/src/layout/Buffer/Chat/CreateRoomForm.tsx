@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {ChangeEvent, useCallback, useState} from 'react';
 import {
   Box,
   Button,
@@ -37,7 +37,38 @@ const currencies = [
   },
 ];
 
-function CreateRoomForm() {
+type CreateModalProps = {
+  createModal: boolean;
+  setCreateModal: React.Dispatch<React.SetStateAction<boolean>>;
+};
+
+function CreateRoomForm({setCreateModal}: CreateModalProps) {
+  const [title, setTitle] = useState('');
+  const [password, setPassword] = useState('');
+  const [maxUser, setMaxUser] = useState('');
+
+  const handleClose = useCallback(() => {
+    setCreateModal(false);
+  }, []);
+
+  const handleTitle = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    setTitle(e.target.value);
+  }, []);
+
+  const handlePassword = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+  }, []);
+
+  const handleMaxUser = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    setMaxUser(e.target.value);
+  }, []);
+
+  function handleCreateRoom(event: React.MouseEvent<HTMLElement>) {
+    console.log(title);
+    console.log(password);
+    console.log(maxUser);
+  }
+
   return (
     <Box sx={style}>
       <FormControl fullWidth>
@@ -48,6 +79,8 @@ function CreateRoomForm() {
           fullWidth
           variant="outlined"
           label="방 제목"
+          value={title}
+          onChange={handleTitle}
         />
         <TextField
           required
@@ -56,21 +89,18 @@ function CreateRoomForm() {
           variant="outlined"
           label="비밀번호"
           type="password"
+          value={password}
+          onChange={handlePassword}
         />
-        <TextField
-          required
-          margin="normal"
-          fullWidth
-          variant="outlined"
-          label="인원수"
-          type="password"
-        />
+
         <TextField
           margin="normal"
           fullWidth
           select
           label="인원 수"
           defaultValue="4"
+          value={maxUser}
+          onChange={handleMaxUser}
         >
           {currencies.map(option => (
             <MenuItem key={option.value} value={option.value}>
@@ -86,9 +116,11 @@ function CreateRoomForm() {
           <Checkbox />
         </Box>
         <Box display="flex" justifyContent="flex-end" sx={{mt: '10px'}}>
-          <Button>확인</Button>
+          <Button type="submit" onClick={handleCreateRoom}>
+            확인
+          </Button>
           {/* TODO: 자식 컴포넌트에서 닫을 방법 생각해볼것 */}
-          <Button>닫기</Button>
+          <Button onClick={handleClose}>닫기</Button>
         </Box>
       </FormControl>
     </Box>

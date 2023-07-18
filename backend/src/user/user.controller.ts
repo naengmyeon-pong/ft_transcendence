@@ -1,13 +1,17 @@
 import {
+  Get,
   Body,
   Controller,
   Delete,
   Param,
   Post,
+  Request,
   ValidationPipe,
+  UseGuards,
 } from '@nestjs/common';
 import {UserService} from './user.service';
 import {User} from './user.entitiy';
+import {AuthGuard} from '@nestjs/passport';
 import {ApiTags, ApiOperation, ApiQuery, ApiResponse} from '@nestjs/swagger';
 import {UserAuthDto} from './dto/userAuth.dto';
 
@@ -56,11 +60,18 @@ export class UserController {
     description: '유저 정보가 존재하지 않는 경우',
   })
   changeUserPw(@Body(ValidationPipe) userAuthDto: UserAuthDto): Promise<User> {
-    return this.userService.changePw(userAuthDto);
+    return this.userService.changePW(userAuthDto);
   }
 
   @Post('/signin')
-  signIn(@Body() userAuthDto: UserAuthDto): Promise<string> {
-    return this.userService.signIn(userAuthDto);
+  async signIn(@Body() userAuthDto: UserAuthDto): Promise<string> {
+    console.log('body :', userAuthDto);
+    return await this.userService.signIn(userAuthDto);
+  }
+
+  @Get('/user-info')
+  @UseGuards(AuthGuard('jwt'))
+  getUserInfo(@Request() req): Promise<string> {
+    return req.user;
   }
 }

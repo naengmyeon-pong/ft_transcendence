@@ -26,6 +26,7 @@ function App() {
           <Route path="/password-reset" element={<PasswordResetPage />} />
         </Route>
         <Route element={<MainLayout />}>
+          <Route path="/main" element={<MainPage />} />
           <Route path="/menu/mainPage" element={<MainPage />} />
           <Route path="/menu/ranking" element={<Ranking />} />
           <Route path="/menu/chatList" element={<ChatList />} />

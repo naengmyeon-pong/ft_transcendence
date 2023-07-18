@@ -42,4 +42,4 @@ lerna-debug.log*
 .env.local
 
 # upload files
-uploads
+assets/users
