@@ -164,13 +164,10 @@ function SignupPage() {
         setPreviewUploadImage(base64data);
       }
     };
-    const modifiedFileNameByUserId = new File(
-      [file],
-      `${user_id}/${extension}`,
-      {
-        type: file.type,
-      }
-    );
+    const filename = `${user_id}.${extension}`;
+    const modifiedFileNameByUserId = new File([file], filename, {
+      type: file.type,
+    });
     console.log(modifiedFileNameByUserId);
     setUploadFile(modifiedFileNameByUserId);
   };
