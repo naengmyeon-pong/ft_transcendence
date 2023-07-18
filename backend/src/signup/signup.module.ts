@@ -12,20 +12,15 @@ import {isUserAuthRepository} from 'src/signup/signup.repository';
 import {JwtStrategy} from 'src/user/jwt.strategy';
 import {MulterModule} from '@nestjs/platform-express';
 import {MulterConfigService} from 'src/imagefile/multer.config';
+import {SingUpJwtStrategy} from './jwt.strategy';
 
 @Module({
   imports: [
-    PassportModule.register({defaultStrategy: 'jwt'}),
-    JwtModule.register({
-      secret: 'Secret1234',
-      signOptions: {
-        expiresIn: 60 * 60,
-      },
-    }),
+    PassportModule.register({defaultStrategy: 'signup'}),
     JwtModule.register({
       secret: 'Intra42',
       signOptions: {
-        expiresIn: 60 * 2,
+        expiresIn: 60 * 60,
       },
     }),
     TypeOrmModule.forFeature([User]),
@@ -36,11 +31,11 @@ import {MulterConfigService} from 'src/imagefile/multer.config';
   ],
   controllers: [SignupController],
   providers: [
+    SingUpJwtStrategy,
     SignupService,
     UserService,
     UserRepository,
     isUserAuthRepository,
-    JwtStrategy,
   ],
   exports: [TypeOrmModule],
 })
