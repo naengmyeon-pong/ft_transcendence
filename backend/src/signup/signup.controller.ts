@@ -9,9 +9,8 @@ import {
   UseInterceptors,
   UploadedFile,
 } from '@nestjs/common';
-import {SignupService} from './signup.service';
+import {SignUpService} from './signup.service';
 import {UserDto} from 'src/user/dto/user.dto';
-import {UserService} from 'src/user/user.service';
 import {AuthGuard} from '@nestjs/passport';
 import {FileInterceptor} from '@nestjs/platform-express';
 import {
@@ -21,14 +20,12 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
+import * as fs from 'fs';
 
 @Controller('signup')
 @ApiTags('Auth')
-export class SignupController {
-  constructor(
-    private signupService: SignupService,
-    private userService: UserService
-  ) {}
+export class SignUpController {
+  constructor(private signUpService: SignUpService) {}
 
   @ApiQuery({
     name: 'code',
@@ -54,7 +51,7 @@ export class SignupController {
     description: '유저 정보 DB에 저장 중 에러 발생한 경우',
   })
   async getUserData(@Query('code') code: string): Promise<string> {
-    return await this.signupService.getUserData(code);
+    return await this.signUpService.getUserData(code);
   }
 
   // nickname이 없으면 true, 있으면 false
@@ -82,10 +79,10 @@ export class SignupController {
     description: 'user_id가 userAuth 데이터베이스에 존재하지 않는 경우',
   })
   async checkUserNickname(
-    @Query('user_id') user_id: string,
+    @Query('user_id') userID: string,
     @Query('nickname') nickname: string
   ): Promise<boolean> {
-    return await this.signupService.checkUserNickname(user_id, nickname);
+    return await this.signUpService.checkUserNickname(userID, nickname);
   }
 
   @Post()
@@ -112,56 +109,10 @@ export class SignupController {
     status: 500,
     description: 'DB 저장에 실패한 경우',
   })
-  async signup(
+  async signUp(
     @Body(ValidationPipe) userinfo: UserDto,
-    @UploadedFile() file: Express.Multer.File
+    @UploadedFile() file?: Express.Multer.File
   ): Promise<void> {
-    return await this.userService.create(userinfo, file.path);
+    return await this.signUpService.create(userinfo, file);
   }
-
-  @Post('/file')
-  @UseInterceptors(FileInterceptor('user_image'))
-  async downfile(@UploadedFile() file: Express.Multer.File) {
-    return file.path;
-  }
-
-  // @Post()
-  // @UseGuards(AuthGuard('jwt'))
-  // @ApiOperation({
-  //   summary: '유저 정보를 DB에 저장하는 API',
-  //   description:
-  //     'JWT 토큰을 확인한 후 전달받은 body의 유저 정보를 DB에 저장한다.<br />JWT 토큰은 반드시 Bearer 형식으로 전달해야한다.',
-  // })
-  // @ApiResponse({
-  //   status: 201,
-  //   description: '유저 정보를 정상적으로 저장한 경우',
-  // })
-  // @ApiResponse({
-  //   status: 401,
-  //   description: '유저가 JWT 토큰 없이 접근하는 경우',
-  // })
-  // @ApiResponse({
-  //   status: 409,
-  //   description: '회원 가입 정보가 존재하는 경우',
-  // })
-  // @ApiResponse({
-  //   status: 500,
-  //   description: 'DB 저장에 실패한 경우',
-  // })
-  // async signup(@Body(ValidationPipe) userinfo: UserDto): Promise<void> {
-  //   return await this.userService.create(userinfo);
-  // }
-
-  // @UseInterceptors(FileInterceptor('file'))
-  // @Post('/file')
-  // async downfile(@UploadedFile() file: Express.Multer.File) {
-  //   if (!file) {
-  //     throw new BadRequestException();
-  //   }
-  //   return file.path;
-  // }
 }
-/*
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoieW91c2tpbSIsImlhdCI6MTY4OTY1MTc1MywiZXhwIjoxNjg5NjUxODczfQ.UVkL9opnyXiZek3k0Z-c7NR9xjiNB-E937-v7qXjp1E
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoieW91c2tpbSIsImlhdCI6MTY4OTY1MTkzMiwiZXhwIjoxNjg5NjUyMDUyfQ.7DYC2bnGk3JkFA0GxNE12tFE008STykQUuZkuRzQK_Q
-*/

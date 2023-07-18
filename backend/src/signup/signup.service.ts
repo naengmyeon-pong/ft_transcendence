@@ -7,17 +7,19 @@ import {
 import axios from 'axios';
 import {InjectRepository} from '@nestjs/typeorm';
 import {UserRepository} from 'src/user/user.repository';
-import {isUserAuthRepository} from './signup.repository';
-import {isUserAuth} from './signup.entity';
+import {IsUserAuthRepository} from './signup.repository';
+import {IsUserAuth} from './signup.entity';
 import {JwtService} from '@nestjs/jwt';
 import {Payload} from 'src/user/payload';
-
+import {UserDto} from 'src/user/dto/user.dto';
+import * as bcrypt from 'bcryptjs';
+import * as fs from 'fs';
 @Injectable()
-export class SignupService {
+export class SignUpService {
   constructor(
     @InjectRepository(UserRepository)
     private userRepository: UserRepository,
-    private userAuthRepository: isUserAuthRepository,
+    private userAuthRepository: IsUserAuthRepository,
     private jwtService: JwtService
   ) {}
 
@@ -33,7 +35,6 @@ export class SignupService {
       method: 'post',
       url: tokenUrl,
     });
-
     if (!response) {
       throw new BadRequestException(
         'code is not validated! please check code!'
@@ -54,7 +55,7 @@ export class SignupService {
     });
     if (!user) {
       try {
-        const userAuth: isUserAuth = this.userAuthRepository.create({
+        const userAuth: IsUserAuth = this.userAuthRepository.create({
           user_id: response.data.login,
         });
         await this.userAuthRepository.save(userAuth);
@@ -62,15 +63,12 @@ export class SignupService {
         const payload: Payload = {
           user_id: userAuth.user_id,
         };
-        const signupJwt = this.jwtService.sign(payload, {
-          secret: 'Intra42',
-          expiresIn: 60 * 2,
-        });
+        const signupJwt = this.jwtService.sign(payload);
         const ret = {
           user_id: response.data.login,
           user_image: response.data.image.link,
           is_already_signup: false,
-          signupJwt: signupJwt,
+          signup_jwt: signupJwt,
         };
         return JSON.stringify(ret);
       } catch (error) {
@@ -82,34 +80,69 @@ export class SignupService {
         user_id: response.data.login,
         user_image: response.data.image.link,
         is_already_signup: true,
-        signupJwt: null,
+        signup_jwt: null,
       };
       return JSON.stringify(ret);
     }
   }
 
   async checkUserNickname(
-    user_id: string,
-    user_nickname: string
+    userID: string,
+    userNickname: string
   ): Promise<boolean> {
-    const userSignUpAuth = await this.userAuthRepository.findOneBy({user_id});
+    const userSignUpAuth = await this.userAuthRepository.findOneBy({
+      user_id: userID,
+    });
 
     if (userSignUpAuth) {
       const existNickname = await this.userRepository.findOneBy({
-        user_nickname,
+        user_nickname: userNickname,
       });
       if (!existNickname) {
         console.log('You can use it');
-        userSignUpAuth.isNickSame = true;
+        userSignUpAuth.is_nickname_same = true;
         await this.userAuthRepository.save(userSignUpAuth);
         return true;
       }
-      userSignUpAuth.isNickSame = false;
+      userSignUpAuth.is_nickname_same = false;
       await this.userAuthRepository.save(userSignUpAuth);
       return false;
     }
     throw new UnauthorizedException(
       'Please auth through our main signup page.'
     );
+  }
+
+  async create(userDto: UserDto, file: Express.Multer.File): Promise<void> {
+    const {user_id, user_pw, user_nickname, user_image, is_2fa_enabled} =
+      userDto;
+    console.log('user_image: ', user_image);
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(user_pw, salt);
+    const userSignUpAuth = await this.userAuthRepository.findOneBy({user_id});
+    if (!userSignUpAuth || userSignUpAuth.is_nickname_same === false) {
+      if (!file) {
+        fs.unlink(file.path, err => {
+          if (err) throw new InternalServerErrorException();
+        });
+      }
+      throw new UnauthorizedException(
+        'Please auth through our main signup page.'
+      );
+    }
+
+    try {
+      const user = this.userRepository.create({
+        user_id,
+        user_pw: hashedPassword,
+        user_nickname,
+        user_image: file ? file.path.substr(11) : '/images/logo.jpeg',
+        is_2fa_enabled,
+      });
+      await this.userRepository.save(user);
+      await this.userAuthRepository.delete({user_id: user.user_id});
+    } catch (error) {
+      throw new InternalServerErrorException();
+    }
   }
 }
