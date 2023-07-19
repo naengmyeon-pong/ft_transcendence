@@ -97,7 +97,7 @@ export default function WaitingChannelRoom() {
   // message event listener
 
   useEffect(() => {
-    const socketIo = io('http://localhost:4000/chat');
+    const socketIo = io('http://localhost:3001/chat');
 
     socketIo.emit('join-room', room_name);
 
