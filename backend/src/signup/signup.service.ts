@@ -119,7 +119,9 @@ export class SignUpService {
   async create(userDto: UserDto, file: Express.Multer.File): Promise<void> {
     const {user_id, user_pw, user_nickname, user_image, is_2fa_enabled} =
       userDto;
-    console.log('user_image: ', user_image);
+    if (!user_id) {
+      throw new BadRequestException('enter your ID');
+    }
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(user_pw, salt);
     const userSignUpAuth = await this.userAuthRepository.findOneBy({user_id});

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -22,6 +23,9 @@ export class UserService {
   ) {}
 
   async findUser(user_id: string): Promise<User> {
+    if (!user_id) {
+      throw new BadRequestException('please, enter your ID');
+    }
     const found = await this.userRepository.findOneBy({user_id});
     if (!found) {
       throw new NotFoundException(`${user_id} is not a member our site.`);
@@ -55,8 +59,4 @@ export class UserService {
     }
     throw new UnauthorizedException('login failed');
   }
-
-  // async getUserInfo(user: User): Promise<string> {
-  //   return user;
-  // }
 }
