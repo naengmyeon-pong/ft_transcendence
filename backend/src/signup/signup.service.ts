@@ -90,6 +90,9 @@ export class SignUpService {
     userID: string,
     userNickname: string
   ): Promise<boolean> {
+    if (!userID || !userNickname) {
+      throw new BadRequestException('enter your ID and nickname');
+    }
     const userSignUpAuth = await this.userAuthRepository.findOneBy({
       user_id: userID,
     });
