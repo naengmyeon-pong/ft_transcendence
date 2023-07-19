@@ -19,7 +19,8 @@ const StyledBadge = styled(Badge)(({theme}) => ({
   },
 }));
 
-export default function FriedList() {
+// TODO: 유저명, 이미지, 유저상태 변경 필요합니다
+function FriedList() {
   return (
     <List>
       <ListItem alignItems="flex-start">
@@ -29,7 +30,7 @@ export default function FriedList() {
             anchorOrigin={{vertical: 'bottom', horizontal: 'right'}}
             variant="dot"
           >
-            <Avatar alt="friend profile memo" src="/Naengmyeon.png" />
+            <Avatar alt="friend profile memo" src="/logo.jpeg" />
           </StyledBadge>
         </ListItemAvatar>
         <ListItemText
@@ -49,3 +50,4 @@ export default function FriedList() {
     </List>
   );
 }
+export default FriedList;

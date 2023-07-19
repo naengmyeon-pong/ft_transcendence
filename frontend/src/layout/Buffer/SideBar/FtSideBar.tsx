@@ -44,7 +44,6 @@ function SideBar() {
 
   return (
     <>
-      <Toolbar />
       <Drawer
         variant="permanent"
         sx={{
@@ -52,7 +51,7 @@ function SideBar() {
           flexShrink: 0,
           [`& .MuiDrawer-paper`]: {
             width: drawerWidth,
-            boxSizing: 'border-box',
+            // boxSizing: 'border-box',
           },
           display: {sm: 'block', xs: 'none'},
         }}

@@ -1,8 +1,9 @@
 import React from 'react';
 import {useState, useEffect} from 'react';
-import {Box, Typography} from '@mui/material';
+import {Avatar, Box, Typography} from '@mui/material';
 import apiManager from '@apiManager/apiManager';
 
+// TODO: 닉네임, 랭크, 사진 변경필요합니다
 export default function Profile() {
   const rankNum = '랭크점수: 1000';
 
@@ -17,7 +18,7 @@ export default function Profile() {
         console.log(response);
         const {user_nickname, user_image} = response.data;
         setNickname(user_nickname);
-        setUserImage(`http://localhost:3001${user_image}`);
+        setUserImage(`http://localhost:3001/${user_image}`);
       } catch (error) {
         console.log(error);
       }
@@ -36,13 +37,9 @@ export default function Profile() {
       }}
     >
       <Box display="flex">
-        <Typography variant="h6" noWrap component="p">
-          <img
-            src={userImage}
-            style={{objectFit: 'cover', width: '40px'}}
-            alt="프로필사진"
-          />
-        </Typography>
+        {/* <Typography variant="h6" noWrap component="p"> */}
+        <Avatar src={userImage} alt="프로필사진" />
+        {/* </Typography> */}
         <Box sx={{px: '10px'}}>
           <Typography variant="h6">{nickname}</Typography>
           <Typography variant="h6" sx={{fontSize: '1em'}}>
