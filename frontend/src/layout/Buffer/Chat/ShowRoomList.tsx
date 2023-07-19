@@ -67,7 +67,7 @@ function ShowRoomList({chatList}: ComponentProps) {
 
   const visibleRows = React.useMemo(
     () => chatList.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
-    [page, rowsPerPage]
+    [page, rowsPerPage, chatList]
   );
 
   function enterRoom(e: React.MouseEvent<unknown>, row: ChatListData) {
@@ -99,10 +99,10 @@ function ShowRoomList({chatList}: ComponentProps) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {visibleRows.map(row => {
+          {visibleRows.map((row, index) => {
             // {chatList.map(row => {
             return (
-              <TableRow key={row.roomName} onClick={e => enterRoom(e, row)}>
+              <TableRow key={index} onClick={e => enterRoom(e, row)}>
                 <TableCell width="15%">
                   {/* <TableCell> */}
                   <Typography variant="h6">

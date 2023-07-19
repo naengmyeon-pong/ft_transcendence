@@ -32,6 +32,7 @@ function ChatList() {
       setChatList([]);
     }
   }
+
   useEffect(() => {
     refershChatList();
   }, []);
@@ -50,6 +51,7 @@ function ChatList() {
         </Box>
         {/* 채팅목록을 출력하는 컴포넌트입니다 */}
         <ShowRoomList chatList={chatList} />
+
         <Box display="flex" justifyContent="center">
           {/* <Box> */}
           <Button
