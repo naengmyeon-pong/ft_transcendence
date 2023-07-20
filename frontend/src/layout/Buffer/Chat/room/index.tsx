@@ -2,14 +2,10 @@ import apiManager from '@apiManager/apiManager';
 import {Box, Button, Grid, TextField, Typography} from '@mui/material';
 import React, {useEffect, useState} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
-import ChatInvite from './ChatInvite';
-import ChatBox from '../ChatBox';
-
-interface UserType {
-  nickName: string;
-  intraId: string;
-  userImage: string;
-}
+import ChatInvite from '../modal/ChatInvite';
+import ChatBox from '../../ChatBox';
+import UserList from './UserList';
+// import UserList from './UserList';
 
 // 채팅방에 입장해서 실행하는 컴포넌트
 function ChatRoom() {
@@ -24,14 +20,14 @@ function ChatRoom() {
   async function roomUsers() {
     try {
       const rep = await apiManager.get(`http://localhost:3003/${roomName}`);
+      // TODO: 유저 권한별로 분별하는 작업을 어디서 할지 회의 필요
       setOwner(rep.data?.owner);
       setAdminUser(rep.data?.adminUser);
       setUsers(rep.data?.users);
-      console.log(rep.data);
     } catch (error) {
       // TODO: 없는 채팅방으로 들어왔을 경우
       alert('존재하지 않는 채팅방입니다');
-      navigator('/menu/chatList');
+      navigator('/menu/chat/list');
       console.log(error);
       // TODO: 벤유저가 들어왔을 경우
     }
@@ -51,7 +47,6 @@ function ChatRoom() {
 
   return (
     <>
-      {/* <Box display="flex" justifyContent="center"> */}
       <Grid container spacing={2}>
         {/* 채팅창 구역*/}
         <Grid item xs={7}>
@@ -69,31 +64,21 @@ function ChatRoom() {
           </Box>
           <Box border={1} height={200}>
             <Typography variant="body1">채팅방 관리자</Typography>
+            {/* 관리자 유저 등급 출력 */}
             <ul>
               {/* <ListItem> */}
-              {adminUser.map(node => {
-                return (
-                  // <ListItem key={node.nickName}>
-                  <li key={node.nickName}>{node.nickName}</li>
-                  // {/* <Typography variant="body2"></Typography> */}
-                  // </ListItem>
-                );
+              {/* <UserList users={adminUser} adminUsers={true} /> */}
+              {adminUser.map((node, index) => {
+                return <UserList key={index} user={node} />;
               })}
+              {/* <UserList users={adminUser} permission={1} /> */}
             </ul>
           </Box>
           <Box border={1} height={200}>
             <Typography variant="body1">채팅 참여자</Typography>
-            <ul>
-              {/* <ListItem> */}
-              {users.map(node => {
-                return (
-                  // <ListItem key={node.nickName}>
-                  <li key={node.nickName}>{node.nickName}</li>
-                  // {/* <Typography variant="body2"></Typography> */}
-                  // </ListItem>
-                );
-              })}
-            </ul>
+
+            {/* 일반 유저 등급 */}
+            {/* <UserList users={adminUser} permission={0} /> */}
           </Box>
           <Box display="flex" justifyContent="flex-end">
             <Button onClick={handleInvite}>초대하기</Button>

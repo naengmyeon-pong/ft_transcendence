@@ -16,18 +16,6 @@ import {
 import LockIcon from '@mui/icons-material/Lock';
 import {useNavigate} from 'react-router-dom';
 
-interface ChatListData {
-  passwordState: boolean;
-  maxNum: string;
-  currentNum: string;
-  roomName: string;
-  owner: string;
-}
-
-interface ComponentProps {
-  chatList: ChatListData[];
-}
-
 const style = {
   position: 'absolute',
   top: '40%',
@@ -41,11 +29,11 @@ const style = {
   p: 4,
 };
 
-async function checkRoomPassword(roomName: string) {
-  console.log(roomName);
+async function checkRoomPassword(name: string) {
+  console.log(name);
 }
 
-function ShowRoomList({chatList}: ComponentProps) {
+function ShowRoomList({roomList}: ComponentProps) {
   const navigate = useNavigate();
   const [passwordModal, setPasswordModal] = useState(false);
   const [page, setPage] = useState(0);
@@ -66,18 +54,18 @@ function ShowRoomList({chatList}: ComponentProps) {
   };
 
   const visibleRows = React.useMemo(
-    () => chatList.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
-    [page, rowsPerPage, chatList]
+    () => roomList.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
+    [page, rowsPerPage, roomList]
   );
 
   function enterRoom(e: React.MouseEvent<unknown>, row: ChatListData) {
     e.preventDefault();
-    if (row.passwordState) {
+    if (row.is_password) {
       setPasswordModal(true);
       return;
     }
     // TODO: 서버에 채팅방 이름과 패스워드를 보낸 후 맞는지 확인하고 들여보낸다
-    navigate(`/menu/${row.roomName}`);
+    navigate(`/menu/chat/room/${row.name}`);
   }
   return (
     <TableContainer>
@@ -100,23 +88,23 @@ function ShowRoomList({chatList}: ComponentProps) {
         </TableHead>
         <TableBody>
           {visibleRows.map((row, index) => {
-            // {chatList.map(row => {
+            // {roomList.map(row => {
             return (
               <TableRow key={index} onClick={e => enterRoom(e, row)}>
                 <TableCell width="15%">
                   {/* <TableCell> */}
                   <Typography variant="h6">
-                    {row.passwordState ? <LockIcon /> : ''}
+                    {row.is_password ? <LockIcon /> : ''}
                   </Typography>
                 </TableCell>
                 {/* <TableCell width="10%"> */}
                 <TableCell>
                   <Typography variant="h6">
-                    {`${row.currentNum}/${row.maxNum}`}
+                    {`${row.current_num}/${row.max_num}`}
                   </Typography>
                 </TableCell>
                 <TableCell>
-                  <Typography variant="h6"> {row.roomName}</Typography>
+                  <Typography variant="h6"> {row.name}</Typography>
                 </TableCell>
                 <TableCell>
                   <Typography variant="h6"> {row.owner}</Typography>
@@ -129,7 +117,7 @@ function ShowRoomList({chatList}: ComponentProps) {
       <TablePagination
         rowsPerPageOptions={[5, 10, 25]}
         component="div"
-        count={chatList.length}
+        count={roomList.length}
         rowsPerPage={rowsPerPage}
         page={page}
         onPageChange={handleChangePage}

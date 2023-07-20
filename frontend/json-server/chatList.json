@@ -1,209 +1,209 @@
 {
   "rooms": [
     {
-      "passwordState": true,
-      "maxNum": "4",
-      "currentNum": "2",
-      "roomName": "끝말잇기  ㄱㄱ",
+      "is_password": true,
+      "max_num": 4,
+      "current_num": 2,
+      "name": "끝말잇기  ㄱㄱ",
       "owner": "버거형"
     },
     {
-      "passwordState": false,
-      "maxNum": "5",
-      "currentNum": "1",
-      "roomName": "ㅅㄷㄴㅅ",
+      "is_password": false,
+      "max_num": 5,
+      "current_num": 1,
+      "name": "ㅅㄷㄴㅅ",
       "owner": "개포상인"
     },
     {
-      "passwordState": false,
-      "maxNum": "4",
-      "currentNum": "4",
-      "roomName": "피신 필승합격전략법🔥",
+      "is_password": false,
+      "max_num": 4,
+      "current_num": 4,
+      "name": "피신 필승합격전략법🔥",
       "owner": "있겠냐?"
     },
     {
-      "passwordState": false,
-      "maxNum": "4",
-      "currentNum": "4",
-      "roomName": "피신 필승합격전략법🔥",
+      "is_password": false,
+      "max_num": 4,
+      "current_num": 4,
+      "name": "피신 필승합격전략법🔥",
       "owner": "있겠냐?"
     },
     {
-      "passwordState": false,
-      "maxNum": "4",
-      "currentNum": "4",
-      "roomName": "test_room",
+      "is_password": false,
+      "max_num": 4,
+      "current_num": 4,
+      "name": "test_room",
       "owner": "테스트방 주인장"
     },
     {
-      "passwordState": false,
-      "maxNum": "4",
-      "currentNum": "4",
-      "roomName": "피신 필승합격전략법🔥",
+      "is_password": false,
+      "max_num": 4,
+      "current_num": 4,
+      "name": "피신 필승합격전략법🔥",
       "owner": "있겠냐?"
     },
     {
-      "passwordState": false,
-      "maxNum": "4",
-      "currentNum": "4",
-      "roomName": "피신 필승합격전략법🔥",
+      "is_password": false,
+      "max_num": 4,
+      "current_num": 4,
+      "name": "피신 필승합격전략법🔥",
       "owner": "있겠냐?"
     },
     {
-      "passwordState": false,
-      "maxNum": "4",
-      "currentNum": "4",
-      "roomName": "피신 필승합격전략법🔥",
+      "is_password": false,
+      "max_num": 4,
+      "current_num": 4,
+      "name": "피신 필승합격전략법🔥",
       "owner": "있겠냐?"
     },
     {
-      "passwordState": false,
-      "maxNum": "4",
-      "currentNum": "4",
-      "roomName": "피신 필승합격전략법🔥",
+      "is_password": false,
+      "max_num": 4,
+      "current_num": 4,
+      "name": "피신 필승합격전략법🔥",
       "owner": "있겠냐?"
     },
     {
-      "passwordState": false,
-      "maxNum": "4",
-      "currentNum": "4",
-      "roomName": "피신 필승합격전략법🔥",
+      "is_password": false,
+      "max_num": 4,
+      "current_num": 4,
+      "name": "피신 필승합격전략법🔥",
       "owner": "있겠냐?"
     },
     {
-      "passwordState": false,
-      "maxNum": "4",
-      "currentNum": "4",
-      "roomName": "피신 필승합격전략법🔥",
+      "is_password": false,
+      "max_num": 4,
+      "current_num": 4,
+      "name": "피신 필승합격전략법🔥",
       "owner": "있겠냐?"
     },
     {
-      "passwordState": false,
-      "maxNum": "4",
-      "currentNum": "4",
-      "roomName": "피신 필승합격전략법🔥",
+      "is_password": false,
+      "max_num": 4,
+      "current_num": 4,
+      "name": "피신 필승합격전략법🔥",
       "owner": "있겠냐?"
     },
     {
-      "passwordState": false,
-      "maxNum": "4",
-      "currentNum": "4",
-      "roomName": "피신 필승합격전략법🔥",
+      "is_password": false,
+      "max_num": 4,
+      "current_num": 4,
+      "name": "피신 필승합격전략법🔥",
       "owner": "있겠냐?"
     },
     {
-      "passwordState": false,
-      "maxNum": "4",
-      "currentNum": "4",
-      "roomName": "피신 필승합격전략법🔥",
+      "is_password": false,
+      "max_num": 4,
+      "current_num": 4,
+      "name": "피신 필승합격전략법🔥",
       "owner": "있겠냐?"
     },
     {
-      "passwordState": false,
-      "maxNum": "4",
-      "currentNum": "4",
-      "roomName": "피신 필승합격전략법🔥",
+      "is_password": false,
+      "max_num": 4,
+      "current_num": 4,
+      "name": "피신 필승합격전략법🔥",
       "owner": "있겠냐?"
     },
     {
-      "passwordState": false,
-      "maxNum": "4",
-      "currentNum": "4",
-      "roomName": "피신 필승합격전략법🔥",
+      "is_password": false,
+      "max_num": 4,
+      "current_num": 4,
+      "name": "피신 필승합격전략법🔥",
       "owner": "있겠냐?"
     },
     {
-      "passwordState": false,
-      "maxNum": "4",
-      "currentNum": "4",
-      "roomName": "피신 필승합격전략법🔥",
+      "is_password": false,
+      "max_num": 4,
+      "current_num": 4,
+      "name": "피신 필승합격전략법🔥",
       "owner": "있겠냐?"
     },
     {
-      "passwordState": false,
-      "maxNum": "4",
-      "currentNum": "4",
-      "roomName": "피신 필승합격전략법🔥",
+      "is_password": false,
+      "max_num": 4,
+      "current_num": 4,
+      "name": "피신 필승합격전략법🔥",
       "owner": "있겠냐?"
     },
     {
-      "passwordState": false,
-      "maxNum": "4",
-      "currentNum": "4",
-      "roomName": "피신 필승합격전략법🔥",
+      "is_password": false,
+      "max_num": 4,
+      "current_num": 4,
+      "name": "피신 필승합격전략법🔥",
       "owner": "있겠냐?"
     },
     {
-      "passwordState": false,
-      "maxNum": "4",
-      "currentNum": "4",
-      "roomName": "피신 필승합격전략법🔥",
+      "is_password": false,
+      "max_num": 4,
+      "current_num": 4,
+      "name": "피신 필승합격전략법🔥",
       "owner": "있겠냐?"
     },
     {
-      "passwordState": false,
-      "maxNum": "4",
-      "currentNum": "4",
-      "roomName": "피신 필승합격전략법🔥",
+      "is_password": false,
+      "max_num": 4,
+      "current_num": 4,
+      "name": "피신 필승합격전략법🔥",
       "owner": "있겠냐?"
     },
     {
-      "passwordState": false,
-      "maxNum": "4",
-      "currentNum": "4",
-      "roomName": "피신 필승합격전략법🔥",
+      "is_password": false,
+      "max_num": 4,
+      "current_num": 4,
+      "name": "피신 필승합격전략법🔥",
       "owner": "있겠냐?"
     },
     {
-      "passwordState": false,
-      "maxNum": "4",
-      "currentNum": "4",
-      "roomName": "피신 필승합격전략법🔥",
+      "is_password": false,
+      "max_num": 4,
+      "current_num": 4,
+      "name": "피신 필승합격전략법🔥",
       "owner": "있겠냐?"
     },
     {
-      "passwordState": false,
-      "maxNum": "4",
-      "currentNum": "4",
-      "roomName": "피신 필승합격전략법🔥",
+      "is_password": false,
+      "max_num": 4,
+      "current_num": 4,
+      "name": "피신 필승합격전략법🔥",
       "owner": "있겠냐?"
     },
     {
-      "passwordState": false,
-      "maxNum": "4",
-      "currentNum": "4",
-      "roomName": "피신 필승합격전략법🔥",
+      "is_password": false,
+      "max_num": 4,
+      "current_num": 4,
+      "name": "피신 필승합격전략법🔥",
       "owner": "있겠냐?"
     }
   ],
   "test_room": {
     "owner": {
       "nickName": "주인장",
-      "intraId": "주인장",
-      "userImage": "주인장 이미지 주소"
+      "intra_id": "주인장",
+      "user_image": "주인장 이미지 주소"
     },
     "adminUser": [
       {
         "nickName": "방글맨",
-        "intraId": "방글맨",
-        "userImage": "방글맨 이미지 주소"
+        "intra_id": "방글맨",
+        "user_image": "방글맨 이미지 주소"
       },
       {
         "nickName": "국밥맨",
-        "intraId": "국밥맨",
-        "userImage": "국밥맨 이미지 주소"
+        "intra_id": "국밥맨",
+        "user_image": "국밥맨 이미지 주소"
       },
       {
         "nickName": "여덟글자 닉네임",
-        "intraId": "테스트테스트테스",
-        "userImage": "국밥맨 이미지 주소"
+        "intra_id": "테스트테스트테스",
+        "user_image": "국밥맨 이미지 주소"
       }
     ],
     "users": [
       {
         "nickName": "고양맨",
-        "intraId": "고양맨",
-        "userImage": "고양맨 이미지 주소"
+        "intra_id": "고양맨",
+        "user_image": "고양맨 이미지 주소"
       }
     ]
   }

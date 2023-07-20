@@ -55,7 +55,6 @@ function ChatBox() {
   const room_name = 'main_room';
   const {roomName} = useParams();
 
-  console.log(roomName);
   // 채팅창 스크롤을 제어하는 변수
   const chatContainerEl = useRef<HTMLDivElement>(null);
 
@@ -73,7 +72,6 @@ function ChatBox() {
 
   useEffect(() => {
     const socketIo = io('http://localhost:3001/chat');
-
     // 백엔드 SubscribeMessage에 설정된 방 이름
     socketIo.emit('join-room', room_name);
 
@@ -89,7 +87,9 @@ function ChatBox() {
     // 뒤로가기 시 소켓이 끊기지 않음
     // 개발단계에서 리랜더링 시 소켓이 끊기지 않음
     return () => {
+      console.log('TESTasklfjsdf');
       socketIo.off('message', messageHandler);
+      socketIo.off('disconnected');
     };
   }, []);
 

@@ -24,16 +24,16 @@ const style = {
 
 const currencies = [
   {
-    value: '4',
+    value: 4,
   },
   {
-    value: '10',
+    value: 10,
   },
   {
-    value: '20',
+    value: 20,
   },
   {
-    value: '30',
+    value: 30,
   },
 ];
 
