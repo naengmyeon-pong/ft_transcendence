@@ -5,9 +5,8 @@ import React, {
   useCallback,
   useEffect,
   useRef,
-  useState,
 } from 'react';
-import {useNavigate, useParams} from 'react-router-dom';
+import {useParams} from 'react-router-dom';
 import {Socket, io} from 'socket.io-client';
 
 interface IChat {
@@ -49,9 +48,9 @@ const Message = ({
 };
 
 function ChatBox() {
-  const [socket, setSocket] = useState<Socket | null>(null);
-  const [chats, setChats] = useState<IChat[]>([]);
-  const [message, setMessage] = useState<string>('');
+  const [socket, setSocket] = React.useState<Socket | null>(null);
+  const [chats, setChats] = React.useState<IChat[]>([]);
+  const [message, setMessage] = React.useState<string>('');
   const room_name = 'main_room';
   const {roomName} = useParams();
 
@@ -71,6 +70,7 @@ function ChatBox() {
   }, [chats.length]);
 
   useEffect(() => {
+    // TODO: 초기 유저의 상태여부(온라인 등)을 위해 로그인 시점에 연결할지 회의필요
     const socketIo = io('http://localhost:3001/chat');
     // 백엔드 SubscribeMessage에 설정된 방 이름
     socketIo.emit('join-room', room_name);
@@ -87,9 +87,9 @@ function ChatBox() {
     // 뒤로가기 시 소켓이 끊기지 않음
     // 개발단계에서 리랜더링 시 소켓이 끊기지 않음
     return () => {
-      console.log('TESTasklfjsdf');
       socketIo.off('message', messageHandler);
-      socketIo.off('disconnected');
+      socketIo.emit('leave-room', room_name);
+      socketIo.disconnect();
     };
   }, []);
 

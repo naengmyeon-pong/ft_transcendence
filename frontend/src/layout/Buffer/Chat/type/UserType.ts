@@ -1,13 +1,12 @@
-interface UserType {
-  nickName: string;
-  intraId: string;
-  userImage: string;
-}
-
 enum PermissionType {
   User = 0,
   Admin,
   Owner,
+}
+interface UserType {
+  nickName: string;
+  intraId: string;
+  userImage: string;
 }
 
 interface UserProps {
