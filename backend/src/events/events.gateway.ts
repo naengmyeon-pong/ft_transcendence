@@ -55,15 +55,15 @@ export class EventsGateway
     this.logger.log(`${socket.id} 소켓 연결 해제 ❌`);
   }
 
-  @SubscribeMessage('message')
+  @SubscribeMessage('message') //메세지 전송하면 이쪽으로 들어옴
   handleMessage(
     @ConnectedSocket() socket: Socket,
     @MessageBody() {roomName, message}: MessagePayload
   ) {
-    socket.to(roomName).emit('message', {username: socket.id, message});
+    socket.to(roomName).emit('message', {username: socket.id, message}); //상대방에게 전송되는 내용.
 
     this.logger.log(`들어온 메세지: ${message}`);
-    return {username: socket.id, message};
+    return {username: socket.id, message}; //자신채팅에 적용되는 내용.
   }
 
   @SubscribeMessage('room-list')
@@ -96,7 +96,7 @@ export class EventsGateway
     socket.join(roomName); // join room
     socket
       .to(roomName)
-      .emit('message', {message: `${socket.id}가 들어왔습니다.`});
+      .emit('message', {message: `${socket.id}가 들어왔습니다.`}); // 채팅에 참여했을 때 뜨는 내용.
 
     return {success: true};
   }
