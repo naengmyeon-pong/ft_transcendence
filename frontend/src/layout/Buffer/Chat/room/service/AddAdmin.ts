@@ -1,6 +1,6 @@
 import React from 'react';
 
-function AddAdmin() {
+function AddAdmin(user: UserType) {
   console.log('AddAdmin');
 }
 

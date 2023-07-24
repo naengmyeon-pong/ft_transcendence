@@ -27,19 +27,19 @@ function UserList({user}: UserProps) {
     if (confirmed && menuItem) {
       switch (menuItem) {
         case 'addAdmin':
-          AddAdmin();
+          AddAdmin(user);
           break;
         case 'Kick':
-          Kick();
+          Kick(user);
           break;
         case 'Mute':
-          Mute();
+          Mute(user);
           break;
         case 'Block':
-          Block();
+          Block(user);
           break;
         case 'Ban':
-          Ban();
+          Ban(user);
           break;
         default:
           break;

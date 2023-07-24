@@ -73,7 +73,7 @@ function ChatRoom() {
             <Typography variant="body1" ml={'10px'}>
               채팅방 관리자
             </Typography>
-            {/* 관리자 유저 등급 출력 */}
+            {/* 나를 제외한 관리자 유저 등급 출력 */}
             <ul style={{marginTop: '5px', width: 'auto'}}>
               {adminUser.map((node, index) => {
                 return <UserList key={index} user={node} />;
@@ -84,7 +84,7 @@ function ChatRoom() {
             <Typography variant="body1" ml={'10px'}>
               채팅 참여자
             </Typography>
-            {/* 일반 유저 등급 */}
+            {/* 나를 제외한 일반 유저 등급 */}
             <ul>
               {users.map((node, index) => {
                 return <UserList key={index} user={node} />;

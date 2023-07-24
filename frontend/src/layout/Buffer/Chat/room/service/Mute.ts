@@ -1,6 +1,6 @@
 import React from 'react';
 
-function Mute() {
+function Mute(user: UserType) {
   console.log('Mute');
 }
 

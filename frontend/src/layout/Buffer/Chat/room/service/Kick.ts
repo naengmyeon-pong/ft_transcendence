@@ -1,6 +1,6 @@
 import React from 'react';
 
-function Kick() {
+function Kick(user: UserType) {
   console.log('Kick');
 }
 
