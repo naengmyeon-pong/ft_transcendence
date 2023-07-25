@@ -20,7 +20,7 @@ function ChatRoom() {
   const [users, setUsers] = useState<UserType[]>([]);
   const [inviteModal, setInviteModal] = useState<boolean>(false);
 
-  const navigator = useNavigate();
+  const navigate = useNavigate();
 
   async function roomUsers() {
     try {
@@ -31,7 +31,7 @@ function ChatRoom() {
     } catch (error) {
       // TODO: 없는 채팅방으로 들어왔을 경우
       alert('존재하지 않는 채팅방입니다');
-      navigator('/menu/chat/list');
+      navigate('/menu/chat/list');
       console.log(error);
       // TODO: 벤유저가 들어왔을 경우
     }
@@ -50,7 +50,7 @@ function ChatRoom() {
   }
 
   function exit() {
-    navigator('/menu/chat/list');
+    navigate('/menu/chat/list');
   }
 
   return (

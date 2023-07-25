@@ -1,4 +1,4 @@
-import React, {ChangeEvent, useCallback, useState} from 'react';
+import React, {ChangeEvent, MouseEvent, useCallback, useState} from 'react';
 import {
   Box,
   Button,
@@ -8,6 +8,8 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import {useNavigate} from 'react-router-dom';
+import apiManager from '@apiManager/apiManager';
 
 const style = {
   position: 'absolute',
@@ -43,16 +45,20 @@ type CreateModalProps = {
 };
 
 function CreateRoomForm({setCreateModal}: CreateModalProps) {
-  const [title, setTitle] = useState('');
-  const [password, setPassword] = useState('');
-  const [maxUser, setMaxUser] = useState('');
+  const [name, setName] = useState<string>('');
+  const [isName, setIsName] = useState<boolean>(false);
+  const [isHide, setIsHide] = useState<boolean>(false);
+  const [password, setPassword] = useState<string>('');
+  const [maxUser, setMaxUser] = useState<number>(4);
+  const navigate = useNavigate();
 
   const handleClose = useCallback(() => {
     setCreateModal(false);
   }, []);
 
-  const handleTitle = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    setTitle(e.target.value);
+  const handleName = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    setIsName(false);
+    setName(e.target.value);
   }, []);
 
   const handlePassword = useCallback((e: ChangeEvent<HTMLInputElement>) => {
@@ -60,13 +66,39 @@ function CreateRoomForm({setCreateModal}: CreateModalProps) {
   }, []);
 
   const handleMaxUser = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    setMaxUser(e.target.value);
+    setMaxUser(Number(e.target.value));
   }, []);
 
-  function handleCreateRoom(event: React.MouseEvent<HTMLElement>) {
-    console.log(title);
-    console.log(password);
-    console.log(maxUser);
+  async function handleCreateRoom(event: MouseEvent<HTMLElement>) {
+    event.preventDefault();
+    if (name.trim() === '') {
+      setIsName(true);
+      return;
+    }
+    try {
+      const rep = await apiManager.post(
+        'http://localhost:3001/chat/room/create',
+        {
+          name: name,
+          max_nums: maxUser,
+          is_public: !isHide,
+          is_password: password.trim() === '' ? false : true,
+          password: password.trim() === '' ? null : password,
+        }
+      );
+      console.log(rep);
+      navigate('/menu/chat/room/' + name);
+    } catch (error) {
+      // TODO: 에러처리
+      alert('에러가 발생하였습니다');
+      console.log(error);
+    }
+    // 전송 보낸 후 성공적으로 저장하면
+  }
+
+  function handleHideRoom(event: MouseEvent<HTMLElement>) {
+    event.preventDefault();
+    setIsHide(!isHide);
   }
 
   return (
@@ -75,12 +107,15 @@ function CreateRoomForm({setCreateModal}: CreateModalProps) {
         <Typography variant="h4">방 만들기</Typography>
         <TextField
           required
+          type="text"
           margin="normal"
           fullWidth
           variant="outlined"
           label="방 제목"
-          value={title}
-          onChange={handleTitle}
+          value={name}
+          onChange={handleName}
+          error={isName ? true : false}
+          helperText={isName ? '방 제목을 입력해주세요' : ''}
         />
         <TextField
           required
@@ -113,13 +148,12 @@ function CreateRoomForm({setCreateModal}: CreateModalProps) {
             <Typography variant="subtitle1">숨겨진 방 만들기</Typography>
             <Typography variant="body2">초대된 유저만 입장 가능</Typography>
           </Box>
-          <Checkbox />
+          <Checkbox onClick={handleHideRoom} />
         </Box>
         <Box display="flex" justifyContent="flex-end" sx={{mt: '10px'}}>
           <Button type="submit" onClick={handleCreateRoom}>
             확인
           </Button>
-          {/* TODO: 자식 컴포넌트에서 닫을 방법 생각해볼것 */}
           <Button onClick={handleClose}>닫기</Button>
         </Box>
       </FormControl>

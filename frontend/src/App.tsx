@@ -11,9 +11,10 @@ import NotFoundPage from './pages/NotFoundPage';
 import MainPage from 'layout/Buffer/MainPage/MainPage';
 import Ranking from 'layout/Buffer/Ranking';
 import MainLayout from 'layout/MainLayout';
-import ChatList from 'layout/Buffer/Chat/ChatList';
-import ChatRoom from 'layout/Buffer/Chat/room';
+
 import WaitingChannelRoom from 'layout/Buffer/WaitingChannelRoom';
+import ChatList from 'pages/ChatPage/ChatList';
+import ChatRoom from 'pages/ChatPage/room';
 
 function App() {
   return (

@@ -10,9 +10,7 @@ interface UserType {
 }
 
 interface UserProps {
-  // key: number;
   user: UserType;
-  // permission: number;
 }
 
 interface ChatListData {

@@ -51,8 +51,9 @@ function ChatBox() {
   const [socket, setSocket] = React.useState<Socket | null>(null);
   const [chats, setChats] = React.useState<IChat[]>([]);
   const [message, setMessage] = React.useState<string>('');
-  const room_name = 'main_room';
+  // const room_name = 'main_room';
   const {roomName} = useParams();
+  const room_name = roomName;
 
   // 채팅창 스크롤을 제어하는 변수
   const chatContainerEl = useRef<HTMLDivElement>(null);

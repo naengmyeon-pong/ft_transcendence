@@ -25,8 +25,8 @@
       "is_password": false,
       "max_num": 4,
       "current_num": 4,
-      "name": "피신 필승합격전략법🔥",
-      "owner": "있겠냐?"
+      "name": "test_room2",
+      "owner": "테스트방 주인장2"
     },
     {
       "is_password": false,
@@ -181,6 +181,37 @@
       "nickName": "주인장",
       "intra_id": "주인장",
       "user_image": "주인장 이미지 주소"
+    },
+    "adminUser": [
+      {
+        "nickName": "방글맨",
+        "intra_id": "방글맨",
+        "user_image": "방글맨 이미지 주소"
+      },
+      {
+        "nickName": "국밥맨",
+        "intra_id": "국밥맨",
+        "user_image": "국밥맨 이미지 주소"
+      },
+      {
+        "nickName": "여덟글자 닉네임",
+        "intra_id": "테스트테스트테스",
+        "user_image": "국밥맨 이미지 주소"
+      }
+    ],
+    "users": [
+      {
+        "nickName": "고양맨",
+        "intra_id": "고양맨",
+        "user_image": "고양맨 이미지 주소"
+      }
+    ]
+  },
+  "test_room2": {
+    "owner": {
+      "nickName": "주인장2",
+      "intra_id": "주인장2",
+      "user_image": "주인장2 이미지 주소"
     },
     "adminUser": [
       {
