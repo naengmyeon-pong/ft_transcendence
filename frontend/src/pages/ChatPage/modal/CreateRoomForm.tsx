@@ -97,7 +97,6 @@ function CreateRoomForm({setCreateModal}: CreateModalProps) {
   }
 
   function handleHideRoom(event: MouseEvent<HTMLElement>) {
-    event.preventDefault();
     setIsHide(!isHide);
   }
 

@@ -64,6 +64,10 @@ function ShowRoomList({roomList}: ComponentProps) {
       setPasswordModal(true);
       return;
     }
+    if (row.current_num >= row.max_num) {
+      alert('인원 초과입니다');
+      return;
+    }
     // TODO: 서버에 채팅방 이름과 패스워드를 보낸 후 맞는지 확인하고 들여보낸다
     navigate(`/menu/chat/room/${row.name}`);
   }

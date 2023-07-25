@@ -13,7 +13,7 @@ import Ranking from 'layout/Buffer/Ranking';
 import MainLayout from 'layout/MainLayout';
 
 import WaitingChannelRoom from 'layout/Buffer/WaitingChannelRoom';
-import ChatList from 'pages/ChatPage/ChatList';
+import ChatList from 'pages/ChatPage';
 import ChatRoom from 'pages/ChatPage/room';
 
 function App() {
