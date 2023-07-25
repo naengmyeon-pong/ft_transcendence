@@ -4,20 +4,11 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 
 import {Box, Button, Modal} from '@mui/material';
 import ShowRoomList from './ShowRoomList';
-import CreateRoomForm from './CreateRoomForm';
-
-// 데이터 타입
-interface ChatListData {
-  passwordState: boolean;
-  maxNum: string;
-  currentNum: string;
-  roomName: string;
-  owner: string;
-}
+import CreateRoomForm from './modal/CreateRoomForm';
 
 function ChatList() {
   // useEffect로 받아서 작성하고 새로고침은 버튼을 누른다
-  const [chatList, setChatList] = useState<ChatListData[]>([]);
+  const [roomList, setRoomList] = useState<ChatListData[]>([]);
   const [createModal, setCreateModal] = React.useState(false);
   const handleCreateModalOpen = () => setCreateModal(true);
   const handleCreateModalClose = () => setCreateModal(false);
@@ -26,10 +17,10 @@ function ChatList() {
     try {
       const rep = await apiManager.get('http://localhost:3003/rooms');
       const data = rep.data;
-      setChatList(data);
+      setRoomList(data);
     } catch (error) {
       console.log(error);
-      setChatList([]);
+      setRoomList([]);
     }
   }
 
@@ -49,8 +40,8 @@ function ChatList() {
             <RefreshIcon />
           </Button>
         </Box>
-        {/* 채팅목록을 출력하는 컴포넌트입니다 */}
-        <ShowRoomList chatList={chatList} />
+        {/* 채팅방목록을 출력하는 컴포넌트입니다 */}
+        <ShowRoomList roomList={roomList} />
 
         <Box display="flex" justifyContent="center">
           {/* <Box> */}

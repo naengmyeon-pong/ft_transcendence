@@ -95,7 +95,7 @@ export default function WaitingChannelRoom() {
   }, [chats.length]);
 
   // message event listener
-
+  // 초기 연결과 연결끊겼을때의 처리
   useEffect(() => {
     const socketIo = io('http://localhost:3001/chat');
 
