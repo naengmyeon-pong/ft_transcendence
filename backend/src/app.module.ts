@@ -48,6 +48,7 @@ import {GameModule} from './game/game.module';
     SignUpModule,
     UserModule,
     EventsModule,
+    GameModule,
   ],
 })
 export class AppModule {}
