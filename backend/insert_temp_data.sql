@@ -1,0 +1,30 @@
+INSERT INTO users VALUES 
+  ('tester1', '12345678!Qw', 'tester1', '/images/logo.jpeg'),
+  ('tester2', '12345678!Qw', 'tester2', '/images/logo.jpeg'),
+  ('tester3', '12345678!Qw', 'tester3', '/images/logo.jpeg'),
+  ('tester4', '12345678!Qw', 'tester4', '/images/logo.jpeg'),
+  ('tester5', '12345678!Qw', 'tester5', '/images/logo.jpeg'),
+  ('tester6', '12345678!Qw', 'tester6', '/images/logo.jpeg'),
+  ('tester7', '12345678!Qw', 'tester7', '/images/logo.jpeg'),
+  ('tester8', '12345678!Qw', 'tester8', '/images/logo.jpeg');
+
+INSERT INTO "chatRoom" (name, current_nums, max_nums, is_public, is_password) VALUES
+  ('room1', 1, 4, true, false),
+  ('room2', 1, 4, true, false),
+  ('room3', 1, 4, true, false),
+  ('room4', 1, 4, true, false);
+
+-- permision user = 0, admin = 1, owner = 2;
+INSERT INTO "chatMember" (permission, "chatroomId", "userId") VALUES
+ (2, 1, 'tester1'),
+ (2, 2, 'tester2'),
+ (2, 3, 'tester3'),
+ (2, 4, 'tester4'),
+ (0, 1, 'tester5'),
+ (0, 1, 'tester6'),
+ (1, 1, 'tester7'),
+ (0, 2, 'tester8');
+
+-- INSERT INTO "chatBan" VALUES
+
+-- SELECT * FROM "chatRoom" LEFT JOIN "chatMember" ON "chatRoom"."id" = "chatMember"."chatroomId";
