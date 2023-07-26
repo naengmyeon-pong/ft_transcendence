@@ -50,15 +50,17 @@ export class GameGateway
     return userId;
   }
 
-  @SubscribeMessage('join-game')
+  @SubscribeMessage('join_game')
   handleJoinGame(
     @ConnectedSocket() socket: Socket,
     @MessageBody() user_id: string
   ) {
     const userSocket: UserSocket = {user_id, socket: socket};
     if (waitUsers.length === 0) {
+      console.log('wait');
       waitUsers.push(userSocket);
     } else {
+      console.log('join');
       const firstUser = waitUsers.shift();
       const roomName = this.createGameRoom(firstUser.user_id);
       firstUser.socket.join(roomName);
