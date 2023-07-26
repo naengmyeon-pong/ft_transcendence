@@ -16,6 +16,8 @@ import WaitingChannelRoom from 'layout/Buffer/WaitingChannelRoom';
 import ChatList from 'pages/ChatPage/ChatList';
 import ChatRoom from 'pages/ChatPage/room';
 
+import Game from 'pages/GamePage';
+
 function App() {
   return (
     <>
@@ -34,6 +36,7 @@ function App() {
           <Route path="/menu/chat/list" element={<ChatList />} />
           <Route path="/menu/chat/room/:roomName" element={<ChatRoom />} />
           <Route path="/menu/chat" element={<WaitingChannelRoom />} />
+          <Route path="/game" element={<Game />} />
         </Route>
         {/* 마이페이지 링크 추가 */}
         <Route path="*" element={<NotFoundPage />} />
