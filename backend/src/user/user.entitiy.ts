@@ -1,4 +1,5 @@
-import {Column, Entity, PrimaryColumn} from 'typeorm';
+import {ChatBan, ChatMember} from 'src/chat/chat.entity';
+import {Column, Entity, OneToMany, PrimaryColumn} from 'typeorm';
 
 @Entity('users')
 export class User {
@@ -19,4 +20,10 @@ export class User {
 
   @Column('boolean', {default: false})
   is_2fa_enabled: boolean;
+
+  @OneToMany(() => ChatMember, chatmember => chatmember.user)
+  chatmembers: ChatMember[];
+
+  @OneToMany(() => ChatBan, chatban => chatban.user)
+  chatbans: ChatBan[];
 }

@@ -8,6 +8,7 @@ import * as Joi from 'joi';
 import {ServeStaticModule} from '@nestjs/serve-static';
 import {join} from 'path';
 import {EventsModule} from './events/events.module';
+import {ChatModule} from './chat/chat.module';
 import {GameModule} from './game/game.module';
 
 @Module({
@@ -47,7 +48,6 @@ import {GameModule} from './game/game.module';
     SignUpModule,
     UserModule,
     EventsModule,
-    GameModule,
   ],
 })
 export class AppModule {}
