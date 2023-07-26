@@ -5,7 +5,6 @@ import {useNavigate, useParams} from 'react-router-dom';
 import ChatInvite from '../modal/ChatInvite';
 import ChatBox from './ChatBox';
 import UserList from './menu/UserList';
-import {Height, Margin} from '@mui/icons-material';
 
 const BoxBorder = styled('div')({
   border: '1px solid black',
@@ -24,10 +23,12 @@ function ChatRoom() {
 
   async function roomUsers() {
     try {
-      const rep = await apiManager.get(`http://localhost:3003/${roomName}`);
+      const rep = await apiManager.get(
+        `/chatroom/room_members/?room_id=${roomName}`
+      );
       setOwner(rep.data?.owner);
-      setAdminUser(rep.data?.adminUser);
-      setUsers(rep.data?.users);
+      setAdminUser(rep.data?.admin);
+      setUsers(rep.data?.user);
     } catch (error) {
       // TODO: 없는 채팅방으로 들어왔을 경우
       alert('존재하지 않는 채팅방입니다');
@@ -75,7 +76,7 @@ function ChatRoom() {
             </Typography>
             {/* 나를 제외한 관리자 유저 등급 출력 */}
             <ul style={{marginTop: '5px', width: 'auto'}}>
-              {adminUser.map((node, index) => {
+              {adminUser?.map((node, index) => {
                 return <UserList key={index} user={node} />;
               })}
             </ul>
@@ -86,7 +87,7 @@ function ChatRoom() {
             </Typography>
             {/* 나를 제외한 일반 유저 등급 */}
             <ul>
-              {users.map((node, index) => {
+              {users?.map((node, index) => {
                 return <UserList key={index} user={node} />;
               })}
             </ul>

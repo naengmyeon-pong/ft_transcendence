@@ -76,17 +76,16 @@ function CreateRoomForm({setCreateModal}: CreateModalProps) {
       return;
     }
     try {
-      const rep = await apiManager.post(
-        'http://localhost:3001/chat/room/create',
-        {
-          name: name,
-          max_nums: maxUser,
-          is_public: !isHide,
-          is_password: password.trim() === '' ? false : true,
-          password: password.trim() === '' ? null : password,
-        }
-      );
-      console.log(rep);
+      // TODO: 사용자 정보 처리 강구할것
+      const response = await apiManager.get('/user/user-info');
+      await apiManager.post('/chatroom/create_room', {
+        room_name: name,
+        max_nums: maxUser,
+        is_public: !isHide,
+        is_password: password.trim() === '' ? false : true,
+        password: password.trim() === '' ? null : password,
+        user_id: response?.data?.user_id,
+      });
       navigate('/menu/chat/room/' + name);
     } catch (error) {
       // TODO: 에러처리

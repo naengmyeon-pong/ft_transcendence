@@ -64,12 +64,12 @@ function ShowRoomList({roomList}: ComponentProps) {
       setPasswordModal(true);
       return;
     }
-    if (row.current_num >= row.max_num) {
+    if (row.current_nums >= row.max_nums) {
       alert('인원 초과입니다');
       return;
     }
     // TODO: 서버에 채팅방 이름과 패스워드를 보낸 후 맞는지 확인하고 들여보낸다
-    navigate(`/menu/chat/room/${row.name}`);
+    navigate(`/menu/chat/room/${row.id}`);
   }
   return (
     <TableContainer>
@@ -104,7 +104,7 @@ function ShowRoomList({roomList}: ComponentProps) {
                 {/* <TableCell width="10%"> */}
                 <TableCell>
                   <Typography variant="h6">
-                    {`${row.current_num}/${row.max_num}`}
+                    {`${row.current_nums}/${row.max_nums}`}
                   </Typography>
                 </TableCell>
                 <TableCell>
