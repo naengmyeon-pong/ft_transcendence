@@ -17,7 +17,7 @@ import * as fs from 'fs';
 @Injectable()
 export class SignUpService {
   constructor(
-    @InjectRepository(UserRepository)
+    // @InjectRepository(UserRepository)
     private userRepository: UserRepository,
     private userAuthRepository: IsUserAuthRepository,
     private jwtService: JwtService

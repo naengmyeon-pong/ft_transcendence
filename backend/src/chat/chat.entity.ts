@@ -2,8 +2,11 @@ import {User} from 'src/user/user.entitiy';
 import {
   Column,
   Entity,
+  JoinColumn,
   ManyToOne,
   OneToMany,
+  OneToOne,
+  PrimaryColumn,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -45,8 +48,14 @@ export class ChatMember {
   @Column()
   permission: number;
 
-  @Column()
+  @Column({nullable: true})
   mute: Date;
+
+  @Column()
+  chatroomId: number;
+
+  @Column()
+  userId: string;
 
   @ManyToOne(() => ChatRoom, chatroom => chatroom.chatmembers, {
     nullable: false,
@@ -58,6 +67,7 @@ export class ChatMember {
     nullable: false,
     onDelete: 'CASCADE',
   })
+  @JoinColumn({name: 'userId'})
   user: User;
 }
 
@@ -65,6 +75,12 @@ export class ChatMember {
 export class ChatBan {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column()
+  chatroomId: number;
+
+  @Column()
+  userId: string;
 
   @ManyToOne(() => ChatRoom, chatroom => chatroom.chatbans, {
     nullable: false,
@@ -76,5 +92,19 @@ export class ChatBan {
     nullable: false,
     onDelete: 'CASCADE',
   })
+  @JoinColumn({name: 'userId'})
+  user: User;
+}
+
+@Entity('socketId')
+export class SocketId {
+  @PrimaryColumn()
+  user_id: string;
+
+  @Column()
+  socket_id: string;
+
+  @OneToOne(() => User, user => user.socket_id)
+  @JoinColumn({name: 'user_id'})
   user: User;
 }

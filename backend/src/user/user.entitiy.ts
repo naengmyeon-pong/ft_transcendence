@@ -1,5 +1,12 @@
-import {ChatBan, ChatMember} from 'src/chat/chat.entity';
-import {Column, Entity, OneToMany, PrimaryColumn} from 'typeorm';
+import {ChatBan, ChatMember, SocketId} from 'src/chat/chat.entity';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  OneToMany,
+  OneToOne,
+  PrimaryColumn,
+} from 'typeorm';
 
 @Entity('users')
 export class User {
@@ -26,4 +33,7 @@ export class User {
 
   @OneToMany(() => ChatBan, chatban => chatban.user)
   chatbans: ChatBan[];
+
+  @OneToOne(() => SocketId, socket_id => socket_id.user)
+  socket_id: SocketId;
 }

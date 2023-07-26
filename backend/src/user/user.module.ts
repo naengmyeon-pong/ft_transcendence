@@ -24,6 +24,5 @@ import {IsUserAuthRepository} from 'src/signup/signup.repository';
   ],
   controllers: [UserController],
   providers: [UserService, JwtStrategy, UserRepository, IsUserAuthRepository],
-  exports: [JwtStrategy, PassportModule, TypeOrmModule, UserService],
 })
 export class UserModule {}
