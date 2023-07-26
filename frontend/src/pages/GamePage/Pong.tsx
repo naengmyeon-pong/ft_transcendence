@@ -6,6 +6,7 @@ import React, {
   useCallback,
   useMemo,
 } from 'react';
+import {Socket} from 'socket.io-client';
 
 interface Velocity {
   x: number;
@@ -56,7 +57,15 @@ const isCollidingPaddle = (ball: Ball, paddle: Coordinate): boolean => {
   );
 };
 
-function Pong() {
+Pong.defaultProps = {
+  socket: null,
+};
+
+interface PongProps {
+  socket: Socket | null;
+}
+
+function Pong({socket}: PongProps) {
   const canvasRef: RefObject<HTMLCanvasElement> =
     useRef<HTMLCanvasElement>(null);
   const [ctx, setCtx] = useState<CanvasRenderingContext2D | null>(null);
@@ -86,6 +95,12 @@ function Pong() {
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     keyStateRef.current[event.key] = true;
+    if (socket) {
+      socket.emit('key_down', {
+        room_name: sessionStorage.getItem('room_name'),
+        key: event.key,
+      });
+    }
   }, []);
 
   const handleKeyUp = useCallback((event: KeyboardEvent) => {
