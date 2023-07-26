@@ -60,7 +60,7 @@ export class ChatService {
 
   async getRoomMembers(room_id: number) {
     const room_members = {
-      owner: [], // permission = 2
+      owner: {}, // permission = 2
       admin: [], // permission = 1
       user: [], // permission = 0
     };
@@ -83,7 +83,7 @@ export class ChatService {
       } else if (e.permission === 1) {
         room_members.admin.push(userinfo);
       } else {
-        room_members.owner.push(userinfo);
+        room_members.owner = userinfo;
       }
     });
     // console.log(room_members);

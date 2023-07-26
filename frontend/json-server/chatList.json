@@ -24,14 +24,14 @@
     {
       "is_password": false,
       "max_num": 4,
-      "current_num": 4,
+      "current_num": 3,
       "name": "test_room2",
       "owner": "테스트방 주인장2"
     },
     {
       "is_password": false,
       "max_num": 4,
-      "current_num": 4,
+      "current_num": 3,
       "name": "test_room",
       "owner": "테스트방 주인장"
     },
