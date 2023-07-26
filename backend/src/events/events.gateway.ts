@@ -1,4 +1,5 @@
-import {Logger} from '@nestjs/common';
+import {Logger, UseGuards} from '@nestjs/common';
+import {AuthGuard} from '@nestjs/passport';
 import {
   ConnectedSocket,
   MessageBody,
@@ -28,6 +29,7 @@ export class EventsGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   private logger = new Logger('Gateway');
+  private;
 
   @WebSocketServer() nsp: Namespace;
 
