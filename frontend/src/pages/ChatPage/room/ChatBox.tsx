@@ -52,12 +52,12 @@ const Message = ({
 function ChatBox() {
   // const [socket, setSocket] = React.useState<Socket | null>(null);
   const {socket, setSocket} = useContext(UserContext);
-
   const [chats, setChats] = React.useState<IChat[]>([]);
   const [message, setMessage] = React.useState<string>('');
+  const user_id = useContext(UserContext);
+  const user_nickname = useContext(UserContext);
   const {roomId} = useParams();
-  console.log(roomId);
-
+  console.log(user_nickname);
   // 채팅창 스크롤을 제어하는 변수
   const chatContainerEl = useRef<HTMLDivElement>(null);
 

@@ -10,12 +10,20 @@ import {io} from 'socket.io-client';
 function MainLayout() {
   const {user_id, setUserId} = useContext(UserContext);
   const {socket, setSocket} = useContext(UserContext);
+  const {setUserNickName} = useContext(UserContext);
 
   async function init() {
-    // const response = await apiManager.get('/user/user-info');
-    // console.log('response: ', response);
-    // setUserId(response.data.user_id);
-    const socketIo = io('http://localhost:3001/chat');
+    const response = await apiManager.get('/user/user-info');
+    console.log('response: ', response);
+    setUserId(response.data.user_id);
+    setUserNickName(response.data.user_nickname);
+    const socketIo = io(`http://localhost:3001/chat`, {
+      query: {
+        user_id: response.data.user_id,
+        nickname: response.data.user_nickname,
+      },
+    });
+    console.log('response.data.user_id: ', response.data.user_id);
     setSocket(socketIo);
   }
   useEffect(() => {

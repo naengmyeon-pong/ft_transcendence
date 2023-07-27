@@ -10,8 +10,8 @@ interface UserContextType {
   user_nickname: string | null;
   setSocket: (socket: Socket) => void;
   setUserId: (user_id: string) => void;
-  setUserImage: (user_id: string) => void;
-  setUserNickName: (user_id: string) => void;
+  setUserImage: (user_image: string) => void;
+  setUserNickName: (user_nickname: string) => void;
 }
 
 const initialUserState: UserContextType = {
