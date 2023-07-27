@@ -85,7 +85,7 @@ function Pong({socket, gameInfo}: PongProps) {
     y: CANVAS_HEIGHT / 2 - PADDLE_HEIGHT / 2,
   });
   const [rightPaddle, setRightPaddle] = useState<Coordinate>({
-    x: CANVAS_WIDTH - PADDLE_DISTANCE_FROM_WALL,
+    x: CANVAS_WIDTH - PADDLE_WIDTH,
     y: CANVAS_HEIGHT / 2 - PADDLE_HEIGHT / 2,
   });
   const [ball, setBall] = useState<Ball>({
@@ -278,7 +278,6 @@ function Pong({socket, gameInfo}: PongProps) {
 
   const onAnimation = useCallback(() => {
     if (gameInfo) {
-      // console.log(gameInfo.ball.pos);
       setRightPaddle(gameInfo.rightPaddle);
       setBall(gameInfo.ball);
       setLeftScore(gameInfo.leftScore);

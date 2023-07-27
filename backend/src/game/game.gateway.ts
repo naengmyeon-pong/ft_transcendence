@@ -29,7 +29,7 @@ const PADDLE_HEIGHT = 100;
 const PADDLE_DISTANCE_FROM_WALL = 20;
 
 const BALL_RADIUS = 10;
-const BALL_SPEED = 3;
+const BALL_SPEED = 1;
 
 interface GameUser {
   user_id: string;
@@ -79,7 +79,7 @@ const initGameInfo = (): GameInfo => {
     y: CANVAS_HEIGHT / 2 - PADDLE_HEIGHT / 2,
   };
   const rightPaddle: Coordinate = {
-    x: CANVAS_WIDTH - PADDLE_DISTANCE_FROM_WALL,
+    x: CANVAS_WIDTH - PADDLE_WIDTH,
     y: CANVAS_HEIGHT / 2 - PADDLE_HEIGHT / 2,
   };
   const ball: Ball = {
@@ -227,19 +227,9 @@ const isCollidingPaddle = (ball: Ball, paddle: Coordinate): boolean => {
   );
 };
 
-const updateBallPosition = ({
-  ball,
-  leftPaddle,
-  leftScore,
-  rightPaddle,
-  rightScore,
-}: {
-  ball: Ball;
-  leftPaddle: Coordinate;
-  leftScore: number;
-  rightPaddle: Coordinate;
-  rightScore: number;
-}) => {
+const updateBallPosition = (gameInfo: GameInfo) => {
+  const {ball, leftPaddle, rightPaddle} = gameInfo;
+
   const nextX = ball.pos.x + BALL_SPEED * ball.vel.x;
   let nextY = ball.pos.y + BALL_SPEED * ball.vel.y;
 
@@ -249,9 +239,9 @@ const updateBallPosition = ({
 
   if (isOutOfBoundsLeft || isOutOfBoundsRight) {
     if (isOutOfBoundsLeft) {
-      rightScore += 1;
+      gameInfo.rightScore += 1;
     } else {
-      leftScore += 1;
+      gameInfo.leftScore += 1;
     }
     resetBall(ball);
     return;
