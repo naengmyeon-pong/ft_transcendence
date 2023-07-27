@@ -23,6 +23,14 @@ interface Ball {
   vel: Velocity;
 }
 
+interface GameInfo {
+  leftPaddle: Coordinate;
+  leftScore: number;
+  rightPaddle: Coordinate;
+  rightScore: number;
+  ball: Ball;
+}
+
 const KEY_CODES = {
   S: 's',
   W: 'w',
@@ -63,9 +71,10 @@ Pong.defaultProps = {
 
 interface PongProps {
   socket: Socket | null;
+  gameInfo: GameInfo | null;
 }
 
-function Pong({socket}: PongProps) {
+function Pong({socket, gameInfo}: PongProps) {
   const canvasRef: RefObject<HTMLCanvasElement> =
     useRef<HTMLCanvasElement>(null);
   const [ctx, setCtx] = useState<CanvasRenderingContext2D | null>(null);
@@ -95,16 +104,23 @@ function Pong({socket}: PongProps) {
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     keyStateRef.current[event.key] = true;
-    if (socket) {
-      socket.emit('key_down', {
-        room_name: sessionStorage.getItem('room_name'),
-        key: event.key,
-      });
-    }
+    // if (socket) {
+    //   console.log('hi');
+    //   socket.emit('key_down', {
+    //     room_name: sessionStorage.getItem('room_name'),
+    //     key: event.key,
+    //   });
+    // }
   }, []);
 
   const handleKeyUp = useCallback((event: KeyboardEvent) => {
     keyStateRef.current[event.key] = false;
+    // if (socket) {
+    //   socket.emit('key_up', {
+    //     room_name: sessionStorage.getItem('room_name'),
+    //     key: event.key,
+    //   });
+    // }
   }, []);
 
   // Setting for context
@@ -261,13 +277,24 @@ function Pong({socket}: PongProps) {
   }, [ctx, leftScore, rightScore]);
 
   const onAnimation = useCallback(() => {
+    if (gameInfo) {
+      // console.log(gameInfo.ball.pos);
+      setRightPaddle(gameInfo.rightPaddle);
+      setBall(gameInfo.ball);
+      setLeftScore(gameInfo.leftScore);
+      setRightScore(gameInfo.rightScore);
+      // if (socket) {
+      //   socket.emit('update', {
+      //     room_name: sessionStorage.getItem('room_name'),
+      //     up: keyStateRef.current[KEY_CODES.ARROW_UP],
+      //     down: keyStateRef.current[KEY_CODES.ARROW_DOWN],
+      //   });
+      // }
+    }
     setLeftPaddle(prevPaddle =>
       updatePaddlePosition(prevPaddle, KEY_CODES.W, KEY_CODES.S)
     );
-    setRightPaddle(prevPaddle =>
-      updatePaddlePosition(prevPaddle, KEY_CODES.ARROW_UP, KEY_CODES.ARROW_DOWN)
-    );
-    updateBallPosition();
+    // updateBallPosition();
 
     if (ctx) {
       ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
