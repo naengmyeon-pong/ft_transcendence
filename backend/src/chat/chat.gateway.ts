@@ -53,12 +53,12 @@ export class ChatGateway
   }
 
   async handleConnection(@ConnectedSocket() socket: Socket, user_id: string) {
-    await this.chatService.socketConnection(socket.id, user_id);
+    // await this.chatService.socketConnection(socket.id, user_id);
     this.logger.log(`${socket.id} 소켓 연결`);
   }
 
   async handleDisconnect(@ConnectedSocket() socket: Socket) {
-    await this.chatService.socketDisconnection(socket.id);
+    // await this.chatService.socketDisconnection(socket.id);
     this.logger.log(`${socket.id} 소켓 연결 해제 ❌`);
   }
 

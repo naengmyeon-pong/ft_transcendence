@@ -69,7 +69,6 @@ export class ChatService {
       admin: [], // permission = 1
       user: [], // permission = 0
     };
-    console.log(room_id);
 
     const members = await this.chatMemberRepository
       .createQueryBuilder('chatMember')
