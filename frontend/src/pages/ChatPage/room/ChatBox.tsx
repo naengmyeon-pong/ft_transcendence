@@ -1,8 +1,10 @@
 import {Box, Button, Paper, TextField, Typography} from '@mui/material';
+import {UserContext} from 'Context';
 import React, {
   ChangeEvent,
   FormEvent,
   useCallback,
+  useContext,
   useEffect,
   useRef,
 } from 'react';
@@ -48,12 +50,13 @@ const Message = ({
 };
 
 function ChatBox() {
-  const [socket, setSocket] = React.useState<Socket | null>(null);
+  // const [socket, setSocket] = React.useState<Socket | null>(null);
+  const {socket, setSocket} = useContext(UserContext);
+
   const [chats, setChats] = React.useState<IChat[]>([]);
   const [message, setMessage] = React.useState<string>('');
-  // const room_name = 'main_room';
-  const {roomName} = useParams();
-  const room_name = roomName;
+  const {roomId} = useParams();
+  console.log(roomId);
 
   // 채팅창 스크롤을 제어하는 변수
   const chatContainerEl = useRef<HTMLDivElement>(null);
@@ -72,25 +75,29 @@ function ChatBox() {
 
   useEffect(() => {
     // TODO: 초기 유저의 상태여부(온라인 등)을 위해 로그인 시점에 연결할지 회의필요
-    const socketIo = io('http://localhost:3001/chat');
+    // const socketIo = io('http://localhost:3001/chat');
     // 백엔드 SubscribeMessage에 설정된 방 이름
-    socketIo.emit('join-room', room_name);
+    socket?.emit('join-room', roomId);
+    // socketIo.emit('join-room', roomId);
 
     // 초기 서버로부터 채팅기록 가져와서 저장
     function messageHandler(chat: IChat) {
       setChats(prevChats => [...prevChats, chat]);
     }
 
-    socketIo.on('message', messageHandler);
-    setSocket(socketIo);
+    // socketIo.on('message', messageHandler);
+    // setSocket(socketIo);
+    socket?.on('message', messageHandler);
 
     //TODO: BUG List
     // 뒤로가기 시 소켓이 끊기지 않음
     // 개발단계에서 리랜더링 시 소켓이 끊기지 않음
     return () => {
-      socketIo.off('message', messageHandler);
-      socketIo.emit('leave-room', room_name);
-      socketIo.disconnect();
+      socket?.off('message', messageHandler);
+      socket?.emit('leave-room', roomId);
+      // socketIo.off('message', messageHandler);
+      // socketIo.emit('leave-room', roomId);
+      // socketIo.disconnect();
     };
   }, []);
 
@@ -109,7 +116,8 @@ function ChatBox() {
         return alert('소켓가 발생했습니다.');
       }
 
-      socket.emit('message', {roomName: room_name, message}, (chat: IChat) => {
+      socket.emit('message', {room_id: roomId, message}, (chat: IChat) => {
+        console.log('TESTasdjklja2');
         setChats(prevChats => [...prevChats, chat]);
         setMessage('');
       });

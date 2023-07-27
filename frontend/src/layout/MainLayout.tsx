@@ -1,11 +1,26 @@
-import React from 'react';
+import React, {useContext, useEffect} from 'react';
 import {Box, CssBaseline, Grid, Toolbar} from '@mui/material';
 import FtAppBar from './Buffer/FtAppBar';
 import FtSideBar from './Buffer/SideBar/FtSideBar';
 import {Outlet} from 'react-router-dom';
-import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
+import apiManager from '@apiManager/apiManager';
+import {UserContext} from 'Context';
+import {io} from 'socket.io-client';
 
 function MainLayout() {
+  const {user_id, setUserId} = useContext(UserContext);
+  const {socket, setSocket} = useContext(UserContext);
+
+  async function init() {
+    // const response = await apiManager.get('/user/user-info');
+    // console.log('response: ', response);
+    // setUserId(response.data.user_id);
+    const socketIo = io('http://localhost:3001/chat');
+    setSocket(socketIo);
+  }
+  useEffect(() => {
+    init();
+  }, []);
   return (
     <>
       <Box height={'100vh'}>

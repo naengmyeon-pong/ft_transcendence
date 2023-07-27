@@ -78,7 +78,7 @@ function CreateRoomForm({setCreateModal}: CreateModalProps) {
     try {
       // TODO: 사용자 정보 처리 강구할것
       const response = await apiManager.get('/user/user-info');
-      await apiManager.post('/chatroom/create_room', {
+      const rep = await apiManager.post('/chatroom/create_room', {
         room_name: name,
         max_nums: maxUser,
         is_public: !isHide,
@@ -86,7 +86,7 @@ function CreateRoomForm({setCreateModal}: CreateModalProps) {
         password: password.trim() === '' ? null : password,
         user_id: response?.data?.user_id,
       });
-      navigate('/menu/chat/room/' + name);
+      navigate(`/menu/chat/room/${name}/${rep?.data?.id}`);
     } catch (error) {
       // TODO: 에러처리
       alert('에러가 발생하였습니다');
