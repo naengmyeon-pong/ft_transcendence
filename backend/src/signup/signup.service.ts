@@ -116,6 +116,7 @@ export class SignUpService {
     );
   }
 
+  // test를 위해 비밀번호 암호화하지 않음.
   async create(userDto: UserDto, file: Express.Multer.File): Promise<void> {
     const {user_id, user_pw, user_nickname, user_image, is_2fa_enabled} =
       userDto;
@@ -139,7 +140,7 @@ export class SignUpService {
     try {
       const user = this.userRepository.create({
         user_id,
-        user_pw: hashedPassword,
+        user_pw,
         user_nickname,
         user_image: file ? file.path.substr(11) : '/images/logo.jpeg',
         is_2fa_enabled,
@@ -150,4 +151,38 @@ export class SignUpService {
       throw new InternalServerErrorException();
     }
   }
+  // async create(userDto: UserDto, file: Express.Multer.File): Promise<void> {
+  //   const {user_id, user_pw, user_nickname, user_image, is_2fa_enabled} =
+  //     userDto;
+  //   if (!user_id) {
+  //     throw new BadRequestException('enter your ID');
+  //   }
+  //   const salt = await bcrypt.genSalt();
+  //   const hashedPassword = await bcrypt.hash(user_pw, salt);
+  //   const userSignUpAuth = await this.userAuthRepository.findOneBy({user_id});
+  //   if (!userSignUpAuth || userSignUpAuth.is_nickname_same === false) {
+  //     if (!file) {
+  //       fs.unlink(file.path, err => {
+  //         if (err) throw new InternalServerErrorException();
+  //       });
+  //     }
+  //     throw new UnauthorizedException(
+  //       'Please auth through our main signup page.'
+  //     );
+  //   }
+
+  //   try {
+  //     const user = this.userRepository.create({
+  //       user_id,
+  //       user_pw: hashedPassword,
+  //       user_nickname,
+  //       user_image: file ? file.path.substr(11) : '/images/logo.jpeg',
+  //       is_2fa_enabled,
+  //     });
+  //     await this.userRepository.save(user);
+  //     await this.userAuthRepository.delete({user_id: user.user_id});
+  //   } catch (error) {
+  //     throw new InternalServerErrorException();
+  //   }
+  // }
 }

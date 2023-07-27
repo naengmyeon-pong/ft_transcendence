@@ -1,4 +1,4 @@
-import {Injectable, NotFoundException} from '@nestjs/common';
+import {ConflictException, Injectable, NotFoundException} from '@nestjs/common';
 import {
   ChatMemberRepository,
   ChatRoomRepository,
@@ -50,11 +50,10 @@ export class ChatService {
         max_nums: element.max_nums,
         is_public: element.is_public,
         is_password: element.is_password,
-        owner: element.chatmembers[0].user.user_id,
+        owner: element.chatmembers[0].user.user_nickname,
       };
       room_list.push(temp);
     });
-    // console.log(room_list);
     return room_list;
   }
 
@@ -64,6 +63,7 @@ export class ChatService {
       admin: [], // permission = 1
       user: [], // permission = 0
     };
+    console.log(room_id);
 
     const members = await this.chatMemberRepository
       .createQueryBuilder('chatMember')
@@ -86,7 +86,6 @@ export class ChatService {
         room_members.owner = userinfo;
       }
     });
-    // console.log(room_members);
     return room_members;
   }
 
@@ -106,15 +105,14 @@ export class ChatService {
       },
     });
     if (already.length !== 0) {
-      console.log(
+      throw new ConflictException(
         `${roomDto.user_id} is already owner ${already[0].chatroomId}`
       );
-      return;
     }
 
     const room = this.chatRoomRepository.create({
       name: roomDto.room_name,
-      current_nums: 1,
+      current_nums: 0,
       max_nums: roomDto.max_nums,
       is_public: roomDto.is_public,
       is_password: roomDto.is_password,
@@ -128,6 +126,25 @@ export class ChatService {
       user: user,
     });
     await this.chatMemberRepository.save(room_member);
+    return room;
+  }
+
+  // async joinRoom(room_id: number) {
+  //   const room = await this.getRoom(room_id);
+  //   if (room.current_nums >= room.max_nums) {
+  //     throw new ConflictException('sorry, room is full!');
+  //   }
+  //   room.current_nums += 1;
+  //   await this.chatRoomRepository.save(room);
+
+  //   const room_member;
+  // }
+
+  async getRoom(room_id: number) {
+    const room = await this.chatRoomRepository.findOneBy({id: room_id});
+    if (!room) {
+      throw new NotFoundException('Please enter right chat room.');
+    }
     return room;
   }
 }

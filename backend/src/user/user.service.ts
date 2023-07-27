@@ -48,9 +48,10 @@ export class UserService {
     return user;
   }
 
+  // 로그인할 때 user pw 암호화 하지않게
   async signIn(userAuthDto: UserAuthDto): Promise<string> {
     const user = await this.findUser(userAuthDto.user_id);
-    if (user && (await bcrypt.compare(userAuthDto.user_pw, user.user_pw))) {
+    if (user && user.user_pw === userAuthDto.user_pw) {
       // user token create. (secret + Payload)
       const payload: Payload = {user_id: userAuthDto.user_id};
       const accessToken = this.jwtService.sign(payload);
@@ -58,4 +59,14 @@ export class UserService {
     }
     throw new UnauthorizedException('login failed');
   }
+  // async signIn(userAuthDto: UserAuthDto): Promise<string> {
+  //   const user = await this.findUser(userAuthDto.user_id);
+  //   if (user && (await bcrypt.compare(userAuthDto.user_pw, user.user_pw))) {
+  //     // user token create. (secret + Payload)
+  //     const payload: Payload = {user_id: userAuthDto.user_id};
+  //     const accessToken = this.jwtService.sign(payload);
+  //     return accessToken;
+  //   }
+  //   throw new UnauthorizedException('login failed');
+  // }
 }

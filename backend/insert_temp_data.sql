@@ -19,11 +19,7 @@ INSERT INTO "chatMember" (permission, "chatroomId", "userId") VALUES
  (2, 1, 'tester1'),
  (2, 2, 'tester2'),
  (2, 3, 'tester3'),
- (2, 4, 'tester4'),
- (0, 1, 'tester5'),
- (0, 1, 'tester6'),
- (1, 1, 'tester7'),
- (0, 2, 'tester8');
+ (2, 4, 'tester4');
 
 -- INSERT INTO "chatBan" VALUES
 

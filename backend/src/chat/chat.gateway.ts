@@ -16,9 +16,10 @@ import {
   ChatRoomRepository,
   SocketRepository,
 } from './chat.repository';
+import {ChatService} from './chat.service';
 
 interface MessagePayload {
-  roomName: string;
+  room_id: number;
   message: string;
 }
 
@@ -35,7 +36,8 @@ export class ChatGateway
     private chatRoomRepository: ChatRoomRepository,
     private chatMemberRepository: ChatMemberRepository,
     private chatBanRepository: ChatBanRepository,
-    private socketId: SocketRepository
+    private socketId: SocketRepository,
+    private chatService: ChatService
   ) {}
   @WebSocketServer() nsp: Namespace;
 
@@ -53,11 +55,39 @@ export class ChatGateway
     this.logger.log(`${socket.id} 소켓 연결 해제 ❌`);
   }
 
-  // @SubscribeMessage('message')
-  // handleMessage(
-  //   @ConnectedSocket() socket: Socket,
-  //   @MessageBody() {roomName, message}: MessagePayload
-  // ) {
-  //   socket.to(roomName).emit('message', {username: socket.id, message}); //front로 메세지 전송
-  // }
+  @SubscribeMessage('message')
+  handleMessage(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() {room_id, message}: MessagePayload
+  ) {
+    socket.to(`${room_id}`).emit('message', {username: socket.id, message}); //front로 메세지 전송
+
+    this.logger.log(`들어온 메세지: ${message}.`);
+  }
+
+  @SubscribeMessage('join-room')
+  async handleJoinRoom(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() room_id: number
+  ) {
+    // await this.chatService.joinRoom(room_id);
+
+    socket.join(`${room_id}`);
+    socket
+      .to(`${room_id}`)
+      .emit('message', {message: `${socket.id}가 들어왔습니다.`});
+  }
+
+  @SubscribeMessage('leave-room')
+  handleLeaveRoom(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() room_id: number
+  ) {
+    socket.leave(`${room_id}`);
+    socket
+      .to(`${room_id}`)
+      .emit('message', {message: `${socket.id}가 나갔습니다.`});
+  }
+
+  // @SubscribeMessage('room-member')
 }

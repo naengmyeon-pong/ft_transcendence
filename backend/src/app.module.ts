@@ -7,7 +7,6 @@ import {SignUpModule} from './signup/signup.module';
 import * as Joi from 'joi';
 import {ServeStaticModule} from '@nestjs/serve-static';
 import {join} from 'path';
-import {EventsModule} from './events/events.module';
 import {ChatModule} from './chat/chat.module';
 
 @Module({
@@ -46,7 +45,6 @@ import {ChatModule} from './chat/chat.module';
     TypeOrmModule.forRoot(userTypeORMconf),
     SignUpModule,
     UserModule,
-    EventsModule,
     ChatModule,
   ],
 })
