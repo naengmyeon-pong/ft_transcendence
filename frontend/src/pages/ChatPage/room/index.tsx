@@ -1,10 +1,11 @@
 import apiManager from '@apiManager/apiManager';
 import {Box, Button, Grid, Typography, styled} from '@mui/material';
-import React, {useEffect, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import ChatInvite from '../modal/ChatInvite';
 import ChatBox from './ChatBox';
 import UserList from './menu/UserList';
+import {UserContext} from 'Context';
 
 const BoxBorder = styled('div')({
   border: '1px solid black',
@@ -19,6 +20,7 @@ function ChatRoom() {
   const [adminUser, setAdminUser] = useState<UserType[]>([]);
   const [users, setUsers] = useState<UserType[]>([]);
   const [inviteModal, setInviteModal] = useState<boolean>(false);
+  const socket = useContext(UserContext).socket;
 
   const navigate = useNavigate();
   async function roomUsers() {
@@ -51,6 +53,7 @@ function ChatRoom() {
   }
 
   function exit() {
+    socket?.emit('leave-room', roomId);
     navigate('/menu/chat/list');
   }
 

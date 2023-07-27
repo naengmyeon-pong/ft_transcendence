@@ -17,7 +17,7 @@ function ChatList() {
     try {
       const rep = await apiManager.get('/chatroom/room_list');
       const data = rep.data;
-      console.log(data);
+      console.log('data:', data);
       setRoomList(data);
     } catch (error) {
       console.log(error);

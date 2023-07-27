@@ -179,9 +179,10 @@ export class ChatService {
       chatroomId: room_id,
       user: user,
     });
-    console.log('member :', member);
+    // console.log('member :', member);
     if (!member) {
-      throw new BadRequestException(`${nickname} is not this chatroom member.`);
+      return;
+      // throw new BadRequestException(`${nickname} is not this chatroom member.`);
     } else if (member.permission === 2) {
       //owner 일 때 방 전체가 터지게.
     } else {
@@ -189,7 +190,7 @@ export class ChatService {
         userId: member.userId,
         chatroomId: room_id,
       });
-      console.log('delete member : ', del_member.affected);
+      // console.log('delete member : ', del_member.affected);
       room.current_nums -= 1;
       await this.chatRoomRepository.save(room);
     }

@@ -55,9 +55,8 @@ function ChatBox() {
   const [chats, setChats] = React.useState<IChat[]>([]);
   const [message, setMessage] = React.useState<string>('');
   const user_id = useContext(UserContext);
-  const user_nickname = useContext(UserContext);
+  const user_nickname = useContext(UserContext).user_nickname;
   const {roomId} = useParams();
-  console.log(user_nickname);
   // 채팅창 스크롤을 제어하는 변수
   const chatContainerEl = useRef<HTMLDivElement>(null);
 
@@ -93,11 +92,8 @@ function ChatBox() {
     // 뒤로가기 시 소켓이 끊기지 않음
     // 개발단계에서 리랜더링 시 소켓이 끊기지 않음
     return () => {
-      socket?.off('message', messageHandler);
       socket?.emit('leave-room', roomId);
-      // socketIo.off('message', messageHandler);
-      // socketIo.emit('leave-room', roomId);
-      // socketIo.disconnect();
+      socket?.off('message', messageHandler);
     };
   }, []);
 
