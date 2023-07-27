@@ -32,7 +32,10 @@ function App() {
           <Route path="/menu/mainPage" element={<MainPage />} />
           <Route path="/menu/ranking" element={<Ranking />} />
           <Route path="/menu/chat/list" element={<ChatList />} />
-          <Route path="/menu/chat/room/:roomName" element={<ChatRoom />} />
+          <Route
+            path="/menu/chat/room/:roomName/:roomId"
+            element={<ChatRoom />}
+          />
           <Route path="/menu/chat" element={<WaitingChannelRoom />} />
         </Route>
         {/* 마이페이지 링크 추가 */}
