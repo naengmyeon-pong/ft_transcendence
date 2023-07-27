@@ -5,8 +5,8 @@ enum PermissionType {
 }
 interface UserType {
   nickName: string;
-  intraId: string;
-  userImage: string;
+  id: string;
+  image: string;
 }
 
 interface UserProps {
@@ -14,10 +14,13 @@ interface UserProps {
 }
 
 interface ChatListData {
-  is_password: boolean;
-  max_num: string;
-  current_num: string;
+  id: number;
   name: string;
+  current_nums: number;
+  max_nums: number;
+  is_public: boolean;
+  is_password: boolean;
+  current_num: string;
   owner: string;
 }
 

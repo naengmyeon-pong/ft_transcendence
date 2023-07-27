@@ -15,7 +15,7 @@ function ChatList() {
 
   async function refershChatList() {
     try {
-      const rep = await apiManager.get('http://localhost:3003/rooms');
+      const rep = await apiManager.get('/chatroom/room_list');
       const data = rep.data;
       setRoomList(data);
     } catch (error) {

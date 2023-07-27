@@ -16,7 +16,7 @@ import {Payload} from './payload';
 @Injectable()
 export class UserService {
   constructor(
-    @InjectRepository(UserRepository)
+    // @InjectRepository(UserRepository)
     private userRepository: UserRepository,
     private userAuthRepository: IsUserAuthRepository,
     private jwtService: JwtService
@@ -49,7 +49,6 @@ export class UserService {
   }
 
   async signIn(userAuthDto: UserAuthDto): Promise<string> {
-    console.log(userAuthDto);
     const user = await this.findUser(userAuthDto.user_id);
     if (user && (await bcrypt.compare(userAuthDto.user_pw, user.user_pw))) {
       // user token create. (secret + Payload)
