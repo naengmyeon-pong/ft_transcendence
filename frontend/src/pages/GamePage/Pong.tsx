@@ -104,23 +104,23 @@ function Pong({socket, gameInfo}: PongProps) {
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     keyStateRef.current[event.key] = true;
-    // if (socket) {
-    //   console.log('hi');
-    //   socket.emit('key_down', {
-    //     room_name: sessionStorage.getItem('room_name'),
-    //     key: event.key,
-    //   });
-    // }
+    if (socket) {
+      console.log('hi');
+      socket.emit('update_key', {
+        room_name: sessionStorage.getItem('room_name'),
+        key: event.key,
+      });
+    }
   }, []);
 
   const handleKeyUp = useCallback((event: KeyboardEvent) => {
     keyStateRef.current[event.key] = false;
-    // if (socket) {
-    //   socket.emit('key_up', {
-    //     room_name: sessionStorage.getItem('room_name'),
-    //     key: event.key,
-    //   });
-    // }
+    if (socket) {
+      socket.emit('update_key', {
+        room_name: sessionStorage.getItem('room_name'),
+        key: event.key,
+      });
+    }
   }, []);
 
   // Setting for context

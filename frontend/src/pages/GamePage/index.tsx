@@ -35,9 +35,18 @@ interface GameInfo {
 function Game() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
-
+  console.log('test');
+  console.log('socket: ', socket);
   const handleNotice = (notice: string) => {
     console.log(notice);
+
+    if (socket) {
+      const roomName = sessionStorage.getItem('room_name');
+      console.log('roomname', roomName);
+      socket.emit('update_frame', roomName);
+    } else {
+      console.log('socket', socket);
+    }
   };
 
   const handleRoomname = ({room_name}: {room_name: string}) => {
@@ -46,7 +55,7 @@ function Game() {
   };
 
   const handleGameInfo = ({game_info}: {game_info: GameInfo}) => {
-    // console.log(game_info);
+    console.log(game_info);
     setGameInfo(game_info);
   };
 
@@ -55,10 +64,10 @@ function Game() {
     const username = 'user_' + (Math.random() * 1000).toString();
     socketIo.emit('join_game', username);
 
+    setSocket(socketIo);
     socketIo.on('notice', handleNotice);
     socketIo.on('room_name', handleRoomname);
     socketIo.on('game_info', handleGameInfo);
-    setSocket(socketIo);
     return () => {
       socketIo.off('notice', handleNotice);
       socketIo.off('room_name', handleRoomname);

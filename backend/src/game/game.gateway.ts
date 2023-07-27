@@ -166,13 +166,12 @@ export class GameGateway
 
       const roomInfo: RoomInfo = gameRooms.get(roomName);
       const gameInfo: GameInfo = roomInfo.game_info;
-      console.log(roomInfo);
       this.nsp.to(roomName).emit('room_name', {room_name: roomName});
       this.nsp.to(roomName).emit('game_info', {game_info: gameInfo});
     }
   }
 
-  @SubscribeMessage('update')
+  @SubscribeMessage('update_key')
   handleKeyDown(
     @ConnectedSocket() socket: Socket,
     @MessageBody()
@@ -184,12 +183,37 @@ export class GameGateway
     const gameInfo: GameInfo = roomInfo.game_info;
 
     updatePaddlePosition(gameInfo.rightPaddle, up, down);
-    updateBallPosition(gameInfo);
-    this.nsp.to(room_name).emit('game_info', {game_info: gameInfo});
+
+    // const gameUsers: GameUser[] = roomInfo.users;
+    // const eventUser = findUserBySocket(socket, gameUsers);
+  }
+
+  @SubscribeMessage('update_frame')
+  handleFrame(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() room_name: string
+  ) {
+    console.log('update frame');
+    // setInterval(
+    //   (function updateFrame() {
+    //     this.num++;
+    //     const roomInfo: RoomInfo = gameRooms.get(room_name);
+    //     const gameInfo: GameInfo = roomInfo.game_info;
+    //     updateBallPosition(gameInfo);
+
+    //     console.log(this.num);
+    //     this.nsp.to(room_name).emit('game_info', {game_info: gameInfo});
+
+    //     return updateFrame;
+    //   })(),
+    //   1000 / 60
+    // );
     // const gameUsers: GameUser[] = roomInfo.users;
     // const eventUser = findUserBySocket(socket, gameUsers);
   }
 }
+
+// const updateFrame = (room_name: string) => {};
 
 const updatePaddlePosition = (
   paddle: Coordinate,
