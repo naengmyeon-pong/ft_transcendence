@@ -14,17 +14,17 @@ const BoxBorder = styled('div')({
 // 채팅방에 입장해서 실행하는 컴포넌트
 function ChatRoom() {
   const {roomName} = useParams();
+  const {roomId} = useParams();
   const [owner, setOwner] = useState<UserType>();
   const [adminUser, setAdminUser] = useState<UserType[]>([]);
   const [users, setUsers] = useState<UserType[]>([]);
   const [inviteModal, setInviteModal] = useState<boolean>(false);
 
   const navigate = useNavigate();
-
   async function roomUsers() {
     try {
       const rep = await apiManager.get(
-        `/chatroom/room_members/?room_id=${roomName}`
+        `/chatroom/room_members/?room_id=${roomId}`
       );
       setOwner(rep.data?.owner);
       setAdminUser(rep.data?.admin);

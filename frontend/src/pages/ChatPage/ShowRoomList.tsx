@@ -69,7 +69,7 @@ function ShowRoomList({roomList}: ComponentProps) {
       return;
     }
     // TODO: 서버에 채팅방 이름과 패스워드를 보낸 후 맞는지 확인하고 들여보낸다
-    navigate(`/menu/chat/room/${row.id}`);
+    navigate(`/menu/chat/room/${row.name}/${row.id}`);
   }
   return (
     <TableContainer>
