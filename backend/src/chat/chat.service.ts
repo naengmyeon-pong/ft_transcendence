@@ -60,7 +60,7 @@ export class ChatService {
       };
       room_list.push(temp);
     });
-    console.log(room_list);
+    // console.log(room_list);
     return room_list;
   }
 
@@ -157,6 +157,13 @@ export class ChatService {
       // 새로운 유저라서 방에 추가해줘야 하는데, 방 인원이 꽉 찼을 경우
       throw new ConflictException('sorry, room is full!');
     }
+    const new_member = this.chatMemberRepository.create({
+      permission: 0,
+      mute: null,
+      chatroom: room,
+      user: user,
+    });
+    await this.chatMemberRepository.save(new_member);
     room.current_nums += 1;
     await this.chatRoomRepository.save(room);
   }
@@ -172,11 +179,17 @@ export class ChatService {
       chatroomId: room_id,
       user: user,
     });
+    console.log('member :', member);
     if (!member) {
       throw new BadRequestException(`${nickname} is not this chatroom member.`);
     } else if (member.permission === 2) {
       //owner 일 때 방 전체가 터지게.
     } else {
+      const del_member = await this.chatMemberRepository.delete({
+        userId: member.userId,
+        chatroomId: room_id,
+      });
+      console.log('delete member : ', del_member.affected);
       room.current_nums -= 1;
       await this.chatRoomRepository.save(room);
     }

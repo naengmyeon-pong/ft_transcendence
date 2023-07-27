@@ -79,7 +79,12 @@ export class ChatGateway
     @MessageBody() room_id: number
   ) {
     const nickname = socket.handshake.query.nickname as string;
-    await this.chatService.joinRoom(room_id, nickname);
+    try {
+      await this.chatService.joinRoom(room_id, nickname);
+    } catch (e) {
+      console.log('join error: ', e.message);
+      return {success: false};
+    }
     socket.join(`${room_id}`);
     socket
       .to(`${room_id}`)
