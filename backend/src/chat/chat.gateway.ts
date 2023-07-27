@@ -52,7 +52,7 @@ export class ChatGateway
     this.logger.log('웹소켓 서버 초기화 ✅');
   }
 
-  async handleConnection(@ConnectedSocket() socket: Socket, user_id: string) {
+  async handleConnection(@ConnectedSocket() socket: Socket) {
     // await this.chatService.socketConnection(socket.id, user_id);
     this.logger.log(`${socket.id} 소켓 연결`);
   }
@@ -70,30 +70,35 @@ export class ChatGateway
     socket.to(`${room_id}`).emit('message', {username: socket.id, message}); //front로 메세지 전송
 
     this.logger.log(`들어온 메세지: ${message}.`);
+    return {username: socket.id, message};
   }
 
   @SubscribeMessage('join-room')
   async handleJoinRoom(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() {room_id, nickname}: JoinPayload
+    @MessageBody() room_id: number
   ) {
+    const nickname = socket.handshake.query.nickname as string;
     await this.chatService.joinRoom(room_id, nickname);
     socket.join(`${room_id}`);
     socket
       .to(`${room_id}`)
       .emit('message', {message: `${nickname}가 들어왔습니다.`});
+    return {success: true};
   }
 
   @SubscribeMessage('leave-room')
   async handleLeaveRoom(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() {room_id, nickname}: JoinPayload
+    @MessageBody() room_id: number
   ) {
+    const nickname = socket.handshake.query.nickname as string;
     await this.chatService.leaveRoom(room_id, nickname);
     socket.leave(`${room_id}`);
     socket
       .to(`${room_id}`)
       .emit('message', {message: `${nickname}가 나갔습니다.`});
+    return {success: true};
   }
 
   // @SubscribeMessage('room-member')

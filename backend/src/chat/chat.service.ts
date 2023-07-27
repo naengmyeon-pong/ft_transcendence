@@ -60,6 +60,7 @@ export class ChatService {
       };
       room_list.push(temp);
     });
+    console.log(room_list);
     return room_list;
   }
 
