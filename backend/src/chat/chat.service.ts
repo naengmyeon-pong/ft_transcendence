@@ -1,4 +1,9 @@
-import {ConflictException, Injectable, NotFoundException} from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   ChatMemberRepository,
   ChatRoomRepository,
@@ -19,6 +24,7 @@ export class ChatService {
     private chatRoomRepository: ChatRoomRepository,
     private chatMemberRepository: ChatMemberRepository,
     private socketRepository: SocketRepository,
+    private socketId: SocketRepository,
     private userRepository: UserRepository
   ) {}
 
@@ -63,7 +69,6 @@ export class ChatService {
       admin: [], // permission = 1
       user: [], // permission = 0
     };
-    console.log(room_id);
 
     const members = await this.chatMemberRepository
       .createQueryBuilder('chatMember')
@@ -112,7 +117,7 @@ export class ChatService {
 
     const room = this.chatRoomRepository.create({
       name: roomDto.room_name,
-      current_nums: 0,
+      current_nums: 1,
       max_nums: roomDto.max_nums,
       is_public: roomDto.is_public,
       is_password: roomDto.is_password,
@@ -129,16 +134,81 @@ export class ChatService {
     return room;
   }
 
-  // async joinRoom(room_id: number) {
-  //   const room = await this.getRoom(room_id);
-  //   if (room.current_nums >= room.max_nums) {
-  //     throw new ConflictException('sorry, room is full!');
-  //   }
-  //   room.current_nums += 1;
-  //   await this.chatRoomRepository.save(room);
+  async joinRoom(room_id: number, nickname: string) {
+    if (!room_id || !nickname) {
+      throw new BadRequestException('empty parameter.');
+    }
+    const user = await this.getUser(nickname);
+    const member = await this.chatMemberRepository.findOneBy({
+      chatroomId: room_id,
+      user: user,
+    });
+    if (member && member.permission === 2) {
+      // 이 user가 방의 owner이면 방 만들 때 이미 member로 추가 되었기 때문에 skip 하고 socket에서 join만 할 수 있도록.
+      return;
+    } else if (member) {
+      // owner가 아닌 유저가 이미 있으면 postman 같이 잘못된 요청이므로 에러 발생
+      throw new ConflictException(`${nickname} already chatmember.`);
+    }
 
-  //   const room_member;
-  // }
+    const room = await this.getRoom(room_id);
+    if (room.current_nums >= room.max_nums) {
+      // 새로운 유저라서 방에 추가해줘야 하는데, 방 인원이 꽉 찼을 경우
+      throw new ConflictException('sorry, room is full!');
+    }
+    room.current_nums += 1;
+    await this.chatRoomRepository.save(room);
+  }
+
+  async leaveRoom(room_id: number, nickname: string) {
+    if (!room_id || !nickname) {
+      throw new BadRequestException('empty parameter.');
+    }
+    const user = await this.getUser(nickname);
+    const room = await this.getRoom(room_id);
+
+    const member = await this.chatMemberRepository.findOneBy({
+      chatroomId: room_id,
+      user: user,
+    });
+    if (!member) {
+      throw new BadRequestException(`${nickname} is not this chatroom member.`);
+    } else if (member.permission === 2) {
+      //owner 일 때 방 전체가 터지게.
+    } else {
+      room.current_nums -= 1;
+      await this.chatRoomRepository.save(room);
+    }
+  }
+
+  async socketConnection(socket_id: string, user_id: string) {
+    if (!socket_id || !user_id) {
+      throw new BadRequestException('empty parameter.');
+    }
+    const socket = this.socketRepository.create({
+      user_id,
+      socket_id,
+    });
+    await this.socketRepository.save(socket);
+  }
+
+  async socketDisconnection(socket_id: string) {
+    if (!socket_id) {
+      throw new BadRequestException('empty parameter.');
+    }
+    const socket = await this.socketRepository.delete(socket_id);
+    if (socket.affected === 0) {
+      throw new NotFoundException(`${socket_id} is not a vlidate socket.`);
+    }
+  }
+
+  async getUser(nickname: string) {
+    const user = await this.userRepository.findOneBy({user_nickname: nickname});
+    if (!user) {
+      throw new NotFoundException(`${nickname} is not a user.`);
+    }
+    return user;
+  }
 
   async getRoom(room_id: number) {
     const room = await this.chatRoomRepository.findOneBy({id: room_id});

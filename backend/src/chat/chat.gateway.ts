@@ -23,6 +23,11 @@ interface MessagePayload {
   message: string;
 }
 
+interface JoinPayload {
+  room_id: number;
+  nickname: string;
+}
+
 @WebSocketGateway({
   namespace: 'chat',
   cors: {
@@ -47,11 +52,13 @@ export class ChatGateway
     this.logger.log('웹소켓 서버 초기화 ✅');
   }
 
-  handleConnection(@ConnectedSocket() socket: Socket) {
+  async handleConnection(@ConnectedSocket() socket: Socket, user_id: string) {
+    // await this.chatService.socketConnection(socket.id, user_id);
     this.logger.log(`${socket.id} 소켓 연결`);
   }
 
-  handleDisconnect(@ConnectedSocket() socket: Socket) {
+  async handleDisconnect(@ConnectedSocket() socket: Socket) {
+    // await this.chatService.socketDisconnection(socket.id);
     this.logger.log(`${socket.id} 소켓 연결 해제 ❌`);
   }
 
@@ -68,25 +75,25 @@ export class ChatGateway
   @SubscribeMessage('join-room')
   async handleJoinRoom(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() room_id: number
+    @MessageBody() {room_id, nickname}: JoinPayload
   ) {
-    // await this.chatService.joinRoom(room_id);
-
+    await this.chatService.joinRoom(room_id, nickname);
     socket.join(`${room_id}`);
     socket
       .to(`${room_id}`)
-      .emit('message', {message: `${socket.id}가 들어왔습니다.`});
+      .emit('message', {message: `${nickname}가 들어왔습니다.`});
   }
 
   @SubscribeMessage('leave-room')
-  handleLeaveRoom(
+  async handleLeaveRoom(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() room_id: number
+    @MessageBody() {room_id, nickname}: JoinPayload
   ) {
+    await this.chatService.leaveRoom(room_id, nickname);
     socket.leave(`${room_id}`);
     socket
       .to(`${room_id}`)
-      .emit('message', {message: `${socket.id}가 나갔습니다.`});
+      .emit('message', {message: `${nickname}가 나갔습니다.`});
   }
 
   // @SubscribeMessage('room-member')
