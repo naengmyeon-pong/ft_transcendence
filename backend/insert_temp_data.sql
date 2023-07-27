@@ -1,12 +1,12 @@
 INSERT INTO users VALUES 
-  ('tester1', '12345678!Qw', 'tester1', '/images/logo.jpeg'),
-  ('tester2', '12345678!Qw', 'tester2', '/images/logo.jpeg'),
-  ('tester3', '12345678!Qw', 'tester3', '/images/logo.jpeg'),
-  ('tester4', '12345678!Qw', 'tester4', '/images/logo.jpeg'),
-  ('tester5', '12345678!Qw', 'tester5', '/images/logo.jpeg'),
-  ('tester6', '12345678!Qw', 'tester6', '/images/logo.jpeg'),
-  ('tester7', '12345678!Qw', 'tester7', '/images/logo.jpeg'),
-  ('tester8', '12345678!Qw', 'tester8', '/images/logo.jpeg');
+  ('tester1', '12345678!Qw', 'nick1', '/images/logo.jpeg'),
+  ('tester2', '12345678!Qw', 'nick2', '/images/logo.jpeg'),
+  ('tester3', '12345678!Qw', 'nick3', '/images/logo.jpeg'),
+  ('tester4', '12345678!Qw', 'nick4', '/images/logo.jpeg'),
+  ('tester5', '12345678!Qw', 'nick5', '/images/logo.jpeg'),
+  ('tester6', '12345678!Qw', 'nick6', '/images/logo.jpeg'),
+  ('tester7', '12345678!Qw', 'nick7', '/images/logo.jpeg'),
+  ('tester8', '12345678!Qw', 'nick8', '/images/logo.jpeg');
 
 INSERT INTO "chatRoom" (name, current_nums, max_nums, is_public, is_password) VALUES
   ('room1', 1, 4, true, false),
