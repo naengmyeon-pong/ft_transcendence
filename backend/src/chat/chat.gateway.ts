@@ -23,9 +23,9 @@ interface MessagePayload {
   message: string;
 }
 
-interface JoinPayload {
+interface ExecPayload {
   room_id: number;
-  nickname: string;
+  target_id: string;
 }
 
 @WebSocketGateway({
@@ -59,7 +59,8 @@ export class ChatGateway
   }
 
   async handleDisconnect(@ConnectedSocket() socket: Socket) {
-    await this.chatService.socketDisconnection(socket.id);
+    const user_id = socket.handshake.query.user_id as string;
+    await this.chatService.socketDisconnection(user_id);
     this.logger.log(`${socket.id} 소켓 연결 해제 ❌`);
   }
 
@@ -90,6 +91,9 @@ export class ChatGateway
     socket.to(`${room_id}`).emit('message', {
       message: `${socket.handshake.query.nickname}가 들어왔습니다.`,
     });
+    socket.to(`${room_id}`).emit('room-member', {
+      members: await this.chatService.getRoomMembers(room_id),
+    });
     return true;
   }
 
@@ -108,9 +112,40 @@ export class ChatGateway
       socket.to(`${room_id}`).emit('message', {
         message: `${socket.handshake.query.nickname}가 나갔습니다.`,
       });
+      socket.to(`${room_id}`).emit('room-member', {
+        members: await this.chatService.getRoomMembers(room_id),
+      });
     }
     return true;
   }
 
-  // @SubscribeMessage('room-member')
+  @SubscribeMessage('add-admin')
+  async handleAddAdmin(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() {room_id, target_id}: ExecPayload
+  ) {
+    const user_id = socket.handshake.query.user_id as string;
+    if (await this.chatService.addToAdmin(room_id, user_id, target_id)) {
+      socket.to(`${room_id}`).emit('room-member', {
+        members: await this.chatService.getRoomMembers(room_id),
+      });
+      return true;
+    }
+    return false;
+  }
+
+  // true 면, front에서 leave_room 호출하게. false면 아무것도 안하고 무시 or kick 권한이 없다고 메세지 띄우기.
+  @SubscribeMessage('kick-member')
+  async handleKickMember(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() {room_id, target_id}: ExecPayload
+  ) {
+    const user_id = socket.handshake.query.user_id as string;
+    if (await this.chatService.kickMember(room_id, user_id, target_id)) {
+      return true;
+    }
+    return false;
+  }
+
+  // socket.to(`${room_id}`).emit('room-member', this.chatService.getRoomMembers(room_id));
 }
