@@ -46,6 +46,7 @@ function ShowRoomList({roomList}: ComponentProps) {
     setPage(newPage);
   };
 
+  console.log('roomList:', roomList);
   const handleChangeRowsPerPage = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {

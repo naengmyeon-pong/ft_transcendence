@@ -1,3 +1,4 @@
+import {NavigateBefore} from '@mui/icons-material';
 import {Box, Button, Paper, TextField, Typography} from '@mui/material';
 import {UserContext} from 'Context';
 import React, {
@@ -86,12 +87,19 @@ function ChatBox() {
       setChats(prevChats => [...prevChats, chat]);
     }
 
+    function leaveRoomHandler(ret: boolean) {
+      navigate('/menu/chat/list');
+    }
+    socket?.once('leave-room', leaveRoomHandler);
+
     // socketIo.on('message', messageHandler);
     // setSocket(socketIo);
     socket?.on('message', messageHandler);
 
     return () => {
-      socket?.emit('leave-room', roomId);
+      socket?.emit('leave-room', roomId, () => {
+        // navigate('/menu/chat/list');
+      });
       socket?.off('message', messageHandler);
     };
   }, []);

@@ -53,12 +53,13 @@ export class ChatGateway
   }
 
   async handleConnection(@ConnectedSocket() socket: Socket) {
-    // await this.chatService.socketConnection(socket.id, user_id);
+    const user_id = socket.handshake.query.user_id as string;
+    await this.chatService.socketConnection(socket.id, user_id);
     this.logger.log(`${socket.id} 소켓 연결`);
   }
 
   async handleDisconnect(@ConnectedSocket() socket: Socket) {
-    // await this.chatService.socketDisconnection(socket.id);
+    await this.chatService.socketDisconnection(socket.id);
     this.logger.log(`${socket.id} 소켓 연결 해제 ❌`);
   }
 
@@ -77,19 +78,19 @@ export class ChatGateway
   async handleJoinRoom(
     @ConnectedSocket() socket: Socket,
     @MessageBody() room_id: number
-  ) {
-    const nickname = socket.handshake.query.nickname as string;
+  ): Promise<boolean> {
+    const user_id = socket.handshake.query.user_id as string;
     try {
-      await this.chatService.joinRoom(room_id, nickname);
+      await this.chatService.joinRoom(room_id, user_id);
     } catch (e) {
       console.log('join error: ', e.message);
-      return {success: false};
+      return false;
     }
     socket.join(`${room_id}`);
-    socket
-      .to(`${room_id}`)
-      .emit('message', {message: `${nickname}가 들어왔습니다.`});
-    return {success: true};
+    socket.to(`${room_id}`).emit('message', {
+      message: `${socket.handshake.query.nickname}가 들어왔습니다.`,
+    });
+    return true;
   }
 
   @SubscribeMessage('leave-room')
@@ -97,13 +98,18 @@ export class ChatGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody() room_id: number
   ) {
-    const nickname = socket.handshake.query.nickname as string;
-    await this.chatService.leaveRoom(room_id, nickname);
+    const user_id = socket.handshake.query.user_id as string;
+    const leave = await this.chatService.leaveRoom(room_id, user_id);
     socket.leave(`${room_id}`);
-    socket
-      .to(`${room_id}`)
-      .emit('message', {message: `${nickname}가 나갔습니다.`});
-    return {success: true};
+
+    if (leave && leave.permission === 2) {
+      socket.to(`${room_id}`).emit('leave-room', true);
+    } else if (leave) {
+      socket.to(`${room_id}`).emit('message', {
+        message: `${socket.handshake.query.nickname}가 나갔습니다.`,
+      });
+    }
+    return true;
   }
 
   // @SubscribeMessage('room-member')
