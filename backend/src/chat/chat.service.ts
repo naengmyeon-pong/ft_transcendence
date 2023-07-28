@@ -28,6 +28,24 @@ export class ChatService {
     private userRepository: UserRepository
   ) {}
 
+  async socketConnection(socket_id: string, user_id: string) {
+    if (!socket_id || !user_id) {
+      throw new BadRequestException('empty parameter.');
+    }
+    const socket = this.socketRepository.create({
+      user_id,
+      socket_id,
+    });
+    await this.socketRepository.save(socket);
+  }
+
+  async socketDisconnection(user_id: string) {
+    if (!user_id) {
+      throw new BadRequestException('empty parameter.');
+    }
+    await this.socketRepository.delete({user_id: user_id});
+  }
+
   async getRoomList() {
     const room_list = [];
     const chatrooms = await this.chatRoomRepository
@@ -199,30 +217,46 @@ export class ChatService {
     return member;
   }
 
-  async socketConnection(socket_id: string, user_id: string) {
-    if (!socket_id || !user_id) {
+  async addToAdmin(room_id: number, user_id: string, target_id: string) {
+    if (this.isOwner(room_id, user_id)) {
+      const member = await this.isChatMember(room_id, target_id);
+      member.permission = 1;
+      await this.chatMemberRepository.save(member);
+      return true;
+    }
+    return false;
+  }
+
+  async kickMember(room_id: number, user_id: string, target_id: string) {
+    const admin = await this.isChatMember(room_id, user_id);
+    const member = await this.isChatMember(room_id, target_id);
+
+    if (admin.permission > member.permission) {
+      return true;
+    }
+    return false;
+  }
+
+  async isOwner(room_id: number, user_id: string) {
+    const member = await this.isChatMember(room_id, user_id);
+    if (member.permission === 2) {
+      return true;
+    }
+    return false;
+  }
+
+  async isChatMember(room_id: number, user_id: string) {
+    if (!room_id || !user_id) {
       throw new BadRequestException('empty parameter.');
     }
-    const socket = this.socketRepository.create({
-      user_id,
-      socket_id,
+    const member = await this.chatMemberRepository.findOneBy({
+      chatroomId: room_id,
+      userId: user_id,
     });
-    await this.socketRepository.save(socket);
-  }
-
-  async socketDisconnection(socket_id: string) {
-    if (!socket_id) {
-      throw new BadRequestException('empty parameter.');
+    if (!member) {
+      throw new NotFoundException(`${user_id} is not member of this chat.`);
     }
-    const socket = await this.socketRepository.delete({socket_id: socket_id});
-    if (socket.affected === 0) {
-      console.log('socket_id :', socket_id);
-      // throw new NotFoundException(`${socket_id} is not a vlidate socket.`);
-    }
-  }
-
-  async deleteRoom(room_id: number) {
-    const room = await this.getRoom(room_id);
+    return member;
   }
 
   async getUser(user_id: string) {
