@@ -6,11 +6,15 @@ import Block from '../service/Block';
 import Kick from '../service/Kick';
 import Mute from '../service/Mute';
 import Ban from '../service/Ban';
+import {UserContext} from 'Context';
+import {useParams} from 'react-router-dom';
 
 function UserNode({user}: UserProps) {
   const [anchorEl, setAnchorEl] = React.useState<HTMLLIElement | null>(null);
   const [modalState, setModalState] = React.useState(false);
   const [menuItem, setMenuItem] = React.useState<string | null>(null);
+  const socket = React.useContext(UserContext).socket;
+  const {roomId} = useParams();
   const open = Boolean(anchorEl);
 
   function handleMenu(event: React.MouseEvent<HTMLLIElement>) {
@@ -27,7 +31,7 @@ function UserNode({user}: UserProps) {
     if (confirmed && menuItem) {
       switch (menuItem) {
         case 'addAdmin':
-          AddAdmin(user);
+          AddAdmin(user, socket, roomId);
           break;
         case 'Kick':
           Kick(user);
