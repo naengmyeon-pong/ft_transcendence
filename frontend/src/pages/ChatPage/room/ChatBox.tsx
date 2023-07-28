@@ -1,5 +1,5 @@
 import {NavigateBefore} from '@mui/icons-material';
-import {Box, Button, Paper, TextField, Typography} from '@mui/material';
+import {Avatar, Box, Button, Paper, TextField, Typography} from '@mui/material';
 import {UserContext} from 'Context';
 import React, {
   ChangeEvent,
@@ -20,21 +20,29 @@ interface IChat {
 const Message = ({
   message,
   username,
+  user_image,
 }: {
   message: IChat;
-  username: string | undefined;
+  username: string | null;
+  user_image: string | null;
 }) => {
-  const me = message.username !== username;
-
+  const user_nickname = username;
+  const user_convert_image: string | undefined =
+    user_image === null ? undefined : user_image;
   return (
     <Box
       sx={{
         display: 'flex',
-        justifyContent: me ? 'flex-start' : 'flex-end',
-        mb: 2,
+        //   justifyContent: me ? 'flex-start' : 'flex-end',
+        //   mb: 2,
       }}
     >
-      <Paper
+      <Avatar src={user_convert_image} sx={{margin: '10px'}} />
+
+      <Typography sx={{margin: '20px'}}>{user_nickname}</Typography>
+      <Typography sx={{margin: '20px'}}>{message.message}</Typography>
+
+      {/* <Paper
         variant="outlined"
         sx={{
           p: 2,
@@ -45,7 +53,7 @@ const Message = ({
         <Typography variant="body1" color={'white'}>
           {message.message}
         </Typography>
-      </Paper>
+      </Paper> */}
     </Box>
   );
 };
@@ -55,8 +63,9 @@ function ChatBox() {
   const {socket, setSocket} = useContext(UserContext);
   const [chats, setChats] = React.useState<IChat[]>([]);
   const [message, setMessage] = React.useState<string>('');
-  const user_id = useContext(UserContext);
-  const user_nickname = useContext(UserContext).user_nickname;
+  const {user_nickname} = useContext(UserContext);
+  const {user_image} = useContext(UserContext);
+
   const {roomId} = useParams();
   // 채팅창 스크롤을 제어하는 변수
   const chatContainerEl = useRef<HTMLDivElement>(null);
@@ -139,7 +148,8 @@ function ChatBox() {
           {chats.map((message_node, index) => (
             <Message
               message={message_node}
-              username={socket?.id.toString()}
+              username={user_nickname}
+              user_image={user_image}
               key={index}
             />
           ))}

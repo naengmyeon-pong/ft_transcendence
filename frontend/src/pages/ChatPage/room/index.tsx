@@ -16,6 +16,23 @@ const BoxBorder = styled('div')({
 // 채팅방에 입장해서 실행하는 컴포넌트
 function ChatRoom() {
   const {roomName} = useParams();
+  const {roomId} = useParams();
+  const navigate = useNavigate();
+
+  async function SearchRoom() {
+    try {
+      // url로 직접 접근하는 경우
+      const rep = await apiManager.get(`/chatroom/join_room?room_id=${roomId}`);
+      console.log(rep);
+    } catch (error) {
+      console.log(error);
+      alert('비정상 접근입니다');
+      navigate(-1);
+    }
+  }
+  useEffect(() => {
+    SearchRoom();
+  }, []);
 
   return (
     <>
