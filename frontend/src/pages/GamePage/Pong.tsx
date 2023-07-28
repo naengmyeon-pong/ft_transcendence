@@ -7,28 +7,7 @@ import React, {
 } from 'react';
 import {Socket} from 'socket.io-client';
 
-interface Velocity {
-  x: number;
-  y: number;
-}
-
-interface Coordinate {
-  x: number;
-  y: number;
-}
-
-interface Ball {
-  pos: Coordinate;
-  vel: Velocity;
-}
-
-interface GameInfo {
-  leftPaddle: Coordinate;
-  leftScore: number;
-  rightPaddle: Coordinate;
-  rightScore: number;
-  ball: Ball;
-}
+import {Coordinate, Ball, GameInfo} from '@/types/game';
 
 const KEY_CODES = {
   S: 's',

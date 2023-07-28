@@ -9,16 +9,9 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import {number} from 'joi';
 import {Namespace, Socket, Server} from 'socket.io';
 import {User} from 'src/user/user.entitiy';
-
-const KEY_CODES = {
-  S: 's',
-  W: 'w',
-  ARROW_DOWN: 'ArrowDown',
-  ARROW_UP: 'ArrowUp',
-};
+import {Coordinate, Ball, GameInfo} from '@/types/game';
 
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
@@ -39,29 +32,6 @@ interface GameUser {
 interface KeyData {
   up: boolean;
   down: boolean;
-}
-
-interface Velocity {
-  x: number;
-  y: number;
-}
-
-interface Coordinate {
-  x: number;
-  y: number;
-}
-
-interface Ball {
-  pos: Coordinate;
-  vel: Velocity;
-}
-
-interface GameInfo {
-  leftPaddle: Coordinate;
-  leftScore: number;
-  rightPaddle: Coordinate;
-  rightScore: number;
-  ball: Ball;
 }
 
 interface RoomInfo {
