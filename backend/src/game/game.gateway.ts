@@ -227,6 +227,7 @@ const updatePaddlePosition = (
   paddle.y = clampedY;
 };
 
+// TODO: 공이 처음 움직이는 방향을 왼쪽 오른쪽 번갈아서 구현하기
 const resetBall = (ball: Ball) => {
   ball.pos.x = CANVAS_WIDTH / 2;
   ball.pos.y = CANVAS_HEIGHT / 2;
