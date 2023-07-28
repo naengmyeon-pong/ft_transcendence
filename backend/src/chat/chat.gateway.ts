@@ -91,7 +91,7 @@ export class ChatGateway
     socket.to(`${room_id}`).emit('message', {
       message: `${socket.handshake.query.nickname}가 들어왔습니다.`,
     });
-    socket.to(`${room_id}`).emit('room-member', {
+    this.nsp.to(`${room_id}`).emit('room-member', {
       members: await this.chatService.getRoomMembers(room_id),
     });
     return true;
@@ -112,7 +112,7 @@ export class ChatGateway
       socket.to(`${room_id}`).emit('message', {
         message: `${socket.handshake.query.nickname}가 나갔습니다.`,
       });
-      socket.to(`${room_id}`).emit('room-member', {
+      this.nsp.to(`${room_id}`).emit('room-member', {
         members: await this.chatService.getRoomMembers(room_id),
       });
     }
@@ -126,7 +126,7 @@ export class ChatGateway
   ) {
     const user_id = socket.handshake.query.user_id as string;
     if (await this.chatService.addToAdmin(room_id, user_id, target_id)) {
-      socket.to(`${room_id}`).emit('room-member', {
+      this.nsp.to(`${room_id}`).emit('room-member', {
         members: await this.chatService.getRoomMembers(room_id),
       });
       return true;
