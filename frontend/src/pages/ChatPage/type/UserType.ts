@@ -26,4 +26,5 @@ interface ChatListData {
 
 interface ComponentProps {
   roomList: ChatListData[];
+  refersh: () => Promise<void>;
 }

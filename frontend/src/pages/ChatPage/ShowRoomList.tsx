@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
 import {useNavigate} from 'react-router-dom';
+import apiManager from '@apiManager/apiManager';
 
 const style = {
   position: 'absolute',
@@ -33,7 +34,7 @@ async function checkRoomPassword(name: string) {
   console.log(name);
 }
 
-function ShowRoomList({roomList}: ComponentProps) {
+function ShowRoomList({roomList, refersh}: ComponentProps) {
   const navigate = useNavigate();
   const [passwordModal, setPasswordModal] = useState(false);
   const [page, setPage] = useState(0);
@@ -46,7 +47,6 @@ function ShowRoomList({roomList}: ComponentProps) {
     setPage(newPage);
   };
 
-  console.log('roomList:', roomList);
   const handleChangeRowsPerPage = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -71,8 +71,12 @@ function ShowRoomList({roomList}: ComponentProps) {
     }
     try {
       // TODO: 서버에 채팅방 이름과 패스워드를 보낸 후 맞는지 확인하고 들여보낸다
+      const rep = await apiManager.get(`/chatroom/join_room?room_id=${row.id}`);
+      console.log(rep);
       navigate(`/menu/chat/room/${row.name}/${row.id}`);
     } catch (error) {
+      alert('존재하지 않는 채팅방입니다, ');
+      refersh();
       console.log(error);
     }
   }

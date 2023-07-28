@@ -7,7 +7,7 @@ import Kick from '../service/Kick';
 import Mute from '../service/Mute';
 import Ban from '../service/Ban';
 
-function UserList({user}: UserProps) {
+function UserNode({user}: UserProps) {
   const [anchorEl, setAnchorEl] = React.useState<HTMLLIElement | null>(null);
   const [modalState, setModalState] = React.useState(false);
   const [menuItem, setMenuItem] = React.useState<string | null>(null);
@@ -105,4 +105,4 @@ function UserList({user}: UserProps) {
     </>
   );
 }
-export default UserList;
+export default UserNode;

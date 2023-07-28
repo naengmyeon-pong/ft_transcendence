@@ -73,27 +73,15 @@ function ChatBox() {
     }
   }, [chats.length]);
 
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   useEffect(() => {
-    // TODO: 초기 유저의 상태여부(온라인 등)을 위해 로그인 시점에 연결할지 회의필요
-    // const socketIo = io('http://localhost:3001/chat');
-    // 백엔드 SubscribeMessage에 설정된 방 이름
     socket?.emit('join-room', roomId);
-    // socketIo.emit('join-room', roomId);
 
-    // 초기 서버로부터 채팅기록 가져와서 저장
     function messageHandler(chat: IChat) {
       setChats(prevChats => [...prevChats, chat]);
     }
 
-    function leaveRoomHandler(ret: boolean) {
-      navigate('/menu/chat/list');
-    }
-    socket?.once('leave-room', leaveRoomHandler);
-
-    // socketIo.on('message', messageHandler);
-    // setSocket(socketIo);
     socket?.on('message', messageHandler);
 
     return () => {

@@ -42,7 +42,7 @@ function ChatList() {
           </Button>
         </Box>
         {/* 채팅방목록을 출력하는 컴포넌트입니다 */}
-        <ShowRoomList roomList={roomList} />
+        <ShowRoomList roomList={roomList} refersh={refershChatList} />
 
         <Box display="flex" justifyContent="center">
           {/* <Box> */}
