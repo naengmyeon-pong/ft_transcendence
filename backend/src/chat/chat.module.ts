@@ -12,6 +12,7 @@ import {
 } from './chat.repository';
 import {User} from 'src/user/user.entitiy';
 import {UserRepository} from 'src/user/user.repository';
+import {SocketArray} from 'src/globalVariable/global.socket';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import {UserRepository} from 'src/user/user.repository';
     ChatBanRepository,
     SocketRepository,
     UserRepository,
+    SocketArray,
   ],
   controllers: [ChatController],
 })

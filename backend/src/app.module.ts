@@ -8,6 +8,7 @@ import * as Joi from 'joi';
 import {ServeStaticModule} from '@nestjs/serve-static';
 import {join} from 'path';
 import {ChatModule} from './chat/chat.module';
+import {SocketArray} from './globalVariable/global.socket';
 
 @Module({
   imports: [

@@ -10,13 +10,8 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import {Socket, Namespace} from 'socket.io';
-import {
-  ChatBanRepository,
-  ChatMemberRepository,
-  ChatRoomRepository,
-  SocketRepository,
-} from './chat.repository';
 import {ChatService} from './chat.service';
+import {SocketArray} from 'src/globalVariable/global.socket';
 
 interface MessagePayload {
   room_id: number;
@@ -38,11 +33,8 @@ export class ChatGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   constructor(
-    private chatRoomRepository: ChatRoomRepository,
-    private chatMemberRepository: ChatMemberRepository,
-    private chatBanRepository: ChatBanRepository,
-    private socketId: SocketRepository,
-    private chatService: ChatService
+    private chatService: ChatService,
+    private socketArray: SocketArray
   ) {}
   @WebSocketServer() nsp: Namespace;
 
@@ -54,13 +46,15 @@ export class ChatGateway
 
   async handleConnection(@ConnectedSocket() socket: Socket) {
     const user_id = socket.handshake.query.user_id as string;
-    await this.chatService.socketConnection(socket.id, user_id);
+    // await this.chatService.socketConnection(socket.id, user_id);
+    this.socketArray.addSocketArray({user_id, socket_id: socket.id});
     this.logger.log(`${socket.id} 소켓 연결`);
   }
 
   async handleDisconnect(@ConnectedSocket() socket: Socket) {
     const user_id = socket.handshake.query.user_id as string;
-    await this.chatService.socketDisconnection(user_id);
+    // await this.chatService.socketDisconnection(user_id);
+    this.socketArray.removeSocketArray(user_id);
     this.logger.log(`${socket.id} 소켓 연결 해제 ❌`);
   }
 
