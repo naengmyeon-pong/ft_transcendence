@@ -4,7 +4,6 @@ import React, {
   useState,
   useRef,
   useCallback,
-  useMemo,
 } from 'react';
 import {Socket} from 'socket.io-client';
 
@@ -41,29 +40,10 @@ const KEY_CODES = {
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
 
-const PADDLE_STEP_SIZE = 10;
 const PADDLE_WIDTH = 10;
 const PADDLE_HEIGHT = 100;
-const PADDLE_DISTANCE_FROM_WALL = 20;
 
 const BALL_RADIUS = 10;
-const BALL_SPEED = 3;
-
-const isCollidingPaddle = (ball: Ball, paddle: Coordinate): boolean => {
-  const isCollidingPaddleLeft = paddle.x <= ball.pos.x + BALL_RADIUS;
-  const isCollidingPaddleRight =
-    paddle.x + PADDLE_WIDTH >= ball.pos.x - BALL_RADIUS;
-  const isCollidingPaddleTop = paddle.y <= ball.pos.y + BALL_RADIUS;
-  const isCollidingPaddleBottom =
-    paddle.y + PADDLE_HEIGHT >= ball.pos.y - BALL_RADIUS;
-
-  return (
-    isCollidingPaddleLeft &&
-    isCollidingPaddleRight &&
-    isCollidingPaddleTop &&
-    isCollidingPaddleBottom
-  );
-};
 
 Pong.defaultProps = {
   socket: null,
@@ -98,7 +78,6 @@ function Pong({socket, gameInfo}: PongProps) {
       y: 0,
     },
   });
-  const ballDirectionRef = useRef<'left' | 'right'>('left');
   const keyStateRef = useRef<{[key: string]: boolean}>({});
   const requestAnimationIdRef = useRef<number>(0);
 
@@ -153,22 +132,6 @@ function Pong({socket, gameInfo}: PongProps) {
     }
   }, [canvasRef, handleKeyDown, handleKeyUp]);
 
-  const maxY = useMemo(() => CANVAS_HEIGHT - PADDLE_HEIGHT, []);
-  const minY = useMemo(() => 0, []);
-
-  const updatePaddlePosition = useCallback(
-    (paddle: Coordinate, keyUp: string, keyDown: string) => {
-      const newY =
-        paddle.y +
-        (keyStateRef.current[keyDown] ? PADDLE_STEP_SIZE : 0) -
-        (keyStateRef.current[keyUp] ? PADDLE_STEP_SIZE : 0);
-
-      const clampedY = Math.max(minY, Math.min(newY, maxY));
-      return {...paddle, y: clampedY};
-    },
-    [maxY, minY]
-  );
-
   const drawPaddle = useCallback(
     (paddle: Coordinate) => {
       if (ctx !== null) {
@@ -206,25 +169,6 @@ function Pong({socket, gameInfo}: PongProps) {
       ctx.stroke();
     }
   }, [ctx, ball]);
-
-  const resetBall = useCallback(() => {
-    if (ballDirectionRef.current === 'left') {
-      ballDirectionRef.current = 'right';
-    } else {
-      ballDirectionRef.current = 'left';
-    }
-
-    setBall(() => ({
-      pos: {
-        x: CANVAS_WIDTH / 2,
-        y: CANVAS_HEIGHT / 2,
-      },
-      vel: {
-        x: ballDirectionRef.current === 'left' ? -1 : 1, // Calculate initial direction based on the current position
-        y: 0,
-      },
-    }));
-  }, [ballDirectionRef]);
 
   const drawScores = useCallback(() => {
     if (ctx) {
