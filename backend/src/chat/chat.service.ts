@@ -11,6 +11,7 @@ import {
 } from './chat.repository';
 import {UserRepository} from 'src/user/user.repository';
 import {RoomDto} from './dto/room.dto';
+import {SocketArray} from 'src/globalVariable/global.socket';
 
 export interface UserInfo {
   id: string;
@@ -24,27 +25,27 @@ export class ChatService {
     private chatRoomRepository: ChatRoomRepository,
     private chatMemberRepository: ChatMemberRepository,
     private socketRepository: SocketRepository,
-    private socketId: SocketRepository,
-    private userRepository: UserRepository
+    private userRepository: UserRepository,
+    private socketArray: SocketArray
   ) {}
 
-  async socketConnection(socket_id: string, user_id: string) {
-    if (!socket_id || !user_id) {
-      throw new BadRequestException('empty parameter.');
-    }
-    const socket = this.socketRepository.create({
-      user_id,
-      socket_id,
-    });
-    await this.socketRepository.save(socket);
-  }
+  // async socketConnection(socket_id: string, user_id: string) {
+  //   if (!socket_id || !user_id) {
+  //     throw new BadRequestException('empty parameter.');
+  //   }
+  //   const socket = this.socketRepository.create({
+  //     user_id,
+  //     socket_id,
+  //   });
+  //   await this.socketRepository.save(socket);
+  // }
 
-  async socketDisconnection(user_id: string) {
-    if (!user_id) {
-      throw new BadRequestException('empty parameter.');
-    }
-    await this.socketRepository.delete({user_id: user_id});
-  }
+  // async socketDisconnection(user_id: string) {
+  //   if (!user_id) {
+  //     throw new BadRequestException('empty parameter.');
+  //   }
+  //   await this.socketRepository.delete({user_id: user_id});
+  // }
 
   async getRoomList() {
     const room_list = [];
@@ -236,6 +237,17 @@ export class ChatService {
     }
     return false;
   }
+
+  // async muteMember(room_id: number, user_id: string, target_id: string) {
+  //   const admin = await this.isChatMember(room_id, user_id);
+  //   const member = await this.isChatMember(room_id, target_id);
+
+  //   if (admin.permission > member.permission) {
+  //     member.mute = Date
+  //     return true;
+  //   }
+  //   return false;
+  // }
 
   async isOwner(room_id: number, user_id: string) {
     const member = await this.isChatMember(room_id, user_id);
