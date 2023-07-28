@@ -103,22 +103,35 @@ function Pong({socket, gameInfo}: PongProps) {
   const requestAnimationIdRef = useRef<number>(0);
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    if (
+      event.key !== KEY_CODES.ARROW_DOWN &&
+      event.key !== KEY_CODES.ARROW_UP
+    ) {
+      return;
+    }
     keyStateRef.current[event.key] = true;
     if (socket) {
-      console.log('hi');
       socket.emit('update_key', {
         room_name: sessionStorage.getItem('room_name'),
-        key: event.key,
+        up: keyStateRef.current[KEY_CODES.ARROW_UP],
+        down: keyStateRef.current[KEY_CODES.ARROW_DOWN],
       });
     }
   }, []);
 
   const handleKeyUp = useCallback((event: KeyboardEvent) => {
+    if (
+      event.key !== KEY_CODES.ARROW_DOWN &&
+      event.key !== KEY_CODES.ARROW_UP
+    ) {
+      return;
+    }
     keyStateRef.current[event.key] = false;
     if (socket) {
       socket.emit('update_key', {
         room_name: sessionStorage.getItem('room_name'),
-        key: event.key,
+        up: keyStateRef.current[KEY_CODES.ARROW_UP],
+        down: keyStateRef.current[KEY_CODES.ARROW_DOWN],
       });
     }
   }, []);
@@ -282,13 +295,6 @@ function Pong({socket, gameInfo}: PongProps) {
       setBall(gameInfo.ball);
       setLeftScore(gameInfo.leftScore);
       setRightScore(gameInfo.rightScore);
-      // if (socket) {
-      //   socket.emit('update', {
-      //     room_name: sessionStorage.getItem('room_name'),
-      //     up: keyStateRef.current[KEY_CODES.ARROW_UP],
-      //     down: keyStateRef.current[KEY_CODES.ARROW_DOWN],
-      //   });
-      // }
     }
     setLeftPaddle(prevPaddle =>
       updatePaddlePosition(prevPaddle, KEY_CODES.W, KEY_CODES.S)
@@ -305,7 +311,8 @@ function Pong({socket, gameInfo}: PongProps) {
       drawScores();
     }
 
-    requestAnimationIdRef.current = window.requestAnimationFrame(onAnimation);
+    // requestAnimationIdRef.current = window.requestAnimationFrame(onAnimation);
+    window.cancelAnimationFrame(requestAnimationIdRef.current);
   }, [
     ctx,
     leftPaddle,

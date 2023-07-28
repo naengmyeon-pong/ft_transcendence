@@ -32,46 +32,38 @@ interface GameInfo {
   ball: Ball;
 }
 
+const socket = io('http://localhost:3001/game');
+
 function Game() {
-  const [socket, setSocket] = useState<Socket | null>(null);
   const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
-  console.log('test');
-  console.log('socket: ', socket);
   const handleNotice = (notice: string) => {
     console.log(notice);
-
-    if (socket) {
-      const roomName = sessionStorage.getItem('room_name');
-      console.log('roomname', roomName);
-      socket.emit('update_frame', roomName);
-    } else {
-      console.log('socket', socket);
-    }
   };
 
   const handleRoomname = ({room_name}: {room_name: string}) => {
-    console.log(room_name);
     sessionStorage.setItem('room_name', room_name);
+
+    if (socket) {
+      socket.emit('update_frame', room_name);
+    }
   };
 
   const handleGameInfo = ({game_info}: {game_info: GameInfo}) => {
-    console.log(game_info);
     setGameInfo(game_info);
   };
 
   useEffect(() => {
-    const socketIo: Socket = io('http://localhost:3001/game');
+    console.log('use effect');
     const username = 'user_' + (Math.random() * 1000).toString();
-    socketIo.emit('join_game', username);
+    socket.emit('join_game', username);
 
-    setSocket(socketIo);
-    socketIo.on('notice', handleNotice);
-    socketIo.on('room_name', handleRoomname);
-    socketIo.on('game_info', handleGameInfo);
+    socket.on('notice', handleNotice);
+    socket.on('room_name', handleRoomname);
+    socket.on('game_info', handleGameInfo);
     return () => {
-      socketIo.off('notice', handleNotice);
-      socketIo.off('room_name', handleRoomname);
-      socketIo.off('game_info', handleGameInfo);
+      socket.off('notice', handleNotice);
+      socket.off('room_name', handleRoomname);
+      socket.off('game_info', handleGameInfo);
     };
   }, []);
 

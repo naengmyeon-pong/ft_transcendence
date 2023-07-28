@@ -26,10 +26,9 @@ const CANVAS_HEIGHT = 500;
 const PADDLE_STEP_SIZE = 10;
 const PADDLE_WIDTH = 10;
 const PADDLE_HEIGHT = 100;
-const PADDLE_DISTANCE_FROM_WALL = 20;
 
 const BALL_RADIUS = 10;
-const BALL_SPEED = 1;
+const BALL_SPEED = 3;
 
 interface GameUser {
   user_id: string;
@@ -193,23 +192,12 @@ export class GameGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody() room_name: string
   ) {
-    console.log('update frame');
-    // setInterval(
-    //   (function updateFrame() {
-    //     this.num++;
-    //     const roomInfo: RoomInfo = gameRooms.get(room_name);
-    //     const gameInfo: GameInfo = roomInfo.game_info;
-    //     updateBallPosition(gameInfo);
-
-    //     console.log(this.num);
-    //     this.nsp.to(room_name).emit('game_info', {game_info: gameInfo});
-
-    //     return updateFrame;
-    //   })(),
-    //   1000 / 60
-    // );
-    // const gameUsers: GameUser[] = roomInfo.users;
-    // const eventUser = findUserBySocket(socket, gameUsers);
+    setInterval(() => {
+      const roomInfo: RoomInfo = gameRooms.get(room_name);
+      const gameInfo: GameInfo = roomInfo.game_info;
+      updateBallPosition(gameInfo);
+      this.nsp.to(room_name).emit('game_info', {game_info: gameInfo});
+    }, 1000 / 60);
   }
 }
 
