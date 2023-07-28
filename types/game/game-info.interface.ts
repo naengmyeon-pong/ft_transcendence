@@ -7,4 +7,5 @@ export interface GameInfo {
   rightPaddle: Coordinate;
   rightScore: number;
   ball: Ball;
+  initialBallVelX: number;
 }

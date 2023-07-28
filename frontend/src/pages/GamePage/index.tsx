@@ -1,36 +1,8 @@
-import React, {
-  RefObject,
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-  useMemo,
-} from 'react';
+import React, {useEffect, useState} from 'react';
 import {io, Socket} from 'socket.io-client';
 import Pong from './Pong';
 
-interface Velocity {
-  x: number;
-  y: number;
-}
-
-interface Coordinate {
-  x: number;
-  y: number;
-}
-
-interface Ball {
-  pos: Coordinate;
-  vel: Velocity;
-}
-
-interface GameInfo {
-  leftPaddle: Coordinate;
-  leftScore: number;
-  rightPaddle: Coordinate;
-  rightScore: number;
-  ball: Ball;
-}
+import {GameInfo} from '@/types/game';
 
 const socket = io('http://localhost:3001/game');
 

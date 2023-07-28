@@ -21,7 +21,7 @@ const PADDLE_WIDTH = 10;
 const PADDLE_HEIGHT = 100;
 
 const BALL_RADIUS = 10;
-const BALL_SPEED = 2;
+const BALL_SPEED = 3;
 
 interface GameUser {
   user_id: string;
@@ -67,6 +67,7 @@ const initGameInfo = (): GameInfo => {
     rightPaddle,
     rightScore: 0,
     ball,
+    initialBallVelX: -1,
   };
 
   return gameInfo;
@@ -151,8 +152,6 @@ export class GameGateway
     @MessageBody()
     {room_name, up, down}: {room_name: string; up: boolean; down: boolean}
   ) {
-    console.log('here');
-    console.log(room_name, up, down);
     const roomInfo: RoomInfo = gameRooms.get(room_name);
     const gameInfo: GameInfo = roomInfo.game_info;
 
@@ -197,11 +196,10 @@ const updatePaddlePosition = (
   paddle.y = clampedY;
 };
 
-// TODO: 공이 처음 움직이는 방향을 왼쪽 오른쪽 번갈아서 구현하기
-const resetBall = (ball: Ball) => {
+const resetBall = (ball: Ball, initialBallVelX: number) => {
   ball.pos.x = CANVAS_WIDTH / 2;
   ball.pos.y = CANVAS_HEIGHT / 2;
-  ball.vel.x = 1;
+  ball.vel.x = -initialBallVelX;
   ball.vel.y = 0;
 };
 
@@ -227,20 +225,8 @@ const updateBallPosition = (gameInfo: GameInfo) => {
   const nextX = ball.pos.x + BALL_SPEED * ball.vel.x;
   let nextY = ball.pos.y + BALL_SPEED * ball.vel.y;
 
-  // Check if the ball is colliding with the left or right walls
-  const isOutOfBoundsLeft = nextX - BALL_RADIUS <= 0;
-  const isOutOfBoundsRight = nextX + BALL_RADIUS >= CANVAS_WIDTH;
-
-  if (isOutOfBoundsLeft || isOutOfBoundsRight) {
-    if (isOutOfBoundsLeft) {
-      gameInfo.rightScore += 1;
-    } else {
-      gameInfo.leftScore += 1;
-    }
-    resetBall(ball);
-    return;
-  }
-
+  ball.pos.x = nextX;
+  ball.pos.y = nextY;
   // Check if the ball is colliding with the top or bottom walls
   const isCollidingTop = nextY - BALL_RADIUS <= 0;
   const isCollidingBottom = nextY + BALL_RADIUS >= CANVAS_HEIGHT;
@@ -264,10 +250,48 @@ const updateBallPosition = (gameInfo: GameInfo) => {
     const direction = ball.pos.x + BALL_RADIUS < CANVAS_WIDTH / 2 ? 1 : -1;
     ball.vel.x = direction * BALL_SPEED * Math.cos(angleRadian);
     ball.vel.y = BALL_SPEED * Math.sin(angleRadian);
+    // if (ball.vel.x < 0) {
+    //   if (ball.pos.x - BALL_RADIUS < PADDLE_WIDTH) {
+    //     ball.pos.x = PADDLE_WIDTH + BALL_RADIUS;
+    //   }
+    // } else {
+    //   if (ball.pos.x + BALL_RADIUS > CANVAS_WIDTH - PADDLE_WIDTH) {
+    //     ball.pos.x = CANVAS_WIDTH - PADDLE_WIDTH - BALL_RADIUS;
+    //   }
+    // }
+    return;
   }
 
-  ball.pos.x = nextX;
-  ball.pos.y = nextY;
+  // Check if the ball is colliding with the left or right walls
+  const isOutOfBoundsLeft = nextX - BALL_RADIUS <= 0;
+  const isOutOfBoundsRight = nextX + BALL_RADIUS >= CANVAS_WIDTH;
+
+  if (isOutOfBoundsLeft || isOutOfBoundsRight) {
+    if (isOutOfBoundsLeft) {
+      // if (
+      //   gameInfo.ball.pos.y >= gameInfo.leftPaddle.y &&
+      //   gameInfo.ball.pos.y <= gameInfo.leftPaddle.y + PADDLE_HEIGHT
+      // ) {
+      //   gameInfo.ball.pos.x = PADDLE_WIDTH + BALL_RADIUS;
+      //   console.log('left collding');
+      //   return;
+      // }
+      gameInfo.rightScore += 1;
+    } else {
+      // if (
+      //   gameInfo.ball.pos.y >= gameInfo.rightPaddle.y &&
+      //   gameInfo.ball.pos.y <= gameInfo.rightPaddle.y + PADDLE_HEIGHT
+      // ) {
+      //   gameInfo.ball.pos.x = CANVAS_WIDTH - (PADDLE_WIDTH + BALL_RADIUS);
+      //   console.log('right collding');
+      //   return;
+      // }
+      gameInfo.leftScore += 1;
+    }
+    resetBall(ball, gameInfo.initialBallVelX);
+    gameInfo.initialBallVelX = -gameInfo.initialBallVelX;
+    return;
+  }
 };
 
 // const findUserBySocket = (socket: Socket): boolean => {};
