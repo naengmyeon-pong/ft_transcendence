@@ -10,7 +10,7 @@ import React, {
   useRef,
 } from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
-import {Socket, io} from 'socket.io-client';
+import {Socket} from 'socket.io-client';
 
 interface IChat {
   username: string;
@@ -61,6 +61,8 @@ function ChatBox() {
   // 채팅창 스크롤을 제어하는 변수
   const chatContainerEl = useRef<HTMLDivElement>(null);
 
+  const navigate = useNavigate();
+
   // 채팅이 길어지면(chats.length) 스크롤이 생성되므로, 스크롤의 위치를 최근 메시지에 위치시키기 위함
   useEffect(() => {
     if (!chatContainerEl.current) return;
@@ -79,10 +81,17 @@ function ChatBox() {
     socket?.emit('join-room', roomId);
 
     function messageHandler(chat: IChat) {
+      console.log('TESThandleMessage');
       setChats(prevChats => [...prevChats, chat]);
     }
 
     socket?.on('message', messageHandler);
+
+    function leaveRoomHandler(ret: boolean) {
+      navigate('/menu/chat/list');
+    }
+
+    socket?.once('leave-room', leaveRoomHandler);
 
     return () => {
       socket?.emit('leave-room', roomId, () => {

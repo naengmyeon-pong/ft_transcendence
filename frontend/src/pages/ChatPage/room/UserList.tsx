@@ -11,6 +11,22 @@ const BoxBorder = styled('div')({
   borderRadius: '5px',
 });
 
+interface MemberInfo {
+  id: string;
+  image: string;
+  nickName: string;
+}
+
+interface Member {
+  owner: MemberInfo;
+  admin: MemberInfo[];
+  user: MemberInfo[];
+}
+
+interface MemberType {
+  members: Member;
+}
+
 export default function UserList() {
   const [owner, setOwner] = useState<UserType>();
   const [adminUser, setAdminUser] = useState<UserType[]>([]);
@@ -53,14 +69,17 @@ export default function UserList() {
     });
   }
 
-  function handleUserList(test: boolean) {
-    console.log('TEST');
-    console.log(test);
+  function handleUserList(test: MemberType) {
+    console.log('admin: : ');
+    setAdminUser(test?.members?.admin);
+    setUsers(test?.members?.user);
+    console.log('owner: : ', test?.members?.owner);
+    console.log('user: : ', test?.members?.user);
   }
-
+  console.log('랜더링');
   useEffect(() => {
     // 소켓 이벤트 등록해서 들어온 메세지 헨들링
-    socket?.on('test', handleUserList);
+    socket?.on('room-member', handleUserList);
     roomUsers();
   }, []);
 
