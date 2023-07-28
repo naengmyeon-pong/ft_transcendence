@@ -53,8 +53,9 @@ function ChatRoom() {
   }
 
   function exit() {
-    socket?.emit('leave-room', roomId);
-    navigate('/menu/chat/list');
+    socket?.emit('leave-room', roomId, () => {
+      navigate('/menu/chat/list');
+    });
   }
 
   return (

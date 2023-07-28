@@ -66,4 +66,9 @@ export class ChatController {
   async createRoom(@Body() roomDto: RoomDto) {
     return await this.chatService.createRoom(roomDto);
   }
+
+  @Get('join_room') //http://localhost:3001/chatroom/join_room?room_id=id
+  async getRoom(@Query('room_id') room_id: number) {
+    return await this.chatService.getRoom(room_id);
+  }
 }

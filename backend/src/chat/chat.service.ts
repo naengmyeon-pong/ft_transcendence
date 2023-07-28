@@ -30,7 +30,7 @@ export class ChatService {
 
   async getRoomList() {
     const room_list = [];
-    const chatrooms = this.chatRoomRepository
+    const chatrooms = await this.chatRoomRepository
       .createQueryBuilder('chatRoom')
       .select([
         'chatRoom.id',
@@ -60,7 +60,6 @@ export class ChatService {
       };
       room_list.push(temp);
     });
-    // console.log(room_list);
     return room_list;
   }
 
@@ -135,21 +134,21 @@ export class ChatService {
     return room;
   }
 
-  async joinRoom(room_id: number, nickname: string) {
-    if (!room_id || !nickname) {
+  async joinRoom(room_id: number, user_id: string) {
+    if (!room_id || !user_id) {
       throw new BadRequestException('empty parameter.');
     }
-    const user = await this.getUser(nickname);
+    const user = await this.getUser(user_id);
     const member = await this.chatMemberRepository.findOneBy({
       chatroomId: room_id,
-      user: user,
+      userId: user_id,
     });
     if (member && member.permission === 2) {
       // 이 user가 방의 owner이면 방 만들 때 이미 member로 추가 되었기 때문에 skip 하고 socket에서 join만 할 수 있도록.
       return;
     } else if (member) {
       // owner가 아닌 유저가 이미 있으면 postman 같이 잘못된 요청이므로 에러 발생
-      throw new ConflictException(`${nickname} already chatmember.`);
+      throw new ConflictException(`${user_id} already chatmember.`);
     }
 
     const room = await this.getRoom(room_id);
@@ -157,43 +156,47 @@ export class ChatService {
       // 새로운 유저라서 방에 추가해줘야 하는데, 방 인원이 꽉 찼을 경우
       throw new ConflictException('sorry, room is full!');
     }
+    room.current_nums += 1;
+    await this.chatRoomRepository.save(room);
     const new_member = this.chatMemberRepository.create({
       permission: 0,
       mute: null,
       chatroom: room,
-      user: user,
+      userId: user_id,
     });
     await this.chatMemberRepository.save(new_member);
-    room.current_nums += 1;
-    await this.chatRoomRepository.save(room);
   }
 
-  async leaveRoom(room_id: number, nickname: string) {
-    if (!room_id || !nickname) {
+  async leaveRoom(room_id: number, user_id: string) {
+    if (!room_id || !user_id) {
       throw new BadRequestException('empty parameter.');
     }
-    const user = await this.getUser(nickname);
-    const room = await this.getRoom(room_id);
+    const user = await this.getUser(user_id);
+    const room = await this.chatRoomRepository.findOneBy({id: room_id});
+    if (!room) {
+      return;
+    }
 
     const member = await this.chatMemberRepository.findOneBy({
       chatroomId: room_id,
-      user: user,
+      userId: user_id,
     });
-    // console.log('member :', member);
     if (!member) {
       return;
-      // throw new BadRequestException(`${nickname} is not this chatroom member.`);
     } else if (member.permission === 2) {
       //owner 일 때 방 전체가 터지게.
+      const check_del = await this.chatRoomRepository.delete({id: room_id});
+      console.log('check_del :', check_del.affected);
+      return member;
     } else {
-      const del_member = await this.chatMemberRepository.delete({
+      await this.chatMemberRepository.delete({
         userId: member.userId,
         chatroomId: room_id,
       });
-      // console.log('delete member : ', del_member.affected);
       room.current_nums -= 1;
       await this.chatRoomRepository.save(room);
     }
+    return member;
   }
 
   async socketConnection(socket_id: string, user_id: string) {
@@ -211,16 +214,21 @@ export class ChatService {
     if (!socket_id) {
       throw new BadRequestException('empty parameter.');
     }
-    const socket = await this.socketRepository.delete(socket_id);
+    const socket = await this.socketRepository.delete({socket_id: socket_id});
     if (socket.affected === 0) {
-      throw new NotFoundException(`${socket_id} is not a vlidate socket.`);
+      console.log('socket_id :', socket_id);
+      // throw new NotFoundException(`${socket_id} is not a vlidate socket.`);
     }
   }
 
-  async getUser(nickname: string) {
-    const user = await this.userRepository.findOneBy({user_nickname: nickname});
+  async deleteRoom(room_id: number) {
+    const room = await this.getRoom(room_id);
+  }
+
+  async getUser(user_id: string) {
+    const user = await this.userRepository.findOneBy({user_id});
     if (!user) {
-      throw new NotFoundException(`${nickname} is not a user.`);
+      throw new NotFoundException(`${user_id} is not a user.`);
     }
     return user;
   }
