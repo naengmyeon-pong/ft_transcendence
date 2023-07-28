@@ -58,7 +58,7 @@ function ShowRoomList({roomList}: ComponentProps) {
     [page, rowsPerPage, roomList]
   );
 
-  function enterRoom(e: React.MouseEvent<unknown>, row: ChatListData) {
+  async function enterRoom(e: React.MouseEvent<unknown>, row: ChatListData) {
     e.preventDefault();
     if (row.is_password) {
       setPasswordModal(true);
@@ -68,10 +68,12 @@ function ShowRoomList({roomList}: ComponentProps) {
       alert('인원 초과입니다');
       return;
     }
-    console.log('name:', row.name);
-    console.log('id:', row.id);
-    // TODO: 서버에 채팅방 이름과 패스워드를 보낸 후 맞는지 확인하고 들여보낸다
-    navigate(`/menu/chat/room/${row.name}/${row.id}`);
+    try {
+      // TODO: 서버에 채팅방 이름과 패스워드를 보낸 후 맞는지 확인하고 들여보낸다
+      navigate(`/menu/chat/room/${row.name}/${row.id}`);
+    } catch (error) {
+      console.log(error);
+    }
   }
   return (
     <TableContainer>

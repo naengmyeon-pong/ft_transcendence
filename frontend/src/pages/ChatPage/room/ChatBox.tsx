@@ -8,7 +8,7 @@ import React, {
   useEffect,
   useRef,
 } from 'react';
-import {useParams} from 'react-router-dom';
+import {useNavigate, useParams} from 'react-router-dom';
 import {Socket, io} from 'socket.io-client';
 
 interface IChat {
@@ -72,6 +72,8 @@ function ChatBox() {
     }
   }, [chats.length]);
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     // TODO: 초기 유저의 상태여부(온라인 등)을 위해 로그인 시점에 연결할지 회의필요
     // const socketIo = io('http://localhost:3001/chat');
@@ -88,9 +90,6 @@ function ChatBox() {
     // setSocket(socketIo);
     socket?.on('message', messageHandler);
 
-    //TODO: BUG List
-    // 뒤로가기 시 소켓이 끊기지 않음
-    // 개발단계에서 리랜더링 시 소켓이 끊기지 않음
     return () => {
       socket?.emit('leave-room', roomId);
       socket?.off('message', messageHandler);
