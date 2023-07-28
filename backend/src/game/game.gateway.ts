@@ -28,7 +28,7 @@ const PADDLE_WIDTH = 10;
 const PADDLE_HEIGHT = 100;
 
 const BALL_RADIUS = 10;
-const BALL_SPEED = 3;
+const BALL_SPEED = 2;
 
 interface GameUser {
   user_id: string;
@@ -101,6 +101,11 @@ const initGameInfo = (): GameInfo => {
 
   return gameInfo;
 };
+
+enum EUserIndex {
+  LEFT = 0,
+  RIGHT = 1,
+}
 
 const maxY = CANVAS_HEIGHT - PADDLE_HEIGHT;
 const minY = 0;
@@ -181,10 +186,11 @@ export class GameGateway
     const roomInfo: RoomInfo = gameRooms.get(room_name);
     const gameInfo: GameInfo = roomInfo.game_info;
 
-    updatePaddlePosition(gameInfo.rightPaddle, up, down);
-
-    // const gameUsers: GameUser[] = roomInfo.users;
-    // const eventUser = findUserBySocket(socket, gameUsers);
+    if (isLeftUser(roomInfo, socket) === true) {
+      updatePaddlePosition(gameInfo.leftPaddle, up, down);
+    } else {
+      updatePaddlePosition(gameInfo.rightPaddle, up, down);
+    }
   }
 
   @SubscribeMessage('update_frame')
@@ -192,16 +198,21 @@ export class GameGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody() room_name: string
   ) {
+    const roomInfo: RoomInfo = gameRooms.get(room_name);
+    const gameInfo: GameInfo = roomInfo.game_info;
     setInterval(() => {
-      const roomInfo: RoomInfo = gameRooms.get(room_name);
-      const gameInfo: GameInfo = roomInfo.game_info;
       updateBallPosition(gameInfo);
       this.nsp.to(room_name).emit('game_info', {game_info: gameInfo});
     }, 1000 / 60);
   }
 }
 
-// const updateFrame = (room_name: string) => {};
+const isLeftUser = (roomInfo: RoomInfo, socket: Socket): boolean => {
+  if (socket === roomInfo.users[EUserIndex.LEFT].socket) {
+    return true;
+  }
+  return false;
+};
 
 const updatePaddlePosition = (
   paddle: Coordinate,

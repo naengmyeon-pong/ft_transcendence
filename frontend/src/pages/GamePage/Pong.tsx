@@ -226,60 +226,6 @@ function Pong({socket, gameInfo}: PongProps) {
     }));
   }, [ballDirectionRef]);
 
-  const updateBallPosition = useCallback(() => {
-    setBall(prevBall => {
-      const nextBall: Ball = {
-        pos: {x: prevBall.pos.x, y: prevBall.pos.y},
-        vel: {x: prevBall.vel.x, y: prevBall.vel.y},
-      };
-
-      nextBall.pos.x = prevBall.pos.x + BALL_SPEED * prevBall.vel.x;
-      nextBall.pos.y = prevBall.pos.y + BALL_SPEED * prevBall.vel.y;
-
-      // Check if the ball is colliding with the left or right walls
-      const isOutOfBoundsLeft = nextBall.pos.x - BALL_RADIUS <= 0;
-      const isOutOfBoundsRight = nextBall.pos.x + BALL_RADIUS >= CANVAS_WIDTH;
-
-      if (isOutOfBoundsLeft || isOutOfBoundsRight) {
-        if (isOutOfBoundsLeft) {
-          setRightScore(prevScore => prevScore + 1);
-        } else {
-          setLeftScore(prevScore => prevScore + 1);
-        }
-        resetBall();
-        return prevBall; // Return the previous ball state to avoid multiple resets in one frame
-      }
-
-      // Check if the ball is colliding with the top or bottom walls
-      const isCollidingTop = nextBall.pos.y - BALL_RADIUS <= 0;
-      const isCollidingBottom = nextBall.pos.y + BALL_RADIUS >= CANVAS_HEIGHT;
-
-      if (isCollidingTop || isCollidingBottom) {
-        if (isCollidingTop) {
-          nextBall.pos.y = 0 + BALL_RADIUS;
-        } else {
-          nextBall.pos.y = CANVAS_HEIGHT - BALL_RADIUS;
-        }
-        nextBall.vel.y = -prevBall.vel.y;
-      }
-
-      const paddle = nextBall.vel.x < 0 ? leftPaddle : rightPaddle;
-
-      if (isCollidingPaddle(nextBall, paddle)) {
-        let collidePoint = nextBall.pos.y - (paddle.y + PADDLE_HEIGHT / 2);
-        collidePoint = collidePoint / (PADDLE_HEIGHT / 2);
-
-        const angleRadian = (Math.PI / 4) * collidePoint;
-        const direction =
-          nextBall.pos.x + BALL_RADIUS < CANVAS_WIDTH / 2 ? 1 : -1;
-        nextBall.vel.x = direction * BALL_SPEED * Math.cos(angleRadian);
-        nextBall.vel.y = BALL_SPEED * Math.sin(angleRadian);
-      }
-
-      return nextBall;
-    });
-  }, [leftPaddle, rightPaddle, resetBall]);
-
   const drawScores = useCallback(() => {
     if (ctx) {
       ctx.font = '30px Arial';
@@ -292,14 +238,11 @@ function Pong({socket, gameInfo}: PongProps) {
   const onAnimation = useCallback(() => {
     if (gameInfo) {
       setRightPaddle(gameInfo.rightPaddle);
+      setLeftPaddle(gameInfo.leftPaddle);
       setBall(gameInfo.ball);
       setLeftScore(gameInfo.leftScore);
       setRightScore(gameInfo.rightScore);
     }
-    setLeftPaddle(prevPaddle =>
-      updatePaddlePosition(prevPaddle, KEY_CODES.W, KEY_CODES.S)
-    );
-    // updateBallPosition();
 
     if (ctx) {
       ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
@@ -311,14 +254,11 @@ function Pong({socket, gameInfo}: PongProps) {
       drawScores();
     }
 
-    // requestAnimationIdRef.current = window.requestAnimationFrame(onAnimation);
+    requestAnimationIdRef.current = window.requestAnimationFrame(onAnimation);
     window.cancelAnimationFrame(requestAnimationIdRef.current);
   }, [
     ctx,
-    leftPaddle,
-    rightPaddle,
-    updatePaddlePosition,
-    updateBallPosition,
+    gameInfo,
     drawBorder,
     drawBall,
     drawMiddleLine,

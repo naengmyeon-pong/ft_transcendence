@@ -53,7 +53,6 @@ function Game() {
   };
 
   useEffect(() => {
-    console.log('use effect');
     const username = 'user_' + (Math.random() * 1000).toString();
     socket.emit('join_game', username);
 
