@@ -8,15 +8,15 @@ import AuthPage from './pages/AuthPage';
 import SignupPage from './pages/SignupPage';
 import PasswordResetPage from './pages/PasswordResetPage';
 import NotFoundPage from './pages/NotFoundPage';
-import MainPage from 'layout/Buffer/MainPage/MainPage';
-import Ranking from 'layout/Buffer/Ranking';
-import MainLayout from 'layout/MainLayout';
+import MainPage from './layout/Buffer/MainPage/MainPage';
+import Ranking from './layout/Buffer/Ranking';
+import MainLayout from './layout/MainLayout';
 
-import WaitingChannelRoom from 'layout/Buffer/WaitingChannelRoom';
-import ChatList from 'pages/ChatPage';
-import ChatRoom from 'pages/ChatPage/room';
+import WaitingChannelRoom from './layout/Buffer/WaitingChannelRoom';
+import ChatList from './pages/ChatPage';
+import ChatRoom from './pages/ChatPage/room';
 
-import Game from 'pages/GamePage';
+import Game from './pages/GamePage';
 
 function App() {
   return (
