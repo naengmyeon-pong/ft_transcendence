@@ -16,7 +16,7 @@ import {IsUserAuthRepository} from 'src/signup/signup.repository';
     JwtModule.register({
       secret: 'Secret1234',
       signOptions: {
-        expiresIn: '1h',
+        expiresIn: '4h',
       },
     }),
     TypeOrmModule.forFeature([User]),

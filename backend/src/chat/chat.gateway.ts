@@ -53,8 +53,13 @@ export class ChatGateway
 
   async handleDisconnect(@ConnectedSocket() socket: Socket) {
     const user_id = socket.handshake.query.user_id as string;
+    const room_id = socket.handshake.query.room_id as string;
+    console.log('room_id :', room_id);
     // await this.chatService.socketDisconnection(user_id);
     this.socketArray.removeSocketArray(user_id);
+    if (room_id) {
+      this.handleLeaveRoom(socket, Number(room_id));
+    }
     this.logger.log(`${socket.id} 소켓 연결 해제 ❌`);
   }
 
@@ -85,6 +90,8 @@ export class ChatGateway
     socket.to(`${room_id}`).emit('message', {
       message: `${socket.handshake.query.nickname}가 들어왔습니다.`,
     });
+    console.log('join-room: ', socket.handshake.query.nickname);
+    // console.log('sockets :', this.nsp.sockets);
     this.nsp.to(`${room_id}`).emit('room-member', {
       members: await this.chatService.getRoomMembers(room_id),
     });
@@ -97,7 +104,13 @@ export class ChatGateway
     @MessageBody() room_id: number
   ) {
     const user_id = socket.handshake.query.user_id as string;
-    const leave = await this.chatService.leaveRoom(room_id, user_id);
+    console.log('leave-room: ', socket.handshake.query.nickname);
+    let leave;
+    try {
+      leave = await this.chatService.leaveRoom(room_id, user_id);
+    } catch (e) {
+      console.log(e.message);
+    }
     socket.leave(`${room_id}`);
 
     if (leave && leave.permission === 2) {
