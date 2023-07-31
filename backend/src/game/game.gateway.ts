@@ -8,7 +8,7 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
-} from '@nestjs/websockekts';
+} from '@nestjs/websockets';
 import {Namespace, Socket, Server} from 'socket.io';
 import {User} from 'src/user/user.entitiy';
 import {
@@ -42,8 +42,7 @@ interface GameUser {
   user_id: string;
   socket: Socket;
   keys: KeyData;
-  mode: string;
-  type: string;
+  mode_type: number;
 }
 
 interface KeyData {
@@ -54,19 +53,11 @@ interface KeyData {
 interface RoomInfo {
   users: GameUser[];
   game_info: GameInfo;
-  mode: string;
-  type: string;
+  mode_type: number;
   interval: NodeJS.Timer | null;
 }
 
-// const waitUsers: GameUser[] = [];
-
 const waitUserList: GameUser[][] = [];
-
-// const waitUsersEasyNormal: GameUser[];
-// const waitUsersEasyRank: GameUser[];
-// const waitUsersHardNormal: GameUser[];
-// const waitUsersHardRank: GameUser[];
 
 const gameRooms: Map<string, RoomInfo> = new Map();
 
@@ -144,6 +135,7 @@ export class GameGateway
     gameRooms.set(userId, {
       users: gameUserSockets,
       game_info: gameInfo,
+      mode_type: gameUserSockets[0].mode_type,
       interval: null,
     });
     return userId;
@@ -155,51 +147,48 @@ export class GameGateway
     @MessageBody() joinGameInfo: JoinGameInfo
   ) {
     const keys: KeyData = {up: false, down: false};
-    const {user_id, mode, type} = joinGameInfo;
-    const userSocket: GameUser = {user_id, socket, keys, mode, type};
-    if (this.isGameMatched(userSocket) === false) {
+    const {user_id} = joinGameInfo;
+    const userSocket: GameUser = {user_id, socket, keys, mode_type: -1};
+    if (this.isGameMatched(joinGameInfo, userSocket) === false) {
       return;
     } else {
-      matchGame(userSocket);
-    }
-    if (waitUsers.length === 0) {
-      // 게임 대기자가 없는 경우 => 대기열에 추가
-      console.log('wait');
-      waitUsers.push(userSocket);
-    } else {
-      // 게임 대기자가 있는 경우 => 대기중인 유저와 매칭
-      console.log('join');
-      const gameUserSockets: GameUser[] = [];
-      const firstUser = waitUsers.shift();
-      const secondUser = userSocket;
-      const roomName = this.createGameRoom(firstUser.user_id, gameUserSockets);
-
-      gameUserSockets.push(firstUser);
-      gameUserSockets.push(secondUser);
-
-      firstUser.socket.join(roomName);
-      secondUser.socket.join(roomName);
-      secondUser.socket
-        .to(roomName)
-        .emit('notice', {notice: `${user_id}이 입장했습니다.`});
-
-      const roomInfo: RoomInfo = gameRooms.get(roomName);
-      const gameInfo: GameInfo = roomInfo.game_info;
-      const roomUserInfo: RoomUserInfo = {
-        room_name: roomName,
-        left_user: firstUser.user_id,
-        right_user: secondUser.user_id,
-      };
-
-      this.nsp.to(roomName).emit('room_name', roomUserInfo);
-      this.nsp.to(roomName).emit('game_info', {game_info: gameInfo});
+      this.createRoom(userSocket);
     }
   }
 
-  // matchGame = ()
+  createRoom = (userSocket: GameUser) => {
+    const gameUserSockets: GameUser[] = [];
+    const firstUser = waitUserList[userSocket.mode_type].shift();
+    const secondUser = userSocket;
+    const roomName = this.createGameRoom(firstUser.user_id, gameUserSockets);
 
-  isGameMatched = (userSocket: GameUser): boolean => {
-    const gameModeType = this.findModeType(userSocket);
+    gameUserSockets.push(firstUser);
+    gameUserSockets.push(secondUser);
+
+    firstUser.socket.join(roomName);
+    secondUser.socket.join(roomName);
+    secondUser.socket
+      .to(roomName)
+      .emit('notice', {notice: `${secondUser.user_id}이 입장했습니다.`});
+
+    const roomInfo: RoomInfo = gameRooms.get(roomName);
+    const gameInfo: GameInfo = roomInfo.game_info;
+    const roomUserInfo: RoomUserInfo = {
+      room_name: roomName,
+      left_user: firstUser.user_id,
+      right_user: secondUser.user_id,
+    };
+
+    this.nsp.to(roomName).emit('room_name', roomUserInfo);
+    this.nsp.to(roomName).emit('game_info', {game_info: gameInfo});
+  };
+
+  isGameMatched = (
+    joinGameInfo: JoinGameInfo,
+    userSocket: GameUser
+  ): boolean => {
+    userSocket.mode_type = this.findModeType(joinGameInfo);
+    const gameModeType = userSocket.mode_type;
     if (gameModeType === -1) {
       // join-game-info not found
     }
@@ -213,10 +202,11 @@ export class GameGateway
     }
   };
 
-  findModeType = (userSocket: GameUser): number => {
-    const mode = userSocket.mode;
-    const type = userSocket.type;
+  findModeType = (joinGameInfo: JoinGameInfo): number => {
+    const mode = joinGameInfo.mode;
+    const type = joinGameInfo.type;
     let gameModeType = -1;
+
     if (mode === 'easy') {
       if (type === 'normal') {
         gameModeType = EASY_NORMAL;
@@ -290,7 +280,7 @@ export class GameGateway
     }
 
     // 테스트용 게임모드 데이터
-    const mode = 'normal_mode';
+    const mode = 'easy_mode';
     let mode_data = await this.modeRepository.findOneBy({mode});
     if (mode_data === null) {
       mode_data = await this.modeRepository.create({
