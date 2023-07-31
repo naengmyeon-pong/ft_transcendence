@@ -87,12 +87,10 @@ function ChatBox() {
   // const navigate = useNavigate();
 
   useEffect(() => {
-    socket?.emit('join-room', roomId, () => {
-      //
-    });
+    console.log('chatBox socket: ', socket);
+    socket?.emit('join-room', roomId);
 
     function messageHandler(chat: IChat) {
-      console.log('TESThandleMessage');
       setChats(prevChats => [...prevChats, chat]);
     }
 
@@ -104,10 +102,15 @@ function ChatBox() {
 
     socket?.once('leave-room', leaveRoomHandler);
 
+    const handleListener = (e: BeforeUnloadEvent) => {
+      socket?.emit('leave-room', roomId);
+    };
+
+    window.addEventListener('beforeunload', handleListener);
+
     return () => {
-      socket?.emit('leave-room', roomId, () => {
-        // navigate('/menu/chat/list');
-      });
+      window.removeEventListener('beforeunload', handleListener);
+      socket?.emit('leave-room', roomId);
       socket?.off('message', messageHandler);
     };
   }, []);

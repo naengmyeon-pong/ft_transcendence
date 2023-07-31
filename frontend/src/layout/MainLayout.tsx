@@ -1,4 +1,4 @@
-import React, {useContext, useEffect} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {Box, CssBaseline, Grid, Toolbar} from '@mui/material';
 import FtAppBar from './Buffer/FtAppBar';
 import FtSideBar from './Buffer/SideBar/FtSideBar';
@@ -13,6 +13,7 @@ function MainLayout() {
   const {setUserNickName} = useContext(UserContext);
   const {setUserImage} = useContext(UserContext);
   const {roomId} = useParams();
+  const [initMainLayout, setInitMainLayout] = useState(false);
 
   async function init() {
     const response = await apiManager.get('/user/user-info');
@@ -28,33 +29,36 @@ function MainLayout() {
       },
     });
     setSocket(socketIo);
+    setInitMainLayout(true);
   }
   useEffect(() => {
     init();
   }, []);
   return (
     <>
-      <Box height={'100vh'}>
-        <CssBaseline />
-        <FtAppBar />
-        <Toolbar />
-        <Box display="flex">
-          <Box>
-            <FtSideBar />
-          </Box>
-          {/* <Box width="80vw" paddingLeft="150px"> */}
-          {/* <Box flexGrow="1"> */}
-          <Grid container justifyContent="center">
-            <Grid item xs={8}>
-              {/* <Box> */}
-              {/* 게임하기, 전체랭킹, 채팅목록 */}
-              <Outlet />
-              {/* 개인 채팅창 위치 */}
+      {initMainLayout && (
+        <Box height={'100vh'}>
+          <CssBaseline />
+          <FtAppBar />
+          <Toolbar />
+          <Box display="flex">
+            <Box>
+              <FtSideBar />
+            </Box>
+            {/* <Box width="80vw" paddingLeft="150px"> */}
+            {/* <Box flexGrow="1"> */}
+            <Grid container justifyContent="center">
+              <Grid item xs={8}>
+                {/* <Box> */}
+                {/* 게임하기, 전체랭킹, 채팅목록 */}
+                <Outlet />
+                {/* 개인 채팅창 위치 */}
+              </Grid>
             </Grid>
-          </Grid>
-          {/* </Box> */}
+            {/* </Box> */}
+          </Box>
         </Box>
-      </Box>
+      )}
     </>
   );
 }

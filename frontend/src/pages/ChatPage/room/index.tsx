@@ -33,17 +33,6 @@ function ChatRoom() {
 
   useEffect(() => {
     SearchRoom();
-    // const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-    //   event.preventDefault();
-    //   event.returnValue = 'test';
-    // };
-
-    // window.addEventListener('beforeunload', handleBeforeUnload);
-    // // window.addEventListener('unload', handleUnloadCancel);
-    // return () => {
-    //   window.removeEventListener('beforeunload', handleBeforeUnload);
-    //   // window.addEventListener('unload', handleUnloadCancel);
-    // };
   }, []);
 
   return (

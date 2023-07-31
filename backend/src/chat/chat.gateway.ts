@@ -51,12 +51,13 @@ export class ChatGateway
       `${user_id} socket room id: ${socket.handshake.query.room_id}`
     );
     // await this.chatService.socketConnection(socket.id, user_id);
-    if (room_id !== 'undefined') {
-      const room_id_to_num = Number(room_id);
-      await this.handleLeaveRoom(socket, room_id_to_num);
-      await this.handleJoinRoomInConnection(socket, room_id_to_num);
-      socket.handshake.query.room_id = 'undefined';
-    }
+    // MEMO: 프론트 수정 후 필요성을 재고해 봐야 할듯합니다
+    // if (room_id !== 'undefined') {
+    //   const room_id_to_num = Number(room_id);
+    //   await this.handleLeaveRoom(socket, room_id_to_num);
+    //   await this.handleJoinRoomInConnection(socket, room_id_to_num);
+    //   socket.handshake.query.room_id = 'undefined';
+    // }
     this.socketArray.addSocketArray({user_id, socket_id: socket.id});
     this.logger.log(`${socket.id} 소켓 연결`);
   }
@@ -85,10 +86,10 @@ export class ChatGateway
     @MessageBody() room_id: number
   ): Promise<boolean> {
     const user_id = socket.handshake.query.user_id as string;
-    const query_room_id = socket.handshake.query.room_id as string;
-    if (query_room_id !== 'undefined') {
-      return true;
-    }
+    // const query_room_id = socket.handshake.query.room_id as string;
+    // if (query_room_id !== 'undefined') {
+    //   return true;
+    // }
 
     console.log('join_room start');
     try {
