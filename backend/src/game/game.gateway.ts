@@ -8,10 +8,20 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
-} from '@nestjs/websockets';
+} from '@nestjs/websockekts';
 import {Namespace, Socket, Server} from 'socket.io';
 import {User} from 'src/user/user.entitiy';
-import {Coordinate, Ball, GameInfo} from '@/types/game';
+import {
+  Coordinate,
+  Ball,
+  GameInfo,
+  RoomUserInfo,
+  JoinGameInfo,
+} from '@/types/game';
+import {UserRepository} from 'src/user/user.repository';
+import {RecordRepository} from 'src/record/record.repository';
+import {ModeRepository} from 'src/record/mode/mode.repository';
+import {TypeRepository} from 'src/record/type/type.repository';
 
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
@@ -21,12 +31,19 @@ const PADDLE_WIDTH = 10;
 const PADDLE_HEIGHT = 100;
 
 const BALL_RADIUS = 10;
-const BALL_SPEED = 3;
+const BALL_SPEED = 5;
+
+const EASY_NORMAL = 1;
+const EASY_RANK = 2;
+const HARD_NORMAL = 3;
+const HARD_RANK = 4;
 
 interface GameUser {
   user_id: string;
   socket: Socket;
   keys: KeyData;
+  mode: string;
+  type: string;
 }
 
 interface KeyData {
@@ -37,10 +54,20 @@ interface KeyData {
 interface RoomInfo {
   users: GameUser[];
   game_info: GameInfo;
+  mode: string;
+  type: string;
   interval: NodeJS.Timer | null;
 }
 
-const waitUsers: GameUser[] = [];
+// const waitUsers: GameUser[] = [];
+
+const waitUserList: GameUser[][] = [];
+
+// const waitUsersEasyNormal: GameUser[];
+// const waitUsersEasyRank: GameUser[];
+// const waitUsersHardNormal: GameUser[];
+// const waitUsersHardRank: GameUser[];
+
 const gameRooms: Map<string, RoomInfo> = new Map();
 
 const initGameInfo = (): GameInfo => {
@@ -92,6 +119,12 @@ export class GameGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   private logger = new Logger('Gateway');
+  constructor(
+    private userRepository: UserRepository,
+    private recordRepository: RecordRepository,
+    private modeRepository: ModeRepository,
+    private typeRepository: TypeRepository
+  ) {}
 
   @WebSocketServer() nsp: Namespace;
   afterInit() {
@@ -119,10 +152,16 @@ export class GameGateway
   @SubscribeMessage('join_game')
   handleJoinGame(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() user_id: string
+    @MessageBody() joinGameInfo: JoinGameInfo
   ) {
     const keys: KeyData = {up: false, down: false};
-    const userSocket: GameUser = {user_id, socket, keys};
+    const {user_id, mode, type} = joinGameInfo;
+    const userSocket: GameUser = {user_id, socket, keys, mode, type};
+    if (this.isGameMatched(userSocket) === false) {
+      return;
+    } else {
+      matchGame(userSocket);
+    }
     if (waitUsers.length === 0) {
       // 게임 대기자가 없는 경우 => 대기열에 추가
       console.log('wait');
@@ -146,10 +185,53 @@ export class GameGateway
 
       const roomInfo: RoomInfo = gameRooms.get(roomName);
       const gameInfo: GameInfo = roomInfo.game_info;
-      this.nsp.to(roomName).emit('room_name', {room_name: roomName});
+      const roomUserInfo: RoomUserInfo = {
+        room_name: roomName,
+        left_user: firstUser.user_id,
+        right_user: secondUser.user_id,
+      };
+
+      this.nsp.to(roomName).emit('room_name', roomUserInfo);
       this.nsp.to(roomName).emit('game_info', {game_info: gameInfo});
     }
   }
+
+  // matchGame = ()
+
+  isGameMatched = (userSocket: GameUser): boolean => {
+    const gameModeType = this.findModeType(userSocket);
+    if (gameModeType === -1) {
+      // join-game-info not found
+    }
+    if (waitUserList[gameModeType].length === 0) {
+      console.log('wait');
+      waitUserList[gameModeType].push(userSocket);
+      return false;
+    } else {
+      console.log('join');
+      return true;
+    }
+  };
+
+  findModeType = (userSocket: GameUser): number => {
+    const mode = userSocket.mode;
+    const type = userSocket.type;
+    let gameModeType = -1;
+    if (mode === 'easy') {
+      if (type === 'normal') {
+        gameModeType = EASY_NORMAL;
+      } else if (type === 'rank') {
+        gameModeType = EASY_RANK;
+      }
+    } else if (mode === 'hard') {
+      if (type === 'normal') {
+        gameModeType = HARD_NORMAL;
+      } else if (type === 'rank') {
+        gameModeType = HARD_RANK;
+      }
+    }
+    return gameModeType;
+  };
 
   @SubscribeMessage('update_key')
   handleKeyDown(
@@ -181,19 +263,63 @@ export class GameGateway
     roomInfo.interval = setInterval(() => {
       const gameOver = updateBallPosition(gameInfo);
       this.nsp.to(room_name).emit('game_info', {game_info: gameInfo});
-      console.log('playing..');
       if (gameOver) {
-        console.log(roomInfo.interval);
         clearInterval(roomInfo.interval);
         console.log('game over!');
+        this.saveData(roomInfo);
       }
     }, 1000 / 60);
-    // const interval = setInterval(this.emitGameInfo, 1000 / 60);
   }
 
-  // stopInterval = (interval: NodeJS.Timer) => {
-  //   clearInterval(interval);
-  // };
+  async saveData(roomInfo: RoomInfo) {
+    const {leftScore} = roomInfo.game_info;
+    const {rightScore} = roomInfo.game_info;
+    let winner_id: string;
+    let loser_id: string;
+    const winner_score = 5;
+    let loser_score: number;
+    const is_forfeit = false;
+    if (leftScore === 5) {
+      winner_id = roomInfo.users[0].user_id;
+      loser_id = roomInfo.users[1].user_id;
+      loser_score = rightScore;
+    } else {
+      winner_id = roomInfo.users[1].user_id;
+      loser_id = roomInfo.users[0].user_id;
+      loser_score = leftScore;
+    }
+
+    // 테스트용 게임모드 데이터
+    const mode = 'normal_mode';
+    let mode_data = await this.modeRepository.findOneBy({mode});
+    if (mode_data === null) {
+      mode_data = await this.modeRepository.create({
+        mode,
+      });
+      await this.modeRepository.save(mode_data);
+    }
+
+    // 테스트용 게임타입 데이터
+    const type = 'normal_type';
+    let type_data = await this.typeRepository.findOneBy({type});
+    if (type_data === null) {
+      type_data = await this.typeRepository.create({
+        type,
+      });
+      await this.typeRepository.save(type_data);
+    }
+
+    const record = this.recordRepository.create({
+      mode_id: mode_data.id,
+      type_id: type_data.id,
+      winner_id,
+      loser_id,
+      winner_score,
+      loser_score,
+      is_forfeit,
+    });
+    await this.recordRepository.save(record);
+  }
 }
 
 const isLeftUser = (roomInfo: RoomInfo, socket: Socket): boolean => {
