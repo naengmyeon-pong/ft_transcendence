@@ -2,7 +2,7 @@ import React, {useContext, useEffect} from 'react';
 import {Box, CssBaseline, Grid, Toolbar} from '@mui/material';
 import FtAppBar from './Buffer/FtAppBar';
 import FtSideBar from './Buffer/SideBar/FtSideBar';
-import {Outlet} from 'react-router-dom';
+import {Outlet, useParams} from 'react-router-dom';
 import apiManager from '@apiManager/apiManager';
 import {UserContext} from 'Context';
 import {io} from 'socket.io-client';
@@ -12,6 +12,7 @@ function MainLayout() {
   const {socket, setSocket} = useContext(UserContext);
   const {setUserNickName} = useContext(UserContext);
   const {setUserImage} = useContext(UserContext);
+  const {roomId} = useParams();
 
   async function init() {
     const response = await apiManager.get('/user/user-info');
@@ -23,9 +24,9 @@ function MainLayout() {
       query: {
         user_id: response.data.user_id,
         nickname: response.data.user_nickname,
+        room_id: roomId === undefined ? undefined : roomId,
       },
     });
-    console.log('response.data.user_id: ', response.data.user_id);
     setSocket(socketIo);
   }
   useEffect(() => {

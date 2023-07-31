@@ -14,7 +14,7 @@ interface UserContextType {
   setUserNickName: (user_nickname: string) => void;
 }
 
-const initialUserState: UserContextType = {
+const initUserState: UserContextType = {
   socket: null,
   user_id: null,
   user_image: null,
@@ -25,7 +25,7 @@ const initialUserState: UserContextType = {
   setUserNickName: () => {},
 };
 
-const UserContext = createContext(initialUserState);
+const UserContext = createContext(initUserState);
 
 const UserProvider: React.FC<{children: ReactNode}> = ({children}) => {
   const [socket, setSocket] = useState<Socket | null>(null);

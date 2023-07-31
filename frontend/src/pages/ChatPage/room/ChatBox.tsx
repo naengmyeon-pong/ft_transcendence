@@ -87,7 +87,9 @@ function ChatBox() {
   // const navigate = useNavigate();
 
   useEffect(() => {
-    socket?.emit('join-room', roomId);
+    socket?.emit('join-room', roomId, () => {
+      //
+    });
 
     function messageHandler(chat: IChat) {
       console.log('TESThandleMessage');
