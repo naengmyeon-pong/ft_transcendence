@@ -169,11 +169,20 @@ export class GameGateway
   ) {
     const roomInfo: RoomInfo = gameRooms.get(room_name);
     const gameInfo: GameInfo = roomInfo.game_info;
-    setInterval(() => {
-      updateBallPosition(gameInfo);
+    const interval = setInterval(() => {
+      const gameOver = updateBallPosition(gameInfo);
       this.nsp.to(room_name).emit('game_info', {game_info: gameInfo});
+      if (gameOver) {
+        this.stopInterval(interval);
+        console.log('game over!');
+      }
     }, 1000 / 60);
+    // const interval = setInterval(this.emitGameInfo, 1000 / 60);
   }
+
+  stopInterval = (interval: NodeJS.Timer) => {
+    clearInterval(interval);
+  };
 }
 
 const isLeftUser = (roomInfo: RoomInfo, socket: Socket): boolean => {
@@ -196,11 +205,20 @@ const updatePaddlePosition = (
   paddle.y = clampedY;
 };
 
-const resetBall = (ball: Ball, initialBallVelX: number) => {
+const resetBall = (
+  ball: Ball,
+  initialBallVelX: number,
+  is_game_over: boolean
+) => {
   ball.pos.x = CANVAS_WIDTH / 2;
   ball.pos.y = CANVAS_HEIGHT / 2;
-  ball.vel.x = -initialBallVelX;
   ball.vel.y = 0;
+  if (is_game_over === false) {
+    // game not over
+    ball.vel.x = -initialBallVelX;
+  } else {
+    ball.vel.x = 0;
+  }
 };
 
 const isCollidingPaddle = (ball: Ball, paddle: Coordinate): boolean => {
@@ -219,7 +237,14 @@ const isCollidingPaddle = (ball: Ball, paddle: Coordinate): boolean => {
   );
 };
 
-const updateBallPosition = (gameInfo: GameInfo) => {
+const isGameOver = (gameInfo: GameInfo): boolean => {
+  if (gameInfo.leftScore === 5 || gameInfo.rightScore === 5) {
+    return true;
+  }
+  return false;
+};
+
+const updateBallPosition = (gameInfo: GameInfo): boolean => {
   const {ball, leftPaddle, rightPaddle} = gameInfo;
 
   const nextX = ball.pos.x + BALL_SPEED * ball.vel.x;
@@ -259,7 +284,7 @@ const updateBallPosition = (gameInfo: GameInfo) => {
     //     ball.pos.x = CANVAS_WIDTH - PADDLE_WIDTH - BALL_RADIUS;
     //   }
     // }
-    return;
+    return false;
   }
 
   // Check if the ball is colliding with the left or right walls
@@ -288,9 +313,17 @@ const updateBallPosition = (gameInfo: GameInfo) => {
       // }
       gameInfo.leftScore += 1;
     }
-    resetBall(ball, gameInfo.initialBallVelX);
-    gameInfo.initialBallVelX = -gameInfo.initialBallVelX;
-    return;
+    const gameOver = isGameOver(gameInfo);
+    resetBall(ball, gameInfo.initialBallVelX, gameOver);
+    if (isGameOver(gameInfo) === false) {
+      // game not over
+      gameInfo.initialBallVelX = -gameInfo.initialBallVelX;
+      return false;
+    } else {
+      // game over
+      return true;
+    }
+    // return false;
   }
 };
 
