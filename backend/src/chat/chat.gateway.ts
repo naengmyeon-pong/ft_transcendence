@@ -47,10 +47,15 @@ export class ChatGateway
   async handleConnection(@ConnectedSocket() socket: Socket) {
     const user_id = socket.handshake.query.user_id as string;
     const room_id = socket.handshake.query.room_id as string;
+    this.logger.log(
+      `${user_id} socket room id: ${socket.handshake.query.room_id}`
+    );
     // await this.chatService.socketConnection(socket.id, user_id);
-    console.log('room_id :', room_id, 'type :', typeof room_id);
     if (room_id !== 'undefined') {
-      await this.handleLeaveRoom(socket, Number(room_id));
+      const room_id_to_num = Number(room_id);
+      await this.handleLeaveRoom(socket, room_id_to_num);
+      await this.handleJoinRoomInConnection(socket, room_id_to_num);
+      socket.handshake.query.room_id = 'undefined';
     }
     this.socketArray.addSocketArray({user_id, socket_id: socket.id});
     this.logger.log(`${socket.id} 소켓 연결`);
@@ -79,8 +84,13 @@ export class ChatGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody() room_id: number
   ): Promise<boolean> {
-    console.log('join_room start');
     const user_id = socket.handshake.query.user_id as string;
+    const query_room_id = socket.handshake.query.room_id as string;
+    if (query_room_id !== 'undefined') {
+      return true;
+    }
+
+    console.log('join_room start');
     try {
       await this.chatService.joinRoom(room_id, user_id);
     } catch (e) {
@@ -99,6 +109,30 @@ export class ChatGateway
     return true;
   }
 
+  async handleJoinRoomInConnection(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() room_id: number
+  ): Promise<boolean> {
+    console.log('join_room in connection start');
+    const user_id = socket.handshake.query.user_id as string;
+    try {
+      await this.chatService.joinRoom(room_id, user_id);
+    } catch (e) {
+      console.log('join error: ', e.message);
+      return false;
+    }
+    socket.join(`${room_id}`);
+    socket.to(`${room_id}`).emit('message', {
+      message: `${socket.handshake.query.nickname}가 들어왔습니다.`,
+    });
+    // console.log('join-room: ', socket.handshake.query.nickname);
+    this.nsp.to(`${room_id}`).emit('room-member', {
+      members: await this.chatService.getRoomMembers(room_id),
+    });
+    console.log('join_room in connection end');
+    return true;
+  }
+
   @SubscribeMessage('leave-room')
   async handleLeaveRoom(
     @ConnectedSocket() socket: Socket,
@@ -107,26 +141,26 @@ export class ChatGateway
     console.log('leave-room start');
     const user_id = socket.handshake.query.user_id as string;
     // console.log('leave-room: ', socket.handshake.query.nickname);
-    let leave;
     try {
-      leave = await this.chatService.leaveRoom(room_id, user_id);
+      const leave = await this.chatService.leaveRoom(room_id, user_id);
+      socket.leave(`${room_id}`);
+
+      if (leave && leave.permission === 2) {
+        socket.to(`${room_id}`).emit('leave-room', true);
+      } else if (leave) {
+        socket.to(`${room_id}`).emit('message', {
+          message: `${socket.handshake.query.nickname}가 나갔습니다.`,
+        });
+        this.nsp.to(`${room_id}`).emit('room-member', {
+          members: await this.chatService.getRoomMembers(room_id),
+        });
+      }
+      console.log('leave-room end');
+      return true;
     } catch (e) {
       console.log(e.message);
+      return false;
     }
-    socket.leave(`${room_id}`);
-
-    if (leave && leave.permission === 2) {
-      socket.to(`${room_id}`).emit('leave-room', true);
-    } else if (leave) {
-      socket.to(`${room_id}`).emit('message', {
-        message: `${socket.handshake.query.nickname}가 나갔습니다.`,
-      });
-      this.nsp.to(`${room_id}`).emit('room-member', {
-        members: await this.chatService.getRoomMembers(room_id),
-      });
-    }
-    console.log('leave-room end');
-    return true;
   }
 
   @SubscribeMessage('add-admin')
