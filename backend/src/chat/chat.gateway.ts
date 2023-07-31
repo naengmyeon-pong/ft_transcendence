@@ -46,20 +46,20 @@ export class ChatGateway
 
   async handleConnection(@ConnectedSocket() socket: Socket) {
     const user_id = socket.handshake.query.user_id as string;
+    const room_id = socket.handshake.query.room_id as string;
     // await this.chatService.socketConnection(socket.id, user_id);
+    console.log('room_id :', room_id, 'type :', typeof room_id);
+    if (room_id !== 'undefined') {
+      await this.handleLeaveRoom(socket, Number(room_id));
+    }
     this.socketArray.addSocketArray({user_id, socket_id: socket.id});
     this.logger.log(`${socket.id} 소켓 연결`);
   }
 
   async handleDisconnect(@ConnectedSocket() socket: Socket) {
     const user_id = socket.handshake.query.user_id as string;
-    const room_id = socket.handshake.query.room_id as string;
-    console.log('room_id :', room_id);
     // await this.chatService.socketDisconnection(user_id);
     this.socketArray.removeSocketArray(user_id);
-    if (room_id) {
-      this.handleLeaveRoom(socket, Number(room_id));
-    }
     this.logger.log(`${socket.id} 소켓 연결 해제 ❌`);
   }
 
@@ -79,6 +79,7 @@ export class ChatGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody() room_id: number
   ): Promise<boolean> {
+    console.log('join_room start');
     const user_id = socket.handshake.query.user_id as string;
     try {
       await this.chatService.joinRoom(room_id, user_id);
@@ -90,11 +91,11 @@ export class ChatGateway
     socket.to(`${room_id}`).emit('message', {
       message: `${socket.handshake.query.nickname}가 들어왔습니다.`,
     });
-    console.log('join-room: ', socket.handshake.query.nickname);
-    // console.log('sockets :', this.nsp.sockets);
+    // console.log('join-room: ', socket.handshake.query.nickname);
     this.nsp.to(`${room_id}`).emit('room-member', {
       members: await this.chatService.getRoomMembers(room_id),
     });
+    console.log('join_room end');
     return true;
   }
 
@@ -103,8 +104,9 @@ export class ChatGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody() room_id: number
   ) {
+    console.log('leave-room start');
     const user_id = socket.handshake.query.user_id as string;
-    console.log('leave-room: ', socket.handshake.query.nickname);
+    // console.log('leave-room: ', socket.handshake.query.nickname);
     let leave;
     try {
       leave = await this.chatService.leaveRoom(room_id, user_id);
@@ -123,6 +125,7 @@ export class ChatGateway
         members: await this.chatService.getRoomMembers(room_id),
       });
     }
+    console.log('leave-room end');
     return true;
   }
 
