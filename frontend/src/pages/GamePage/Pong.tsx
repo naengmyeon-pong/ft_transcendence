@@ -94,6 +94,11 @@ function Pong({socket, gameInfo}: PongProps) {
     }
   }, []);
 
+  const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+    e.preventDefault();
+    e.returnValue = '';
+  };
+
   // Setting for context
   useEffect(() => {
     if (canvasRef?.current) {
@@ -103,10 +108,12 @@ function Pong({socket, gameInfo}: PongProps) {
 
       window.addEventListener('keydown', handleKeyDown);
       window.addEventListener('keyup', handleKeyUp);
+      window.addEventListener('beforeunload', handleBeforeUnload);
 
       return () => {
         window.removeEventListener('keydown', handleKeyDown);
         window.removeEventListener('keyup', handleKeyUp);
+        window.removeEventListener('beforeunload', handleBeforeUnload);
       };
     }
   }, [canvasRef, handleKeyDown, handleKeyUp]);
