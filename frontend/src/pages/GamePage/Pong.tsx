@@ -37,6 +37,8 @@ function Pong({socket, gameInfo}: PongProps) {
   const canvasRef: RefObject<HTMLCanvasElement> =
     useRef<HTMLCanvasElement>(null);
   const [ctx, setCtx] = useState<CanvasRenderingContext2D | null>(null);
+  const [leftUser, setLeftUser] = useState<string | null>(null);
+  const [rightUser, setRightUser] = useState<string | null>(null);
   const [leftScore, setLeftScore] = useState<number>(0);
   const [rightScore, setRightScore] = useState<number>(0);
   const [leftPaddle, setLeftPaddle] = useState<Coordinate>({
@@ -94,11 +96,6 @@ function Pong({socket, gameInfo}: PongProps) {
     }
   }, []);
 
-  const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-    e.preventDefault();
-    e.returnValue = '';
-  };
-
   // Setting for context
   useEffect(() => {
     if (canvasRef?.current) {
@@ -108,12 +105,10 @@ function Pong({socket, gameInfo}: PongProps) {
 
       window.addEventListener('keydown', handleKeyDown);
       window.addEventListener('keyup', handleKeyUp);
-      window.addEventListener('beforeunload', handleBeforeUnload);
 
       return () => {
         window.removeEventListener('keydown', handleKeyDown);
         window.removeEventListener('keyup', handleKeyUp);
-        window.removeEventListener('beforeunload', handleBeforeUnload);
       };
     }
   }, [canvasRef, handleKeyDown, handleKeyUp]);
@@ -156,6 +151,30 @@ function Pong({socket, gameInfo}: PongProps) {
     }
   }, [ctx, ball]);
 
+  const drawPlayers = useCallback(() => {
+    if (ctx) {
+      const leftUser: string | null = sessionStorage.getItem('left_user');
+      const rightUser: string | null = sessionStorage.getItem('right_user');
+
+      ctx.font = '18px Arial';
+      ctx.fillStyle = 'black';
+      if (leftUser !== null) {
+        ctx.fillText(
+          leftUser,
+          CANVAS_WIDTH / 4 - ctx.measureText(leftUser).width / 2,
+          100
+        );
+      }
+      if (rightUser !== null) {
+        ctx.fillText(
+          rightUser,
+          (3 * CANVAS_WIDTH) / 4 - ctx.measureText(rightUser).width / 2,
+          100
+        );
+      }
+    }
+  }, [ctx, leftUser, rightUser]);
+
   const drawScores = useCallback(() => {
     if (ctx) {
       ctx.font = '30px Arial';
@@ -182,6 +201,7 @@ function Pong({socket, gameInfo}: PongProps) {
       drawPaddle(leftPaddle);
       drawPaddle(rightPaddle);
       drawScores();
+      drawPlayers();
     }
 
     requestAnimationIdRef.current = window.requestAnimationFrame(onAnimation);
