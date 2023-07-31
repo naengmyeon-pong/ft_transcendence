@@ -37,6 +37,7 @@ interface KeyData {
 interface RoomInfo {
   users: GameUser[];
   game_info: GameInfo;
+  interval: NodeJS.Timer | null;
 }
 
 const waitUsers: GameUser[] = [];
@@ -107,7 +108,11 @@ export class GameGateway
 
   createGameRoom(userId: string, gameUserSockets: GameUser[]): string {
     const gameInfo = initGameInfo();
-    gameRooms.set(userId, {users: gameUserSockets, game_info: gameInfo});
+    gameRooms.set(userId, {
+      users: gameUserSockets,
+      game_info: gameInfo,
+      interval: null,
+    });
     return userId;
   }
 
@@ -169,20 +174,26 @@ export class GameGateway
   ) {
     const roomInfo: RoomInfo = gameRooms.get(room_name);
     const gameInfo: GameInfo = roomInfo.game_info;
-    const interval = setInterval(() => {
+
+    if (roomInfo.interval !== null) {
+      return;
+    }
+    roomInfo.interval = setInterval(() => {
       const gameOver = updateBallPosition(gameInfo);
       this.nsp.to(room_name).emit('game_info', {game_info: gameInfo});
+      console.log('playing..');
       if (gameOver) {
-        this.stopInterval(interval);
+        console.log(roomInfo.interval);
+        clearInterval(roomInfo.interval);
         console.log('game over!');
       }
     }, 1000 / 60);
     // const interval = setInterval(this.emitGameInfo, 1000 / 60);
   }
 
-  stopInterval = (interval: NodeJS.Timer) => {
-    clearInterval(interval);
-  };
+  // stopInterval = (interval: NodeJS.Timer) => {
+  //   clearInterval(interval);
+  // };
 }
 
 const isLeftUser = (roomInfo: RoomInfo, socket: Socket): boolean => {
@@ -315,7 +326,7 @@ const updateBallPosition = (gameInfo: GameInfo): boolean => {
     }
     const gameOver = isGameOver(gameInfo);
     resetBall(ball, gameInfo.initialBallVelX, gameOver);
-    if (isGameOver(gameInfo) === false) {
+    if (gameOver === false) {
       // game not over
       gameInfo.initialBallVelX = -gameInfo.initialBallVelX;
       return false;
