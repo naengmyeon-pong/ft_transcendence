@@ -193,6 +193,30 @@ export class GameGateway
       is_forfeit: true,
     });
     await this.recordRepository.save(record);
+    await this.saveRankScore(winner_id, loser_id);
+  };
+
+  saveRankScore = async (winnerID: string, loserID: string) => {
+    const winner = await this.userRepository.findOneBy({user_id: winnerID});
+    if (winner === null) {
+      // user not found
+    } else {
+      const score = winner.rank_score;
+      if (score < 1000000 || score.toString().length < 1000) {
+        // postgres에 저장할 수 있는 최대값
+        winner.rank_score += 3;
+      }
+    }
+    const loser = await this.userRepository.findOneBy({user_id: loserID});
+    if (loser === null) {
+      // user not found
+    } else {
+      const score = loser.rank_score;
+      if (score >= 1) {
+        // 점수의 최소값을 0점으로 설정
+        loser.rank_score -= 1;
+      }
+    }
   };
 
   findRecordData = (
