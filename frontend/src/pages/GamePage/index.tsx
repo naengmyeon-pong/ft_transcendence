@@ -66,6 +66,9 @@ function Game() {
     setIsGameOver(false);
     setIsStartingGame(false);
     setIsWaitingGame(false);
+    setGameInfo(null);
+    setGameMode('');
+    setGameType('');
   };
 
   const handleStopWaiting = () => {
