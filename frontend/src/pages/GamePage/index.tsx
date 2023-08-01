@@ -28,6 +28,7 @@ function Game() {
   const [gameType, setGameType] = useState<string>('');
   const [gameMode, setGameMode] = useState<string>('');
   const [isWaitingGame, setIsWaitingGame] = useState<boolean>(false);
+  const [isStartingGame, setIsStartingGame] = useState<boolean>(false);
 
   const handleGameType = (event: React.ChangeEvent<HTMLInputElement>) => {
     console.log(event.currentTarget.value);
@@ -115,79 +116,84 @@ function Game() {
   return (
     <>
       <Grid id="game-area" container justifyContent="center">
-        <Grid id="mode-selection" container justifyContent="center">
-          <Grid item xs={4}>
-            <FormControl>
-              <FormLabel id="game-mode-selection">게임 타입</FormLabel>
-              <RadioGroup
-                aria-labelledby="game-mode-selection"
-                name="radio-buttons-group"
-                onChange={handleGameType}
-              >
-                <FormControlLabel
-                  value="normal"
-                  control={<Radio />}
-                  label="일반 게임"
-                />
-                <FormControlLabel
-                  value="rank"
-                  control={<Radio />}
-                  label="랭크 게임"
-                />
-              </RadioGroup>
-            </FormControl>
+        {!isStartingGame ? (
+          <Grid id="game-selection" container>
+            <Grid id="mode-selection" container justifyContent="center">
+              <Grid item xs={4}>
+                <FormControl>
+                  <FormLabel id="game-mode-selection">게임 타입</FormLabel>
+                  <RadioGroup
+                    aria-labelledby="game-mode-selection"
+                    name="radio-buttons-group"
+                    onChange={handleGameType}
+                  >
+                    <FormControlLabel
+                      value="normal"
+                      control={<Radio />}
+                      label="일반 게임"
+                    />
+                    <FormControlLabel
+                      value="rank"
+                      control={<Radio />}
+                      label="랭크 게임"
+                    />
+                  </RadioGroup>
+                </FormControl>
+              </Grid>
+              <Grid item xs={4}>
+                <FormControl>
+                  <FormLabel id="game-type-selection">게임 난이도</FormLabel>
+                  <RadioGroup
+                    aria-labelledby="game-type-selection"
+                    name="radio-buttons-group"
+                    onChange={handleGameMode}
+                  >
+                    <FormControlLabel
+                      value="easy"
+                      control={<Radio />}
+                      label="일반 모드"
+                    />
+                    <FormControlLabel
+                      value="hard"
+                      control={<Radio />}
+                      label="가속 모드"
+                    />
+                  </RadioGroup>
+                </FormControl>
+              </Grid>
+              <Grid item xs={4}>
+                <Button
+                  variant="contained"
+                  color={isWaitingGame ? 'error' : 'success'}
+                  onClick={handleGameStart}
+                >
+                  {isWaitingGame ? '상대 대기중' : '게임 시작'}
+                </Button>
+                {isWaitingGame && (
+                  <CircularProgress
+                    size={24}
+                    sx={{
+                      position: 'absolute',
+                      color: 'white',
+                      marginTop: '5px',
+                      marginLeft: '-60px',
+                    }}
+                  />
+                )}
+                {isWaitingGame && (
+                  <Button variant="outlined" onClick={handleStopWaiting}>
+                    대기 취소
+                  </Button>
+                )}
+              </Grid>
+            </Grid>
           </Grid>
-          <Grid item xs={4}>
-            <FormControl>
-              <FormLabel id="game-type-selection">게임 난이도</FormLabel>
-              <RadioGroup
-                aria-labelledby="game-type-selection"
-                name="radio-buttons-group"
-                onChange={handleGameMode}
-              >
-                <FormControlLabel
-                  value="easy"
-                  control={<Radio />}
-                  label="일반 모드"
-                />
-                <FormControlLabel
-                  value="hard"
-                  control={<Radio />}
-                  label="가속 모드"
-                />
-              </RadioGroup>
-            </FormControl>
+        ) : (
+          <Grid xs={8}>
+            {/* <Pong socket={socket} gameInfo={gameInfo} />  */}
+            <Pong gameInfo={gameInfo} />
           </Grid>
-          <Grid item xs={4}>
-            <Button
-              variant="contained"
-              color={isWaitingGame ? 'error' : 'success'}
-              onClick={handleGameStart}
-            >
-              {isWaitingGame ? '상대 대기중' : '게임 시작'}
-            </Button>
-            {isWaitingGame && (
-              <CircularProgress
-                size={24}
-                sx={{
-                  position: 'absolute',
-                  color: 'white',
-                  marginTop: '5px',
-                  marginLeft: '-60px',
-                }}
-              />
-            )}
-            {isWaitingGame && (
-              <Button variant="outlined" onClick={handleStopWaiting}>
-                대기 취소
-              </Button>
-            )}
-          </Grid>
-        </Grid>
-        <Grid xs={8}>
-          {/* <Pong socket={socket} gameInfo={gameInfo} />  */}
-          <Pong gameInfo={gameInfo} />
-        </Grid>
+        )}
       </Grid>
     </>
   );
