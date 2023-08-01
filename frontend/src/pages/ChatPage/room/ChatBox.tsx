@@ -88,7 +88,12 @@ function ChatBox() {
 
   useEffect(() => {
     console.log('chatBox socket: ', socket);
-    socket?.emit('join-room', roomId);
+    socket?.emit('join-room', roomId, (res: boolean) => {
+      if (res === false) {
+        navigate(-1);
+        alert('에러가 발생하였습니다.');
+      }
+    });
 
     function messageHandler(chat: IChat) {
       setChats(prevChats => [...prevChats, chat]);
@@ -101,6 +106,20 @@ function ChatBox() {
     }
 
     socket?.once('leave-room', leaveRoomHandler);
+
+    socket?.once('kick-member', () => {
+      socket?.emit('leave-room', roomId, () => {
+        navigate(-1);
+      });
+    });
+    function handleMute(mute_time: Date) {
+      // const now = new Date(Date.UTC(0, 0, 0, 0, 0, 0));
+      console.log(mute_time);
+      console.log(typeof mute_time);
+      // console.log(now);
+    }
+
+    socket?.on('mute-member', handleMute);
 
     const handleListener = (e: BeforeUnloadEvent) => {
       socket?.emit('leave-room', roomId);

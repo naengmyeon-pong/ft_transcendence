@@ -49,7 +49,7 @@ export class ChatMember {
   permission: number;
 
   @Column({nullable: true})
-  mute: string;
+  mute: Date;
 
   @Column()
   chatroomId: number;

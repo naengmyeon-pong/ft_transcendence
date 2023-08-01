@@ -160,6 +160,7 @@ export class ChatService {
       chatroomId: room_id,
       userId: user_id,
     });
+    console.log('ban_member: ', room_id, ' ', user_id);
     if (ban_member) {
       throw new ForbiddenException(`${user_id} is ban this room.`);
     }
@@ -244,17 +245,13 @@ export class ChatService {
   }
 
   // 현재 시간은 아님. UTC 시간. front랑 그대로 사용할지 바꿀지 합의필요.
-  async muteMember(
-    room_id: number,
-    user_id: string,
-    target_id: string
-  ): Promise<string> {
+  async muteMember(room_id: number, user_id: string, target_id: string) {
     const admin = await this.isChatMember(room_id, user_id);
     const member = await this.isChatMember(room_id, target_id);
 
     if (admin.permission > member.permission) {
-      const time = new Date();
-      member.mute = time.toLocaleTimeString();
+      const time = new Date(Date.UTC(0, 0, 0, 0, 0, 0));
+      member.mute = time;
       this.chatMemberRepository.save(member);
       return member.mute;
     }
@@ -268,7 +265,7 @@ export class ChatService {
     if (admin.permission > member.permission) {
       const ban_member = this.chatBanRepository.create({
         chatroomId: room_id,
-        userId: user_id,
+        userId: target_id,
       });
       await this.chatBanRepository.save(ban_member);
       return true;

@@ -161,7 +161,7 @@ export class ChatGateway
   ) {
     const user_id = socket.handshake.query.user_id as string;
     try {
-      const mute_time: string = await this.chatService.muteMember(
+      const mute_time = await this.chatService.muteMember(
         room_id,
         user_id,
         target_id
