@@ -58,9 +58,11 @@ function Game() {
     };
     socket.emit('join_game', joinGameInfo);
     setIsWaitingGame(true);
+    window.addEventListener('beforeunload', handleBeforeUnload);
   };
 
   const handleStopWaiting = () => {
+    window.removeEventListener('beforeunload', handleBeforeUnload);
     setIsWaitingGame(false);
   };
 
@@ -103,15 +105,9 @@ function Game() {
   }, [isWaitingGame]);
 
   useEffect(() => {
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
     sessionStorage.removeItem('room_name');
     sessionStorage.removeItem('left_user');
     sessionStorage.removeItem('right_user');
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
   }, []);
 
   return (
