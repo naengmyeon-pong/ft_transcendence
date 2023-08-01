@@ -358,12 +358,13 @@ export class GameGateway
     {room_name, up, down}: {room_name: string; up: boolean; down: boolean}
   ) {
     const roomInfo: RoomInfo = gameRooms.get(room_name);
-    const gameInfo: GameInfo = roomInfo.game_info;
 
     if (isLeftUser(roomInfo, socket) === true) {
-      updatePaddlePosition(gameInfo.leftPaddle, up, down);
+      roomInfo.users[EUserIndex.LEFT].keys.up = up;
+      roomInfo.users[EUserIndex.LEFT].keys.down = down;
     } else {
-      updatePaddlePosition(gameInfo.rightPaddle, up, down);
+      roomInfo.users[EUserIndex.RIGHT].keys.up = up;
+      roomInfo.users[EUserIndex.RIGHT].keys.down = down;
     }
   }
 
@@ -374,6 +375,8 @@ export class GameGateway
   ) {
     const roomInfo: RoomInfo = gameRooms.get(room_name);
     const gameInfo: GameInfo = roomInfo.game_info;
+    const leftUserKeyState: KeyData = roomInfo.users[EUserIndex.LEFT].keys;
+    const rightUserKeyState: KeyData = roomInfo.users[EUserIndex.RIGHT].keys;
 
     if (roomInfo.interval !== null) {
       return;
@@ -381,6 +384,16 @@ export class GameGateway
     roomInfo.interval = setInterval(() => {
       const gameOver = updateBallPosition(gameInfo);
       this.sendGameInfo(roomInfo);
+      updatePaddlePosition(
+        gameInfo.leftPaddle,
+        leftUserKeyState.up,
+        leftUserKeyState.down
+      );
+      updatePaddlePosition(
+        gameInfo.rightPaddle,
+        rightUserKeyState.up,
+        rightUserKeyState.down
+      );
       if (gameOver === true) {
         // 게임이 정상 종료된 경우
         clearInterval(roomInfo.interval);
