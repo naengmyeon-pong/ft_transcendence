@@ -1,13 +1,14 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import {
+  ChatBanRepository,
   ChatMemberRepository,
   ChatRoomRepository,
-  SocketRepository,
 } from './chat.repository';
 import {UserRepository} from 'src/user/user.repository';
 import {RoomDto} from './dto/room.dto';
@@ -24,28 +25,10 @@ export class ChatService {
   constructor(
     private chatRoomRepository: ChatRoomRepository,
     private chatMemberRepository: ChatMemberRepository,
-    private socketRepository: SocketRepository,
+    private chatBanRepository: ChatBanRepository,
     private userRepository: UserRepository,
     private socketArray: SocketArray
   ) {}
-
-  // async socketConnection(socket_id: string, user_id: string) {
-  //   if (!socket_id || !user_id) {
-  //     throw new BadRequestException('empty parameter.');
-  //   }
-  //   const socket = this.socketRepository.create({
-  //     user_id,
-  //     socket_id,
-  //   });
-  //   await this.socketRepository.save(socket);
-  // }
-
-  // async socketDisconnection(user_id: string) {
-  //   if (!user_id) {
-  //     throw new BadRequestException('empty parameter.');
-  //   }
-  //   await this.socketRepository.delete({user_id: user_id});
-  // }
 
   async getRoomList() {
     const room_list = [];
@@ -155,6 +138,7 @@ export class ChatService {
   }
 
   async joinRoom(room_id: number, user_id: string) {
+    // 우리 서버의 user가 맞는지 확인하고, 채팅방에 member로 등록되어있는지 확인
     if (!room_id || !user_id) {
       throw new BadRequestException('empty parameter.');
     }
@@ -171,6 +155,16 @@ export class ChatService {
       throw new ConflictException(`${user_id} already chatmember.`);
     }
 
+    // ban_list에 등록되어 있는지 확인
+    const ban_member = await this.chatBanRepository.findOneBy({
+      chatroomId: room_id,
+      userId: user_id,
+    });
+    if (ban_member) {
+      throw new ForbiddenException(`${user_id} is ban this room.`);
+    }
+
+    // room 인원 증가시키고, room_member에 추가
     const room = await this.getRoom(room_id);
     if (room.current_nums >= room.max_nums) {
       // 새로운 유저라서 방에 추가해줘야 하는데, 방 인원이 꽉 찼을 경우
@@ -229,6 +223,16 @@ export class ChatService {
     return false;
   }
 
+  async delAdmin(room_id: number, user_id: string, target_id: string) {
+    if (this.isOwner(room_id, user_id)) {
+      const member = await this.isChatMember(room_id, target_id);
+      member.permission = 0;
+      await this.chatMemberRepository.save(member);
+      return true;
+    }
+    return false;
+  }
+
   async kickMember(room_id: number, user_id: string, target_id: string) {
     const admin = await this.isChatMember(room_id, user_id);
     const member = await this.isChatMember(room_id, target_id);
@@ -248,6 +252,21 @@ export class ChatService {
       const time = new Date();
       member.mute = time.toLocaleTimeString();
       this.chatMemberRepository.save(member);
+      return true;
+    }
+    return false;
+  }
+
+  async banMember(room_id: number, user_id: string, target_id: string) {
+    const admin = await this.isChatMember(room_id, user_id);
+    const member = await this.isChatMember(room_id, target_id);
+
+    if (admin.permission > member.permission) {
+      const ban_member = this.chatBanRepository.create({
+        chatroomId: room_id,
+        userId: user_id,
+      });
+      await this.chatBanRepository.save(ban_member);
       return true;
     }
     return false;
@@ -289,5 +308,15 @@ export class ChatService {
       throw new NotFoundException('Please enter right chat room.');
     }
     return room;
+  }
+
+  getLoginUser() {
+    const members = this.socketArray.getSocketArray();
+    const users: string[] = [];
+    members.forEach((value, key) => {
+      console.log('users: ', key);
+      users.push(key);
+    });
+    return users;
   }
 }
