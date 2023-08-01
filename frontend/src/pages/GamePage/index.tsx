@@ -41,7 +41,7 @@ function Game() {
     setGameMode(event.currentTarget.value);
   };
 
-  const handleGameStart = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleGameStart = () => {
     console.log(`gameType: ${gameType}, gameMode: ${gameMode}`);
     if (gameType === '') {
       console.error('게임 타입을 선택해주세요!');
@@ -60,6 +60,12 @@ function Game() {
     socket.emit('join_game', joinGameInfo);
     setIsWaitingGame(true);
     window.addEventListener('beforeunload', handleBeforeUnload);
+  };
+
+  const handleReturnMain = () => {
+    setIsGameOver(false);
+    setIsStartingGame(false);
+    setIsWaitingGame(false);
   };
 
   const handleStopWaiting = () => {
@@ -198,12 +204,17 @@ function Game() {
           </Grid>
         )}
         {isGameOver && gameInfo !== null && (
-          <p>
-            {gameInfo.leftScore > gameInfo.rightScore
-              ? sessionStorage.getItem('left_user')
-              : sessionStorage.getItem('right_user')}
-            승리!
-          </p>
+          <Grid item>
+            <p>
+              {gameInfo.leftScore > gameInfo.rightScore
+                ? sessionStorage.getItem('left_user')
+                : sessionStorage.getItem('right_user')}
+              승리!
+            </p>
+            <Button variant="contained" onClick={handleReturnMain}>
+              메인으로 돌아가기
+            </Button>
+          </Grid>
         )}
       </Grid>
     </>
