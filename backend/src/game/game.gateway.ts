@@ -41,11 +41,11 @@ const RANK_HARD = 3;
 interface GameUser {
   user_id: string;
   socket: Socket;
-  keys: KeyRecord;
+  keys: KeyData;
   type_mode: number;
 }
 
-interface KeyRecord {
+interface KeyData {
   up: boolean;
   down: boolean;
 }
@@ -332,7 +332,7 @@ export class GameGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody() joinGameInfo: JoinGameInfo
   ) {
-    const keys: KeyRecord = {up: false, down: false};
+    const keys: KeyData = {up: false, down: false};
     const {user_id} = joinGameInfo;
     const userSocket: GameUser = {user_id, socket, keys, type_mode: -1};
     if (this.isGameMatched(joinGameInfo, userSocket) === false) {
