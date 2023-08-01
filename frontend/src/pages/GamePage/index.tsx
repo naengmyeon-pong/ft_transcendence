@@ -126,7 +126,7 @@ function Game() {
   return (
     <>
       <Grid id="game-area" container justifyContent="center">
-        {!isStartingGame ? (
+        {!isStartingGame && (
           <Grid id="game-selection" container>
             <Grid id="mode-selection" container justifyContent="center">
               <Grid item xs={4}>
@@ -198,7 +198,8 @@ function Game() {
               </Grid>
             </Grid>
           </Grid>
-        ) : (
+        )}
+        {isStartingGame && !isGameOver && (
           <Grid item xs={8}>
             <Pong socket={socket} gameInfo={gameInfo} />
           </Grid>
