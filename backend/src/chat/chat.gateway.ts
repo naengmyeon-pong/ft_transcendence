@@ -161,7 +161,14 @@ export class ChatGateway
   ) {
     const user_id = socket.handshake.query.user_id as string;
     try {
-      if (await this.chatService.muteMember(room_id, user_id, target_id)) {
+      const mute_time: string = await this.chatService.muteMember(
+        room_id,
+        user_id,
+        target_id
+      );
+      if (mute_time) {
+        const target_socket_id = this.socketArray.getUserSocket(target_id);
+        socket.to(`${target_socket_id}`).emit('mute-member', mute_time);
         return true;
       }
     } catch (e) {

@@ -244,7 +244,11 @@ export class ChatService {
   }
 
   // 현재 시간은 아님. UTC 시간. front랑 그대로 사용할지 바꿀지 합의필요.
-  async muteMember(room_id: number, user_id: string, target_id: string) {
+  async muteMember(
+    room_id: number,
+    user_id: string,
+    target_id: string
+  ): Promise<string> {
     const admin = await this.isChatMember(room_id, user_id);
     const member = await this.isChatMember(room_id, target_id);
 
@@ -252,9 +256,9 @@ export class ChatService {
       const time = new Date();
       member.mute = time.toLocaleTimeString();
       this.chatMemberRepository.save(member);
-      return true;
+      return member.mute;
     }
-    return false;
+    return null;
   }
 
   async banMember(room_id: number, user_id: string, target_id: string) {
