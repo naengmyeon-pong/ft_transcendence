@@ -1,6 +1,14 @@
 import React, {useEffect, useState} from 'react';
 import {io, Socket} from 'socket.io-client';
-import {Box, Grid} from '@mui/material';
+import {Button, Grid} from '@mui/material';
+import {
+  Radio,
+  RadioGroup,
+  FormControlLabel,
+  FormControl,
+  FormLabel,
+} from '@mui/material';
+import {CircularProgress} from '@mui/material';
 import Pong from './Pong';
 
 import {GameInfo, RoomUserInfo, JoinGameInfo} from '@/types/game';
@@ -17,6 +25,45 @@ const handleBeforeUnload = (e: BeforeUnloadEvent) => {
 
 function Game() {
   const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
+  const [gameType, setGameType] = useState<string>('');
+  const [gameMode, setGameMode] = useState<string>('');
+  const [isWaitingGame, setIsWaitingGame] = useState<boolean>(false);
+  const [isStartingGame, setIsStartingGame] = useState<boolean>(false);
+
+  const handleGameType = (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log(event.currentTarget.value);
+    setGameType(event.currentTarget.value);
+  };
+
+  const handleGameMode = (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log(event.currentTarget.value);
+    setGameMode(event.currentTarget.value);
+  };
+
+  const handleGameStart = (event: React.MouseEvent<HTMLButtonElement>) => {
+    console.log(`gameType: ${gameType}, gameMode: ${gameMode}`);
+    if (gameType === '') {
+      console.error('게임 타입을 선택해주세요!');
+      return;
+    }
+    if (gameMode === '') {
+      console.error('게임 난이도를 선택해주세요!');
+      return;
+    }
+    const username = 'user_' + (Math.random() * 1000).toString();
+    const joinGameInfo: JoinGameInfo = {
+      user_id: username,
+      mode: gameMode,
+      type: gameType,
+    };
+    // socket.emit('join_game', joinGameInfo);
+    setIsWaitingGame(true);
+  };
+
+  const handleStopWaiting = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setIsWaitingGame(false);
+  };
+
   const handleNotice = (notice: string) => {
     console.log(notice);
   };
@@ -43,17 +90,18 @@ function Game() {
   };
 
   useEffect(() => {
-    const username = 'user_' + (Math.random() * 1000).toString();
-    const joinGameInfo: JoinGameInfo = {
-      user_id: username,
-      mode: 'easy',
-      type: 'normal',
-    };
-    // socket.emit('join_game', joinGameInfo);
-
     // socket.on('notice', handleNotice);
     // socket.on('room_name', handleRoomname);
     // socket.on('game_info', handleGameInfo);
+
+    return () => {
+      // socket.off('notice', handleNotice);
+      // socket.off('room_name', handleRoomname);
+      // socket.off('game_info', handleGameInfo);
+    };
+  }, [isWaitingGame]);
+
+  useEffect(() => {
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     sessionStorage.removeItem('room_name');
@@ -61,28 +109,91 @@ function Game() {
     sessionStorage.removeItem('right_user');
 
     return () => {
-      // socket.off('notice', handleNotice);
-      // socket.off('room_name', handleRoomname);
-      // socket.off('game_info', handleGameInfo);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, []);
 
   return (
     <>
-      <Grid id="game-area" container justifyContent="center" xs={12}>
-        <Grid id="mode-selection" container justifyContent="center" xs={12}>
-          <Grid xs={6}>
-            <p>123</p>
+      <Grid id="game-area" container justifyContent="center">
+        {!isStartingGame ? (
+          <Grid id="game-selection" container>
+            <Grid id="mode-selection" container justifyContent="center">
+              <Grid item xs={4}>
+                <FormControl>
+                  <FormLabel id="game-mode-selection">게임 타입</FormLabel>
+                  <RadioGroup
+                    aria-labelledby="game-mode-selection"
+                    name="radio-buttons-group"
+                    onChange={handleGameType}
+                  >
+                    <FormControlLabel
+                      value="normal"
+                      control={<Radio />}
+                      label="일반 게임"
+                    />
+                    <FormControlLabel
+                      value="rank"
+                      control={<Radio />}
+                      label="랭크 게임"
+                    />
+                  </RadioGroup>
+                </FormControl>
+              </Grid>
+              <Grid item xs={4}>
+                <FormControl>
+                  <FormLabel id="game-type-selection">게임 난이도</FormLabel>
+                  <RadioGroup
+                    aria-labelledby="game-type-selection"
+                    name="radio-buttons-group"
+                    onChange={handleGameMode}
+                  >
+                    <FormControlLabel
+                      value="easy"
+                      control={<Radio />}
+                      label="일반 모드"
+                    />
+                    <FormControlLabel
+                      value="hard"
+                      control={<Radio />}
+                      label="가속 모드"
+                    />
+                  </RadioGroup>
+                </FormControl>
+              </Grid>
+              <Grid item xs={4}>
+                <Button
+                  variant="contained"
+                  color={isWaitingGame ? 'error' : 'success'}
+                  onClick={handleGameStart}
+                >
+                  {isWaitingGame ? '상대 대기중' : '게임 시작'}
+                </Button>
+                {isWaitingGame && (
+                  <CircularProgress
+                    size={24}
+                    sx={{
+                      position: 'absolute',
+                      color: 'white',
+                      marginTop: '5px',
+                      marginLeft: '-60px',
+                    }}
+                  />
+                )}
+                {isWaitingGame && (
+                  <Button variant="outlined" onClick={handleStopWaiting}>
+                    대기 취소
+                  </Button>
+                )}
+              </Grid>
+            </Grid>
           </Grid>
-          <Grid xs={6}>
-            <p>123</p>
+        ) : (
+          <Grid xs={8}>
+            {/* <Pong socket={socket} gameInfo={gameInfo} />  */}
+            <Pong gameInfo={gameInfo} />
           </Grid>
-        </Grid>
-        <Grid xs={8}>
-          {/* <Pong socket={socket} gameInfo={gameInfo} />  */}
-          <Pong gameInfo={gameInfo} />
-        </Grid>
+        )}
       </Grid>
     </>
   );
