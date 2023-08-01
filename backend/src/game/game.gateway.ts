@@ -33,16 +33,16 @@ const PADDLE_HEIGHT = 100;
 const BALL_RADIUS = 10;
 const BALL_SPEED = 5;
 
-const EASY_NORMAL = 1;
-const EASY_RANK = 2;
-const HARD_NORMAL = 3;
-const HARD_RANK = 4;
+const NORMAL_EASY = 0;
+const NORMAL_HARD = 1;
+const RANK_EASY = 2;
+const RANK_HARD = 3;
 
 interface GameUser {
   user_id: string;
   socket: Socket;
   keys: KeyData;
-  mode_type: number;
+  type_mode: number;
 }
 
 interface KeyData {
@@ -51,9 +51,10 @@ interface KeyData {
 }
 
 interface RoomInfo {
+  room_name: string;
   users: GameUser[];
   game_info: GameInfo;
-  mode_type: number;
+  type_mode: number;
   interval: NodeJS.Timer | null;
 }
 
@@ -127,15 +128,114 @@ export class GameGateway
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
+    this.checkForfeit(socket);
     this.logger.log(`${socket.id} 게임 소켓 연결 해제`);
   }
+
+  checkForfeit = (socket: Socket) => {
+    for (const [key, value] of gameRooms) {
+      if (
+        socket.id === value.users[0].socket.id ||
+        socket.id === value.users[1].socket.id
+      ) {
+        // 소켓이 gameRooms에 존재하는 경우
+        if (
+          value.game_info.leftScore === 5 ||
+          value.game_info.rightScore === 5
+        ) {
+          // 정상 종료된 경우
+          return;
+        } else {
+          // 비정상 종료된 경우 => 몰수패 처리
+          let loserID;
+          let winnerID;
+          if (socket.id === value.users[0].socket.id) {
+            loserID = value.users[0].user_id;
+            winnerID = value.users[1].user_id;
+          } else {
+            winnerID = value.users[0].user_id;
+            loserID = value.users[1].user_id;
+          }
+          const roomName = key;
+          this.saveForfeitData(value, winnerID, loserID);
+        }
+        gameRooms.delete(key);
+        return;
+      }
+    }
+  };
+
+  saveForfeitData = async (
+    roomInfo: RoomInfo,
+    winner_id: string,
+    loser_id: string
+  ) => {
+    const [type, mode] = this.getTypeModeName(roomInfo.type_mode);
+    const {type_id, mode_id} = await this.getTypeModeID(type, mode);
+    const record = this.recordRepository.create({
+      type_id,
+      mode_id,
+      winner_id,
+      loser_id,
+      winner_score: 5,
+      loser_score: 0,
+      is_forfeit: true,
+    });
+    await this.recordRepository.save(record);
+  };
+
+  getTypeModeName = (type_mode: number): [string, string] => {
+    let type: string;
+    let mode: string;
+    switch (type_mode) {
+      case 0:
+        type = 'normal';
+        mode = 'easy';
+        break;
+      case 1:
+        type = 'normal';
+        mode = 'hard';
+        break;
+      case 2:
+        type = 'rank';
+        mode = 'easy';
+        break;
+      case 3:
+        type = 'rank';
+        mode = 'hard';
+        break;
+    }
+    return [type, mode];
+  };
+
+  getTypeModeID = async (
+    type: string,
+    mode: string
+  ): Promise<{type_id: number; mode_id: number}> => {
+    let type_data = await this.typeRepository.findOneBy({type});
+    if (type_data === null) {
+      type_data = this.typeRepository.create({
+        type,
+      });
+      await this.typeRepository.save(type_data);
+    }
+    let mode_data = await this.modeRepository.findOneBy({mode});
+    if (mode_data === null) {
+      mode_data = this.modeRepository.create({
+        mode,
+      });
+      await this.modeRepository.save(mode_data);
+    }
+    return {type_id: type_data.id, mode_id: mode_data.id};
+  };
 
   createGameRoom(userId: string, gameUserSockets: GameUser[]): string {
     const gameInfo = initGameInfo();
     gameRooms.set(userId, {
+      room_name: userId,
       users: gameUserSockets,
       game_info: gameInfo,
-      mode_type: gameUserSockets[0].mode_type,
+      type_mode: gameUserSockets[0].type_mode,
       interval: null,
     });
     return userId;
@@ -148,7 +248,7 @@ export class GameGateway
   ) {
     const keys: KeyData = {up: false, down: false};
     const {user_id} = joinGameInfo;
-    const userSocket: GameUser = {user_id, socket, keys, mode_type: -1};
+    const userSocket: GameUser = {user_id, socket, keys, type_mode: -1};
     if (this.isGameMatched(joinGameInfo, userSocket) === false) {
       return;
     } else {
@@ -158,7 +258,7 @@ export class GameGateway
 
   createRoom = (userSocket: GameUser) => {
     const gameUserSockets: GameUser[] = [];
-    const firstUser = waitUserList[userSocket.mode_type].shift();
+    const firstUser = waitUserList[userSocket.type_mode].shift();
     const secondUser = userSocket;
     const roomName = this.createGameRoom(firstUser.user_id, gameUserSockets);
 
@@ -187,14 +287,14 @@ export class GameGateway
     joinGameInfo: JoinGameInfo,
     userSocket: GameUser
   ): boolean => {
-    userSocket.mode_type = this.findModeType(joinGameInfo);
-    const gameModeType = userSocket.mode_type;
-    if (gameModeType === -1) {
+    userSocket.type_mode = this.findTypeMode(joinGameInfo);
+    const gameTypeMode = userSocket.type_mode;
+    if (gameTypeMode === -1) {
       // join-game-info not found
     }
-    if (waitUserList[gameModeType].length === 0) {
+    if (waitUserList[gameTypeMode].length === 0) {
       console.log('wait');
-      waitUserList[gameModeType].push(userSocket);
+      waitUserList[gameTypeMode].push(userSocket);
       return false;
     } else {
       console.log('join');
@@ -202,25 +302,25 @@ export class GameGateway
     }
   };
 
-  findModeType = (joinGameInfo: JoinGameInfo): number => {
+  findTypeMode = (joinGameInfo: JoinGameInfo): number => {
     const mode = joinGameInfo.mode;
     const type = joinGameInfo.type;
-    let gameModeType = -1;
+    let gameTypeMode = -1;
 
-    if (mode === 'easy') {
-      if (type === 'normal') {
-        gameModeType = EASY_NORMAL;
-      } else if (type === 'rank') {
-        gameModeType = EASY_RANK;
+    if (type === 'normal') {
+      if (mode === 'easy') {
+        gameTypeMode = NORMAL_EASY;
+      } else if (mode === 'hard') {
+        gameTypeMode = NORMAL_HARD;
       }
-    } else if (mode === 'hard') {
-      if (type === 'normal') {
-        gameModeType = HARD_NORMAL;
-      } else if (type === 'rank') {
-        gameModeType = HARD_RANK;
+    } else if (type === 'rank') {
+      if (mode === 'easy') {
+        gameTypeMode = RANK_EASY;
+      } else if (mode === 'hard') {
+        gameTypeMode = RANK_HARD;
       }
     }
-    return gameModeType;
+    return gameTypeMode;
   };
 
   @SubscribeMessage('update_key')
@@ -254,21 +354,22 @@ export class GameGateway
       const gameOver = updateBallPosition(gameInfo);
       this.nsp.to(room_name).emit('game_info', {game_info: gameInfo});
       if (gameOver) {
+        // 게임이 정상 종료된 경우
         clearInterval(roomInfo.interval);
         console.log('game over!');
-        this.saveData(roomInfo);
+        this.saveRecord(roomInfo);
+        gameRooms.delete(roomInfo.room_name);
       }
     }, 1000 / 60);
   }
 
-  async saveData(roomInfo: RoomInfo) {
+  async saveRecord(roomInfo: RoomInfo) {
     const {leftScore} = roomInfo.game_info;
     const {rightScore} = roomInfo.game_info;
     let winner_id: string;
     let loser_id: string;
     const winner_score = 5;
     let loser_score: number;
-    const is_forfeit = false;
     if (leftScore === 5) {
       winner_id = roomInfo.users[0].user_id;
       loser_id = roomInfo.users[1].user_id;
@@ -279,34 +380,17 @@ export class GameGateway
       loser_score = leftScore;
     }
 
-    // 테스트용 게임모드 데이터
-    const mode = 'easy_mode';
-    let mode_data = await this.modeRepository.findOneBy({mode});
-    if (mode_data === null) {
-      mode_data = await this.modeRepository.create({
-        mode,
-      });
-      await this.modeRepository.save(mode_data);
-    }
-
-    // 테스트용 게임타입 데이터
-    const type = 'normal_type';
-    let type_data = await this.typeRepository.findOneBy({type});
-    if (type_data === null) {
-      type_data = await this.typeRepository.create({
-        type,
-      });
-      await this.typeRepository.save(type_data);
-    }
+    const [type, mode] = this.getTypeModeName(roomInfo.type_mode);
+    const {type_id, mode_id} = await this.getTypeModeID(type, mode);
 
     const record = this.recordRepository.create({
-      mode_id: mode_data.id,
-      type_id: type_data.id,
+      type_id,
+      mode_id,
       winner_id,
       loser_id,
       winner_score,
       loser_score,
-      is_forfeit,
+      is_forfeit: false,
     });
     await this.recordRepository.save(record);
   }
