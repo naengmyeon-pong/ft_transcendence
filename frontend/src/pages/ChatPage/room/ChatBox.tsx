@@ -129,9 +129,7 @@ function ChatBox() {
       if (!socket) {
         return alert('소켓가 발생했습니다.');
       }
-
       socket.emit('message', {room_id: roomId, message}, (chat: IChat) => {
-        console.log('TESTasdjklja2');
         setChats(prevChats => [...prevChats, chat]);
         setMessage('');
       });

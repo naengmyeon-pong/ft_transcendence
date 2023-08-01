@@ -11,6 +11,8 @@ interface UserType {
 
 interface UserProps {
   user: UserType;
+  permission: string;
+  myPermission: string;
 }
 
 interface ChatListData {

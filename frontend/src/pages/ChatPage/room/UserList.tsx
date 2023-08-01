@@ -33,7 +33,8 @@ export default function UserList() {
   const [users, setUsers] = useState<UserType[]>([]);
   const [inviteModal, setInviteModal] = useState<boolean>(false);
 
-  const socket = useContext(UserContext).socket;
+  const {socket} = useContext(UserContext);
+  const {user_id} = useContext(UserContext);
 
   const {roomId} = useParams();
 
@@ -55,6 +56,26 @@ export default function UserList() {
     }
   }
 
+  function getPermission() {
+    if (owner?.id === user_id) {
+      return 'owner';
+    }
+
+    for (const node of adminUser) {
+      if (user_id === node?.id) {
+        return 'admin';
+      }
+    }
+    for (const node of users) {
+      if (user_id === node?.id) {
+        return 'user';
+      }
+    }
+    return 'not user';
+  }
+
+  const myPermission: string = getPermission();
+
   function handleInvite() {
     setInviteModal(true);
   }
@@ -70,13 +91,10 @@ export default function UserList() {
   }
 
   function handleUserList(test: MemberType) {
-    console.log('admin: : ');
     setAdminUser(test?.members?.admin);
     setUsers(test?.members?.user);
-    console.log('owner: : ', test?.members?.owner);
-    console.log('user: : ', test?.members?.user);
   }
-  console.log('랜더링');
+
   useEffect(() => {
     // 소켓 이벤트 등록해서 들어온 메세지 헨들링
     socket?.on('room-member', handleUserList);
@@ -95,7 +113,14 @@ export default function UserList() {
         {/* 나를 제외한 관리자 유저 등급 출력 */}
         <ul style={{marginTop: '5px', width: 'auto'}}>
           {adminUser?.map((node, index) => {
-            return <UserNode key={index} user={node} />;
+            return (
+              <UserNode
+                key={index}
+                user={node}
+                permission={'admin'}
+                myPermission={myPermission}
+              />
+            );
           })}
         </ul>
       </BoxBorder>
@@ -106,7 +131,14 @@ export default function UserList() {
         {/* 나를 제외한 일반 유저 등급 */}
         <ul>
           {users?.map((node, index) => {
-            return <UserNode key={index} user={node} />;
+            return (
+              <UserNode
+                key={index}
+                user={node}
+                permission={'user'}
+                myPermission={myPermission}
+              />
+            );
           })}
         </ul>
       </BoxBorder>

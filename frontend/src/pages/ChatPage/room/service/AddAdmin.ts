@@ -1,6 +1,4 @@
-import {UserContext} from 'Context';
-import React, {useContext} from 'react';
-import {useParams} from 'react-router-dom';
+import React from 'react';
 import {Socket} from 'socket.io-client';
 
 function AddAdmin(

@@ -179,9 +179,11 @@ export class ChatGateway
     const user_id = socket.handshake.query.user_id as string;
     try {
       if (await this.chatService.kickMember(room_id, user_id, target_id)) {
-        this.nsp.to(`${room_id}`).emit('room-member', {
-          members: await this.chatService.getRoomMembers(room_id),
-        });
+        // this.nsp.to(`${room_id}`).emit('room-member', {
+        //   members: await this.chatService.getRoomMembers(room_id),
+        // });
+        const target_socket_id = this.socketArray.getUserSocket(target_id);
+        socket.to(`${target_socket_id}`).emit('kick-member');
         return true;
       }
     } catch (e) {

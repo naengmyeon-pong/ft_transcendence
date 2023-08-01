@@ -1,5 +1,5 @@
 import {Menu, MenuItem, Typography} from '@mui/material';
-import React from 'react';
+import React, {useContext} from 'react';
 import ServiceModal from '../service/ServiceModal';
 import AddAdmin from '../service/AddAdmin';
 import Block from '../service/Block';
@@ -8,13 +8,20 @@ import Mute from '../service/Mute';
 import Ban from '../service/Ban';
 import {UserContext} from 'Context';
 import {useParams} from 'react-router-dom';
+import DelAdmin from '../service/DelAdmin';
 
-function UserNode({user}: UserProps) {
+/*
+ * @PARAM: 클릭당한 유저의 id, nickname, image를 가진 객체
+ * @PARAM: 매개변수 유저의 권한
+ * @PARAM: 현재 페이지에 접속한 유저의 권한
+ */
+function UserNode({user, permission, myPermission}: UserProps) {
   const [anchorEl, setAnchorEl] = React.useState<HTMLLIElement | null>(null);
   const [modalState, setModalState] = React.useState(false);
   const [menuItem, setMenuItem] = React.useState<string | null>(null);
   const socket = React.useContext(UserContext).socket;
   const {roomId} = useParams();
+  const {user_id} = useContext(UserContext);
   const open = Boolean(anchorEl);
 
   function handleMenu(event: React.MouseEvent<HTMLLIElement>) {
@@ -30,20 +37,23 @@ function UserNode({user}: UserProps) {
   function handleModalClose(confirmed: boolean) {
     if (confirmed && menuItem) {
       switch (menuItem) {
-        case 'addAdmin':
+        case 'AddAdmin':
           AddAdmin(user, socket, roomId);
           break;
+        case 'DelAdmin':
+          DelAdmin(user, socket, roomId);
+          break;
         case 'Kick':
-          Kick(user);
+          Kick(user, socket, roomId);
           break;
         case 'Mute':
-          Mute(user);
+          Mute(user, socket, roomId);
           break;
         case 'Block':
-          Block(user);
+          Block(user, socket, roomId);
           break;
         case 'Ban':
-          Ban(user);
+          Ban(user, socket, roomId);
           break;
         default:
           break;
@@ -52,6 +62,29 @@ function UserNode({user}: UserProps) {
     setModalState(false);
     setMenuItem(null);
     setAnchorEl(null);
+  }
+
+  function kickMuteBanPermission() {
+    if (myPermission === 'owner') {
+      return true;
+    }
+    if (myPermission === 'admin' && permission === 'user') {
+      return true;
+    }
+    return false;
+  }
+
+  function delAdminMenu() {
+    if (permission === 'admin' && myPermission === 'owner') {
+      return true;
+    }
+    return false;
+  }
+  function addAdminMenu() {
+    if (myPermission === 'owner' && permission !== 'admin') {
+      return true;
+    }
+    return false;
   }
 
   function MenuOpen() {
@@ -73,20 +106,33 @@ function UserNode({user}: UserProps) {
         }}
       >
         {/* TODO: 유저의 권한별로 설정해줘야 합니다 */}
-        <MenuItem onClick={() => handleMenuItemClick('addAdmin')}>
-          <Typography>채팅 관리자로 추가</Typography>
-        </MenuItem>
-        <MenuItem onClick={() => handleMenuItemClick('Kick')}>
-          <Typography>강퇴</Typography>
-        </MenuItem>
-        <MenuItem onClick={() => handleMenuItemClick('Mute')}>
-          <Typography>음소거(5분)</Typography>
-        </MenuItem>
+
+        {delAdminMenu() && (
+          <MenuItem onClick={() => handleMenuItemClick('DelAdmin')}>
+            <Typography>채팅 관리자에서 제거</Typography>
+          </MenuItem>
+        )}
+        {addAdminMenu() && (
+          <MenuItem onClick={() => handleMenuItemClick('AddAdmin')}>
+            <Typography>채팅 관리자로 추가</Typography>
+          </MenuItem>
+        )}
+        {kickMuteBanPermission() && (
+          <div>
+            <MenuItem onClick={() => handleMenuItemClick('Kick')}>
+              <Typography>강퇴</Typography>
+            </MenuItem>
+            <MenuItem onClick={() => handleMenuItemClick('Mute')}>
+              <Typography>음소거(5분)</Typography>
+            </MenuItem>
+            <MenuItem onClick={() => handleMenuItemClick('Ban')}>
+              <Typography>밴</Typography>
+            </MenuItem>
+          </div>
+        )}
+
         <MenuItem onClick={() => handleMenuItemClick('Block')}>
           <Typography>차단</Typography>
-        </MenuItem>
-        <MenuItem onClick={() => handleMenuItemClick('Ban')}>
-          <Typography>밴</Typography>
         </MenuItem>
       </Menu>
     );
@@ -97,7 +143,7 @@ function UserNode({user}: UserProps) {
       <li key={user.nickName}>
         <span onClick={handleMenu}>{user.nickName}</span>
       </li>
-      {open && MenuOpen()}
+      {user_id !== user.id && open && MenuOpen()}
       {modalState && menuItem && (
         <ServiceModal
           modalState={modalState}

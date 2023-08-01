@@ -11,11 +11,13 @@ interface ModalPrintInstance {
 function ModalPrint({user, menuItem}: ModalPrintInstance) {
   let title;
   let detail;
-  console.log(user);
   function getTitle() {
     switch (menuItem) {
-      case 'addAdmin':
+      case 'AddAdmin':
         title = '채팅관리자 추가';
+        break;
+      case 'DelAdmin':
+        title = '채팅관리자 제거';
         break;
       case 'Kick':
         title = '강퇴';
@@ -35,8 +37,11 @@ function ModalPrint({user, menuItem}: ModalPrintInstance) {
   }
   function getDetail() {
     switch (menuItem) {
-      case 'addAdmin':
+      case 'AddAdmin':
         detail = ' 님을 채팅 관리자로 추가하시겠습니까?';
+        break;
+      case 'DelAdmin':
+        detail = ' 님을 채팅 관리자에서 제거하시겠습니까?';
         break;
       case 'Kick':
         detail = ' 님을 채팅에서 강퇴하시겠습니까?';
@@ -56,7 +61,7 @@ function ModalPrint({user, menuItem}: ModalPrintInstance) {
   }
   getTitle();
   getDetail();
-  console.log('title: ', title, ' detail:', detail);
+  console.log('title: ', title, ' detail:', detail, 'menuItem', menuItem);
   return (
     <>
       <Typography variant="h4">{title}</Typography>
