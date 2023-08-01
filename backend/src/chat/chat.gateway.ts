@@ -207,13 +207,4 @@ export class ChatGateway
     }
     return false;
   }
-
-  // @SubscribeMessage('invite-member')
-  // async handleInviteMember(
-  //   @ConnectedSocket() socket: Socket,
-  //   @MessageBody() room_id: number
-  // ) {
-  //   const user_id = socket.handshake.query.user_id as string;
-  //   this.socketArray.getSocketArray();
-  // }
 }

@@ -310,11 +310,34 @@ export class ChatService {
     return room;
   }
 
-  getLoginUser() {
+  async getLoginUser(user_nickname: string) {
+    if (!user_nickname) {
+      throw new BadRequestException('empty usre_nickname param.');
+    }
+    const ret: UserInfo[] = [];
+    const users = await this.userRepository
+      .createQueryBuilder('users')
+      .where('users.user_nickname like :nickname', {
+        nickname: `${user_nickname}%`,
+      })
+      .getMany();
+
+    users.forEach(user => {
+      if (this.socketArray.getUserSocket(user.user_id)) {
+        ret.push({
+          id: user.user_id,
+          nickName: user.user_nickname,
+          image: user.user_image,
+        });
+      }
+    });
+    return ret;
+  }
+
+  getLoginUsers() {
     const members = this.socketArray.getSocketArray();
     const users: string[] = [];
     members.forEach((value, key) => {
-      console.log('users: ', key);
       users.push(key);
     });
     return users;
