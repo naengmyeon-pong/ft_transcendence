@@ -36,4 +36,7 @@ export class User {
 
   @OneToOne(() => SocketId, socket_id => socket_id.user)
   socket_id: SocketId;
+
+  @Column({default: 1000})
+  rank_score: number;
 }
