@@ -58,7 +58,7 @@ interface RoomInfo {
   interval: NodeJS.Timer | null;
 }
 
-const waitUserList: GameUser[][] = [];
+const waitUserList: GameUser[][] = [[], [], [], []];
 
 const gameRooms: Map<string, RoomInfo> = new Map();
 
@@ -156,7 +156,6 @@ export class GameGateway
             winnerID = value.users[0].user_id;
             loserID = value.users[1].user_id;
           }
-          const roomName = key;
           this.saveForfeitData(value, winnerID, loserID);
         }
         gameRooms.delete(key);
@@ -231,6 +230,7 @@ export class GameGateway
 
   createGameRoom(userId: string, gameUserSockets: GameUser[]): string {
     const gameInfo = initGameInfo();
+
     gameRooms.set(userId, {
       room_name: userId,
       users: gameUserSockets,
@@ -260,10 +260,10 @@ export class GameGateway
     const gameUserSockets: GameUser[] = [];
     const firstUser = waitUserList[userSocket.type_mode].shift();
     const secondUser = userSocket;
-    const roomName = this.createGameRoom(firstUser.user_id, gameUserSockets);
-
     gameUserSockets.push(firstUser);
     gameUserSockets.push(secondUser);
+
+    const roomName = this.createGameRoom(firstUser.user_id, gameUserSockets);
 
     firstUser.socket.join(roomName);
     secondUser.socket.join(roomName);

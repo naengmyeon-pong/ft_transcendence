@@ -16,7 +16,7 @@ import {GameInfo, RoomUserInfo, JoinGameInfo} from '@/types/game';
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
 
-// const socket: Socket = io('http://localhost:3001/game');
+const socket: Socket = io('http://localhost:3001/game');
 
 const handleBeforeUnload = (e: BeforeUnloadEvent) => {
   e.preventDefault();
@@ -56,11 +56,11 @@ function Game() {
       mode: gameMode,
       type: gameType,
     };
-    // socket.emit('join_game', joinGameInfo);
+    socket.emit('join_game', joinGameInfo);
     setIsWaitingGame(true);
   };
 
-  const handleStopWaiting = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleStopWaiting = () => {
     setIsWaitingGame(false);
   };
 
@@ -80,9 +80,10 @@ function Game() {
     sessionStorage.setItem('left_user', left_user);
     sessionStorage.setItem('right_user', right_user);
 
-    // if (socket) {
-    //   socket.emit('update_frame', room_name);
-    // }
+    if (socket) {
+      socket.emit('update_frame', room_name);
+      setIsStartingGame(true);
+    }
   };
 
   const handleGameInfo = ({game_info}: {game_info: GameInfo}) => {
@@ -90,14 +91,14 @@ function Game() {
   };
 
   useEffect(() => {
-    // socket.on('notice', handleNotice);
-    // socket.on('room_name', handleRoomname);
-    // socket.on('game_info', handleGameInfo);
+    socket.on('notice', handleNotice);
+    socket.on('room_name', handleRoomname);
+    socket.on('game_info', handleGameInfo);
 
     return () => {
-      // socket.off('notice', handleNotice);
-      // socket.off('room_name', handleRoomname);
-      // socket.off('game_info', handleGameInfo);
+      socket.off('notice', handleNotice);
+      socket.off('room_name', handleRoomname);
+      socket.off('game_info', handleGameInfo);
     };
   }, [isWaitingGame]);
 
@@ -189,9 +190,8 @@ function Game() {
             </Grid>
           </Grid>
         ) : (
-          <Grid xs={8}>
-            {/* <Pong socket={socket} gameInfo={gameInfo} />  */}
-            <Pong gameInfo={gameInfo} />
+          <Grid item xs={8}>
+            <Pong socket={socket} gameInfo={gameInfo} />
           </Grid>
         )}
       </Grid>
