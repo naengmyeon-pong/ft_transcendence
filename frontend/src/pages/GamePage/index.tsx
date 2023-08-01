@@ -80,6 +80,7 @@ function Game() {
           </Grid>
         </Grid>
         <Grid xs={8}>
+          {/* <Pong socket={socket} gameInfo={gameInfo} />  */}
           <Pong gameInfo={gameInfo} />
         </Grid>
       </Grid>
