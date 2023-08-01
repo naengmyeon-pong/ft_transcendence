@@ -121,7 +121,6 @@ function Game() {
               <FormLabel id="game-mode-selection">게임 타입</FormLabel>
               <RadioGroup
                 aria-labelledby="game-mode-selection"
-                defaultValue="female"
                 name="radio-buttons-group"
                 onChange={handleGameType}
               >
@@ -143,7 +142,6 @@ function Game() {
               <FormLabel id="game-type-selection">게임 난이도</FormLabel>
               <RadioGroup
                 aria-labelledby="game-type-selection"
-                defaultValue="female"
                 name="radio-buttons-group"
                 onChange={handleGameMode}
               >
