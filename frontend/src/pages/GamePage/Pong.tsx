@@ -58,6 +58,7 @@ function Pong({socket, gameInfo}: PongProps) {
       x: -1,
       y: 0,
     },
+    speed: 2,
   });
   const keyStateRef = useRef<{[key: string]: boolean}>({});
   const requestAnimationIdRef = useRef<number>(0);

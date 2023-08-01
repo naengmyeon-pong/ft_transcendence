@@ -31,7 +31,6 @@ const PADDLE_WIDTH = 10;
 const PADDLE_HEIGHT = 100;
 
 const BALL_RADIUS = 10;
-const BALL_SPEED = 5;
 
 const NORMAL_EASY = 0;
 const NORMAL_HARD = 1;
@@ -80,6 +79,7 @@ const initGameInfo = (): GameInfo => {
       x: -1,
       y: 0,
     },
+    speed: 2,
   };
   const gameInfo: GameInfo = {
     leftPaddle,
@@ -278,6 +278,12 @@ export class GameGateway
       left_user: firstUser.user_id,
       right_user: secondUser.user_id,
     };
+    if (
+      roomInfo.type_mode === NORMAL_HARD ||
+      roomInfo.type_mode === RANK_HARD
+    ) {
+      gameInfo.ball.speed *= 1.5;
+    }
 
     this.nsp.to(roomName).emit('room_name', roomUserInfo);
     this.nsp.to(roomName).emit('game_info', {game_info: gameInfo});
@@ -458,8 +464,8 @@ const isGameOver = (gameInfo: GameInfo): boolean => {
 const updateBallPosition = (gameInfo: GameInfo): boolean => {
   const {ball, leftPaddle, rightPaddle} = gameInfo;
 
-  const nextX = ball.pos.x + BALL_SPEED * ball.vel.x;
-  let nextY = ball.pos.y + BALL_SPEED * ball.vel.y;
+  const nextX = ball.pos.x + ball.speed * ball.vel.x;
+  let nextY = ball.pos.y + ball.speed * ball.vel.y;
 
   ball.pos.x = nextX;
   ball.pos.y = nextY;
@@ -484,8 +490,8 @@ const updateBallPosition = (gameInfo: GameInfo): boolean => {
 
     const angleRadian = (Math.PI / 4) * collidePoint;
     const direction = ball.pos.x + BALL_RADIUS < CANVAS_WIDTH / 2 ? 1 : -1;
-    ball.vel.x = direction * BALL_SPEED * Math.cos(angleRadian);
-    ball.vel.y = BALL_SPEED * Math.sin(angleRadian);
+    ball.vel.x = direction * ball.speed * Math.cos(angleRadian);
+    ball.vel.y = ball.speed * Math.sin(angleRadian);
     // if (ball.vel.x < 0) {
     //   if (ball.pos.x - BALL_RADIUS < PADDLE_WIDTH) {
     //     ball.pos.x = PADDLE_WIDTH + BALL_RADIUS;
