@@ -17,6 +17,7 @@ import {
   GameInfo,
   RoomUserInfo,
   JoinGameInfo,
+  DEFAULT_BALL_SPEED,
 } from '@/types/game';
 import {UserRepository} from 'src/user/user.repository';
 import {RecordRepository} from 'src/record/record.repository';
@@ -79,7 +80,7 @@ const initGameInfo = (): GameInfo => {
       x: -1,
       y: 0,
     },
-    speed: 2,
+    speed: DEFAULT_BALL_SPEED,
   };
   const gameInfo: GameInfo = {
     leftPaddle,
@@ -147,8 +148,8 @@ export class GameGateway
           return;
         } else {
           // 비정상 종료된 경우 => 몰수패 처리
-          let loserID;
-          let winnerID;
+          let loserID: string;
+          let winnerID: string;
           if (socket.id === value.users[0].socket.id) {
             loserID = value.users[0].user_id;
             winnerID = value.users[1].user_id;
@@ -157,6 +158,7 @@ export class GameGateway
             loserID = value.users[1].user_id;
           }
           this.saveForfeitData(value, winnerID, loserID);
+          this.sendGameInfo(value);
         }
         gameRooms.delete(key);
         return;
@@ -169,6 +171,7 @@ export class GameGateway
     winner_id: string,
     loser_id: string
   ) => {
+    this.setRoomInfoScore(roomInfo, winner_id);
     const [type, mode] = this.getTypeModeName(roomInfo.type_mode);
     const {type_id, mode_id} = await this.getTypeModeID(type, mode);
     const record = this.recordRepository.create({
@@ -181,6 +184,24 @@ export class GameGateway
       is_forfeit: true,
     });
     await this.recordRepository.save(record);
+  };
+
+  setRoomInfoScore = (roomInfo: RoomInfo, winner_id: string) => {
+    const winnerLeft = this.isWinnerLeft(roomInfo, winner_id);
+    if (winnerLeft === true) {
+      roomInfo.game_info.leftScore = 5;
+      roomInfo.game_info.rightScore = 0;
+    } else {
+      roomInfo.game_info.leftScore = 0;
+      roomInfo.game_info.rightScore = 5;
+    }
+  };
+
+  isWinnerLeft = (roomInfo: RoomInfo, winner_id: string): boolean => {
+    if (winner_id === roomInfo.users[0].user_id) {
+      return true;
+    }
+    return false;
   };
 
   getTypeModeName = (type_mode: number): [string, string] => {
@@ -358,8 +379,8 @@ export class GameGateway
     }
     roomInfo.interval = setInterval(() => {
       const gameOver = updateBallPosition(gameInfo);
-      this.nsp.to(room_name).emit('game_info', {game_info: gameInfo});
-      if (gameOver) {
+      this.sendGameInfo(roomInfo);
+      if (gameOver === true) {
         // 게임이 정상 종료된 경우
         clearInterval(roomInfo.interval);
         console.log('game over!');
@@ -368,6 +389,12 @@ export class GameGateway
       }
     }, 1000 / 60);
   }
+
+  sendGameInfo = (roomInfo: RoomInfo) => {
+    this.nsp
+      .to(roomInfo.room_name)
+      .emit('game_info', {game_info: roomInfo.game_info});
+  };
 
   async saveRecord(roomInfo: RoomInfo) {
     const {leftScore} = roomInfo.game_info;
