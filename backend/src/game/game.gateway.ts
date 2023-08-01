@@ -159,6 +159,7 @@ export class GameGateway
           }
           this.saveForfeitData(value, winnerID, loserID);
           this.sendGameInfo(value);
+          clearInterval(value.interval);
         }
         gameRooms.delete(key);
         return;
