@@ -29,6 +29,7 @@ function Game() {
   const [gameMode, setGameMode] = useState<string>('');
   const [isWaitingGame, setIsWaitingGame] = useState<boolean>(false);
   const [isStartingGame, setIsStartingGame] = useState<boolean>(false);
+  const [isGameOver, setIsGameOver] = useState<boolean>(false);
 
   const handleGameType = (event: React.ChangeEvent<HTMLInputElement>) => {
     console.log(event.currentTarget.value);
@@ -89,7 +90,13 @@ function Game() {
   };
 
   const handleGameInfo = ({game_info}: {game_info: GameInfo}) => {
+    if (game_info === null) {
+      return;
+    }
     setGameInfo(game_info);
+    if (game_info.leftScore === 5 || game_info.rightScore === 5) {
+      setIsGameOver(true);
+    }
   };
 
   useEffect(() => {
@@ -189,6 +196,14 @@ function Game() {
           <Grid item xs={8}>
             <Pong socket={socket} gameInfo={gameInfo} />
           </Grid>
+        )}
+        {isGameOver && gameInfo !== null && (
+          <p>
+            {gameInfo.leftScore > gameInfo.rightScore
+              ? sessionStorage.getItem('left_user')
+              : sessionStorage.getItem('right_user')}
+            승리!
+          </p>
         )}
       </Grid>
     </>
