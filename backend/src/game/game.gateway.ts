@@ -330,13 +330,15 @@ export class GameGateway
   }
 
   @SubscribeMessage('join_game')
-  handleJoinGame(
+  async handleJoinGame(
     @ConnectedSocket() socket: Socket,
     @MessageBody() joinGameInfo: JoinGameInfo
   ) {
     let user_id: string;
     try {
-      const decodedToken = this.jwtService.verify(joinGameInfo.jwt);
+      const decodedToken = this.jwtService.verify(joinGameInfo.jwt, {
+        secret: process.env.SIGNIN_JWT_SECRET_KEY,
+      });
       user_id = decodedToken.user_id;
       const keys: KeyData = {up: false, down: false};
       const userSocket: GameUser = {
@@ -352,6 +354,7 @@ export class GameGateway
       }
     } catch (err) {
       console.error('JWT verification error: ', err.message);
+      // client에 이벤트 전송
     }
   }
 
