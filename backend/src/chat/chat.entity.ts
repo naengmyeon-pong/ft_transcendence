@@ -49,7 +49,7 @@ export class ChatMember {
   permission: number;
 
   @Column({nullable: true})
-  mute: Date;
+  mute: string;
 
   @Column()
   chatroomId: number;
@@ -104,7 +104,9 @@ export class SocketId {
   @Column()
   socket_id: string;
 
-  @OneToOne(() => User, user => user.socket_id)
+  @OneToOne(() => User, user => user.socket_id, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({name: 'user_id'})
   user: User;
 }

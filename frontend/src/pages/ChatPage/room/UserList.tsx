@@ -85,7 +85,7 @@ export default function UserList() {
   }
 
   function exit() {
-    socket?.emit('leave-room', roomId, () => {
+    socket?.emit('leave-room', {room_id: roomId}, () => {
       navigate('/menu/chat/list');
     });
   }
@@ -97,6 +97,7 @@ export default function UserList() {
 
   useEffect(() => {
     // 소켓 이벤트 등록해서 들어온 메세지 헨들링
+    console.log('room-member on');
     socket?.on('room-member', handleUserList);
     roomUsers();
   }, []);

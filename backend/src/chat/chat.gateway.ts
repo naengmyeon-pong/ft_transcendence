@@ -53,6 +53,14 @@ export class ChatGateway
   async handleConnection(@ConnectedSocket() socket: Socket) {
     const user_id = socket.handshake.query.user_id as string;
     this.socketArray.addSocketArray({user_id, socket_id: socket.id});
+    try {
+      const member = await this.chatService.isChatMember(user_id);
+      if (member.mute !== null) {
+        socket.emit('mute-member', member.mute);
+      }
+    } catch (e) {
+      console.log(e.message);
+    }
     this.logger.log(`${socket.id} 소켓 연결`);
   }
 
@@ -67,10 +75,15 @@ export class ChatGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody() {room_id, message}: MessagePayload
   ) {
-    socket.to(`${room_id}`).emit('message', {username: socket.id, message}); //front로 메세지 전송
+    const user_id = socket.handshake.query.user_id as string;
+    const user_nickname = socket.handshake.query.nickname as string;
+    const user_image = socket.handshake.query.user_image as string;
+    socket
+      .to(`${room_id}`)
+      .emit('message', {message, user_id, user_nickname, user_image}); //front로 메세지 전송
 
     this.logger.log(`들어온 메세지: ${message}.`);
-    return {username: socket.id, message};
+    return {message, user_id, user_nickname, user_image};
   }
 
   @SubscribeMessage('join-room')
@@ -80,15 +93,21 @@ export class ChatGateway
   ): Promise<boolean> {
     const user_id = socket.handshake.query.user_id as string;
     try {
-      await this.chatService.joinRoom(room_id, user_id);
-      socket.join(`${room_id}`);
-      socket.to(`${room_id}`).emit('message', {
-        message: `${socket.handshake.query.nickname}가 들어왔습니다.`,
-      });
-      this.nsp.to(`${room_id}`).emit('room-member', {
-        members: await this.chatService.getRoomMembers(room_id),
-      });
-      return true;
+      if (await this.chatService.joinRoom(room_id, user_id)) {
+        socket.join(`${room_id}`);
+        socket.to(`${room_id}`).emit('message', {
+          message: `${socket.handshake.query.nickname}가 들어왔습니다.`,
+        });
+        this.nsp.to(`${room_id}`).emit('room-member', {
+          members: await this.chatService.getRoomMembers(room_id),
+        });
+        return true;
+      } else {
+        socket.join(`${room_id}`);
+        this.nsp.to(`${room_id}`).emit('room-member', {
+          members: await this.chatService.getRoomMembers(room_id),
+        });
+      }
     } catch (e) {
       console.log('join error: ', e.message);
       return false;
@@ -98,8 +117,12 @@ export class ChatGateway
   @SubscribeMessage('leave-room')
   async handleLeaveRoom(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() room_id: number
+    @MessageBody('room_id') room_id: number,
+    @MessageBody('reload') reload: boolean
   ) {
+    if (reload) {
+      return true;
+    }
     const user_id = socket.handshake.query.user_id as string;
     try {
       const leave = await this.chatService.leaveRoom(room_id, user_id);
@@ -165,25 +188,25 @@ export class ChatGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody() {room_id, target_id, mute_time}: MutePayload
   ) {
-    // const user_id = socket.handshake.query.user_id as string;
-    // try {
-    //   const mute_time = await this.chatService.muteMember(
-    //     room_id,
-    //     user_id,
-    //     target_id
-    //   );
-    console.log('mute_time: ', mute_time);
-    if (mute_time) {
-      const target_socket_id = this.socketArray.getUserSocket(target_id);
-      socket
-        .to(`${room_id}`)
-        .to(`${target_socket_id}`)
-        .emit('mute-member', mute_time);
-      return true;
+    const user_id = socket.handshake.query.user_id as string;
+    try {
+      if (mute_time) {
+        await this.chatService.muteMember(
+          room_id,
+          user_id,
+          target_id,
+          mute_time
+        );
+        const target_socket_id = this.socketArray.getUserSocket(target_id);
+        socket
+          .to(`${room_id}`)
+          .to(`${target_socket_id}`)
+          .emit('mute-member', mute_time);
+        return true;
+      }
+    } catch (e) {
+      console.log(e.message);
     }
-    // } catch (e) {
-    //   console.log(e.message);
-    // }
     return false;
   }
 
@@ -196,9 +219,6 @@ export class ChatGateway
     const user_id = socket.handshake.query.user_id as string;
     try {
       if (await this.chatService.kickMember(room_id, user_id, target_id)) {
-        // this.nsp.to(`${room_id}`).emit('room-member', {
-        //   members: await this.chatService.getRoomMembers(room_id),
-        // });
         const target_socket_id = this.socketArray.getUserSocket(target_id);
         socket.to(`${target_socket_id}`).emit('kick-member');
         return true;

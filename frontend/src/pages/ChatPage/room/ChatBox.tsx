@@ -1,4 +1,4 @@
-import {NavigateBefore} from '@mui/icons-material';
+import {CleaningServices, NavigateBefore} from '@mui/icons-material';
 import {Avatar, Box, Button, Paper, TextField, Typography} from '@mui/material';
 import {UserContext} from 'Context';
 import React, {
@@ -100,7 +100,7 @@ function ChatBox() {
 
     const handleListener = (e: BeforeUnloadEvent) => {
       e.preventDefault();
-      socket?.emit('leave-room', roomId);
+      socket?.emit('leave-room', {room_id: roomId, reload: true});
     };
 
     function handleMute(mute_time: number) {
@@ -123,14 +123,14 @@ function ChatBox() {
     socket?.once('leave-room', leaveRoomHandler);
 
     socket?.once('kick-member', () => {
-      socket?.emit('leave-room', roomId, () => {
+      socket?.emit('leave-room', {room_id: roomId}, () => {
         navigate(-1);
       });
     });
 
     return () => {
       window.removeEventListener('beforeunload', handleListener);
-      socket?.emit('leave-room', roomId);
+      socket?.emit('leave-room', {room_id: roomId});
       socket?.off('message', handleMessage);
       socket?.off('mute_time', handleMute);
     };

@@ -143,26 +143,22 @@ export class ChatService {
       throw new BadRequestException('empty parameter.');
     }
     const user = await this.getUser(user_id);
-    const member = await this.chatMemberRepository.findOneBy({
-      chatroomId: room_id,
-      userId: user_id,
-    });
-    if (member && member.permission === 2) {
-      // 이 user가 방의 owner이면 방 만들 때 이미 member로 추가 되었기 때문에 skip 하고 socket에서 join만 할 수 있도록.
-      return;
-    } else if (member) {
-      // owner가 아닌 유저가 이미 있으면 postman 같이 잘못된 요청이므로 에러 발생
-      throw new ConflictException(`${user_id} already chatmember.`);
-    }
 
     // ban_list에 등록되어 있는지 확인
     const ban_member = await this.chatBanRepository.findOneBy({
       chatroomId: room_id,
       userId: user_id,
     });
-    console.log('ban_member: ', room_id, ' ', user_id);
     if (ban_member) {
       throw new ForbiddenException(`${user_id} is ban this room.`);
+    }
+
+    const member = await this.chatMemberRepository.findOneBy({
+      chatroomId: room_id,
+      userId: user_id,
+    });
+    if (member) {
+      return false;
     }
 
     // room 인원 증가시키고, room_member에 추가
@@ -180,6 +176,7 @@ export class ChatService {
       userId: user_id,
     });
     await this.chatMemberRepository.save(new_member);
+    return true;
   }
 
   async leaveRoom(room_id: number, user_id: string) {
@@ -216,7 +213,7 @@ export class ChatService {
 
   async addToAdmin(room_id: number, user_id: string, target_id: string) {
     if (this.isOwner(room_id, user_id)) {
-      const member = await this.isChatMember(room_id, target_id);
+      const member = await this.isChatMember(target_id);
       member.permission = 1;
       await this.chatMemberRepository.save(member);
       return true;
@@ -226,7 +223,7 @@ export class ChatService {
 
   async delAdmin(room_id: number, user_id: string, target_id: string) {
     if (this.isOwner(room_id, user_id)) {
-      const member = await this.isChatMember(room_id, target_id);
+      const member = await this.isChatMember(target_id);
       member.permission = 0;
       await this.chatMemberRepository.save(member);
       return true;
@@ -235,8 +232,8 @@ export class ChatService {
   }
 
   async kickMember(room_id: number, user_id: string, target_id: string) {
-    const admin = await this.isChatMember(room_id, user_id);
-    const member = await this.isChatMember(room_id, target_id);
+    const admin = await this.isChatMember(user_id);
+    const member = await this.isChatMember(target_id);
 
     if (admin.permission > member.permission) {
       return true;
@@ -245,22 +242,24 @@ export class ChatService {
   }
 
   // 현재 시간은 아님. UTC 시간. front랑 그대로 사용할지 바꿀지 합의필요.
-  async muteMember(room_id: number, user_id: string, target_id: string) {
-    const admin = await this.isChatMember(room_id, user_id);
-    const member = await this.isChatMember(room_id, target_id);
+  async muteMember(
+    room_id: number,
+    user_id: string,
+    target_id: string,
+    mute_time: string
+  ) {
+    const admin = await this.isChatMember(user_id);
+    const member = await this.isChatMember(target_id);
 
     if (admin.permission > member.permission) {
-      const time = new Date(Date.UTC(0, 0, 0, 0, 0, 0));
-      member.mute = time;
+      member.mute = mute_time;
       this.chatMemberRepository.save(member);
-      return member.mute;
     }
-    return null;
   }
 
   async banMember(room_id: number, user_id: string, target_id: string) {
-    const admin = await this.isChatMember(room_id, user_id);
-    const member = await this.isChatMember(room_id, target_id);
+    const admin = await this.isChatMember(user_id);
+    const member = await this.isChatMember(target_id);
 
     if (admin.permission > member.permission) {
       const ban_member = this.chatBanRepository.create({
@@ -274,19 +273,18 @@ export class ChatService {
   }
 
   async isOwner(room_id: number, user_id: string) {
-    const member = await this.isChatMember(room_id, user_id);
+    const member = await this.isChatMember(user_id);
     if (member.permission === 2) {
       return true;
     }
     return false;
   }
 
-  async isChatMember(room_id: number, user_id: string) {
-    if (!room_id || !user_id) {
+  async isChatMember(user_id: string) {
+    if (!user_id) {
       throw new BadRequestException('empty parameter.');
     }
     const member = await this.chatMemberRepository.findOneBy({
-      chatroomId: room_id,
       userId: user_id,
     });
     if (!member) {
