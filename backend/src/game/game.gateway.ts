@@ -345,6 +345,22 @@ export class GameGateway
     return userId;
   }
 
+  @SubscribeMessage('cancel_waiting')
+  handleCancelWaiting(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() joinGameInfo: JoinGameInfo
+  ) {
+    const typeMode = this.findTypeMode(joinGameInfo);
+    const waitUsers: GameUser[] = waitUserList[typeMode];
+    for (let i = 0; i <= RANK_HARD; i++) {
+      if (waitUsers[i].socket.id === socket.id) {
+        waitUsers.splice(i, 1);
+        return;
+      }
+    }
+    console.log('Socket not in waiting list');
+  }
+
   @SubscribeMessage('join_game')
   async handleJoinGame(
     @ConnectedSocket() socket: Socket,
