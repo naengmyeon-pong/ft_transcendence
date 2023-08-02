@@ -23,6 +23,12 @@ interface ExecPayload {
   target_id: string;
 }
 
+interface MutePayload {
+  room_id: number;
+  target_id: string;
+  mute_time: string;
+}
+
 @WebSocketGateway({
   namespace: 'chat',
   cors: {
@@ -157,23 +163,27 @@ export class ChatGateway
   @SubscribeMessage('mute-member')
   async handleMuteMember(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() {room_id, target_id}: ExecPayload
+    @MessageBody() {room_id, target_id, mute_time}: MutePayload
   ) {
-    const user_id = socket.handshake.query.user_id as string;
-    try {
-      const mute_time = await this.chatService.muteMember(
-        room_id,
-        user_id,
-        target_id
-      );
-      if (mute_time) {
-        const target_socket_id = this.socketArray.getUserSocket(target_id);
-        socket.to(`${target_socket_id}`).emit('mute-member', mute_time);
-        return true;
-      }
-    } catch (e) {
-      console.log(e.message);
+    // const user_id = socket.handshake.query.user_id as string;
+    // try {
+    //   const mute_time = await this.chatService.muteMember(
+    //     room_id,
+    //     user_id,
+    //     target_id
+    //   );
+    console.log('mute_time: ', mute_time);
+    if (mute_time) {
+      const target_socket_id = this.socketArray.getUserSocket(target_id);
+      socket
+        .to(`${room_id}`)
+        .to(`${target_socket_id}`)
+        .emit('mute-member', mute_time);
+      return true;
     }
+    // } catch (e) {
+    //   console.log(e.message);
+    // }
     return false;
   }
 

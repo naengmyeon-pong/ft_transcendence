@@ -6,12 +6,11 @@ function Mute(
   socket: Socket | null,
   roomId: string | undefined
 ) {
-  socket?.emit(
-    'mute-member',
-    {room_id: roomId, target_id: user?.id},
-    new Date()
-  );
-  console.log('Mute');
+  socket?.emit('mute-member', {
+    room_id: roomId,
+    target_id: user?.id,
+    mute_time: new Date().getTime(),
+  });
 }
 
 export default Mute;

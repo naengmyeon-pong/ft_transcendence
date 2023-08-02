@@ -8,9 +8,11 @@ import React, {
   useContext,
   useEffect,
   useRef,
+  useState,
 } from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import {Socket} from 'socket.io-client';
+import MuteModal from '../modal/MuteModal';
 
 interface IChat {
   username: string;
@@ -61,10 +63,12 @@ const Message = ({
 function ChatBox() {
   // const [socket, setSocket] = React.useState<Socket | null>(null);
   const {socket, setSocket} = useContext(UserContext);
-  const [chats, setChats] = React.useState<IChat[]>([]);
-  const [message, setMessage] = React.useState<string>('');
+  const [chats, setChats] = useState<IChat[]>([]);
+  const [message, setMessage] = useState<string>('');
   const {user_nickname} = useContext(UserContext);
   const {user_image} = useContext(UserContext);
+  const [muteTimer, setMuteTimer] = useState<number>(0);
+  const [muteModal, setMuteModal] = useState<boolean>(false);
 
   const {roomId} = useParams();
   // 채팅창 스크롤을 제어하는 변수
@@ -87,7 +91,6 @@ function ChatBox() {
   // const navigate = useNavigate();
 
   useEffect(() => {
-    console.log('chatBox socket: ', socket);
     socket?.emit('join-room', roomId, (res: boolean) => {
       if (res === false) {
         navigate(-1);
@@ -95,11 +98,23 @@ function ChatBox() {
       }
     });
 
-    function messageHandler(chat: IChat) {
+    const handleListener = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      socket?.emit('leave-room', roomId);
+    };
+
+    function handleMute(mute_time: number) {
+      console.log(mute_time);
+      setMuteTimer(mute_time);
+    }
+
+    function handleMessage(chat: IChat) {
       setChats(prevChats => [...prevChats, chat]);
     }
 
-    socket?.on('message', messageHandler);
+    window.addEventListener('beforeunload', handleListener);
+    socket?.on('mute-member', handleMute);
+    socket?.on('message', handleMessage);
 
     function leaveRoomHandler(ret: boolean) {
       navigate('/menu/chat/list');
@@ -112,25 +127,12 @@ function ChatBox() {
         navigate(-1);
       });
     });
-    function handleMute(mute_time: Date) {
-      // const now = new Date(Date.UTC(0, 0, 0, 0, 0, 0));
-      console.log(mute_time);
-      console.log(typeof mute_time);
-      // console.log(now);
-    }
-
-    socket?.on('mute-member', handleMute);
-
-    const handleListener = (e: BeforeUnloadEvent) => {
-      socket?.emit('leave-room', roomId);
-    };
-
-    window.addEventListener('beforeunload', handleListener);
 
     return () => {
       window.removeEventListener('beforeunload', handleListener);
       socket?.emit('leave-room', roomId);
-      socket?.off('message', messageHandler);
+      socket?.off('message', handleMessage);
+      socket?.off('mute_time', handleMute);
     };
   }, []);
 
@@ -148,6 +150,18 @@ function ChatBox() {
       if (!socket) {
         return alert('소켓가 발생했습니다.');
       }
+      console.log(muteTimer);
+      if (muteTimer !== 0) {
+        const five_minute = 5 * 60 * 1000;
+        const mute = Math.abs(new Date().getTime() - muteTimer);
+        if (five_minute > mute) {
+          setMuteModal(true);
+          return;
+        }
+      }
+      setMuteModal(false);
+      setMuteTimer(0);
+
       socket.emit('message', {room_id: roomId, message}, (chat: IChat) => {
         setChats(prevChats => [...prevChats, chat]);
         setMessage('');
@@ -155,6 +169,10 @@ function ChatBox() {
     },
     [message, socket]
   );
+
+  function handleMuteClose() {
+    setMuteModal(false);
+  }
 
   return (
     <>
@@ -201,6 +219,13 @@ function ChatBox() {
             </Button>
           </form>
         </Box>
+        {muteModal && (
+          <MuteModal
+            muteModal={muteModal}
+            handleMuteClose={handleMuteClose}
+            muteTimer={muteTimer}
+          />
+        )}
       </Box>
     </>
   );
