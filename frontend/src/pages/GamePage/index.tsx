@@ -51,9 +51,14 @@ function Game() {
       console.error('게임 난이도를 선택해주세요!');
       return;
     }
-    const username = 'user_' + (Math.random() * 1000).toString();
+    const jwtToken = sessionStorage.getItem('accessToken');
+    // TODO: 에러 처리 추가하기
+    // TODO: 토큰 만료 시간 확인 추가하기
+    if (jwtToken === null) {
+      return;
+    }
     const joinGameInfo: JoinGameInfo = {
-      user_id: username,
+      jwt: jwtToken,
       mode: gameMode,
       type: gameType,
     };
