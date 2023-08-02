@@ -13,23 +13,38 @@ import Pong from './Pong';
 
 import {GameInfo, RoomUserInfo, JoinGameInfo} from '@/types/game';
 
-const CANVAS_WIDTH = 500;
-const CANVAS_HEIGHT = 500;
-
 const socket: Socket = io('http://localhost:3001/game');
-
-const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-  e.preventDefault();
-  e.returnValue = '';
-};
 
 function Game() {
   const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
   const [gameType, setGameType] = useState<string>('');
   const [gameMode, setGameMode] = useState<string>('');
+  const [selectedGameType, setSelectedGameType] = useState<string>('');
+  const [selectedGameMode, setSelectedGameMode] = useState<string>('');
   const [isWaitingGame, setIsWaitingGame] = useState<boolean>(false);
   const [isStartingGame, setIsStartingGame] = useState<boolean>(false);
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
+
+  const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+    e.preventDefault();
+    e.returnValue = '';
+  };
+
+  const handleUnload = () => {
+    if (isWaitingGame === true) {
+      const jwtToken = sessionStorage.getItem('accessToken');
+      if (jwtToken === null) {
+        return;
+      }
+      const joinGameInfo: JoinGameInfo = {
+        jwt: jwtToken,
+        mode: selectedGameMode,
+        type: selectedGameType,
+      };
+      console.log('hey');
+      socket.emit('cancel_waiting', joinGameInfo);
+    }
+  };
 
   const handleGameType = (event: React.ChangeEvent<HTMLInputElement>) => {
     console.log(event.currentTarget.value);
@@ -57,6 +72,8 @@ function Game() {
     if (jwtToken === null) {
       return;
     }
+    setSelectedGameMode(gameMode);
+    setSelectedGameType(gameType);
     const joinGameInfo: JoinGameInfo = {
       jwt: jwtToken,
       mode: gameMode,
@@ -74,11 +91,25 @@ function Game() {
     setGameInfo(null);
     setGameMode('');
     setGameType('');
+    setSelectedGameMode('');
+    setSelectedGameType('');
   };
 
   const handleStopWaiting = () => {
-    window.removeEventListener('beforeunload', handleBeforeUnload);
+    const jwtToken = sessionStorage.getItem('accessToken');
+    if (jwtToken === null) {
+      return;
+    }
+    const joinGameInfo: JoinGameInfo = {
+      jwt: jwtToken,
+      mode: selectedGameMode,
+      type: selectedGameType,
+    };
+    socket.emit('cancel_waiting', joinGameInfo);
     setIsWaitingGame(false);
+    setSelectedGameMode('');
+    setSelectedGameType('');
+    window.removeEventListener('beforeunload', handleBeforeUnload);
   };
 
   const handleNotice = (notice: string) => {
@@ -117,11 +148,13 @@ function Game() {
     socket.on('notice', handleNotice);
     socket.on('room_name', handleRoomname);
     socket.on('game_info', handleGameInfo);
+    window.addEventListener('unload', handleUnload);
 
     return () => {
       socket.off('notice', handleNotice);
       socket.off('room_name', handleRoomname);
       socket.off('game_info', handleGameInfo);
+      window.removeEventListener('unload', handleUnload);
     };
   }, [isWaitingGame]);
 
