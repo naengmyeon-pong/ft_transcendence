@@ -24,6 +24,7 @@ import {RecordRepository} from 'src/record/record.repository';
 import {ModeRepository} from 'src/record/mode/mode.repository';
 import {TypeRepository} from 'src/record/type/type.repository';
 import {JwtService} from '@nestjs/jwt';
+import {boolean} from 'joi';
 
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
@@ -184,10 +185,10 @@ export class GameGateway
       this.setRoomInfoScore(roomInfo, winner_id);
     }
     const [type, mode] = this.getTypeModeName(roomInfo.type_mode);
-    const {type_id, mode_id} = await this.getTypeModeID(type, mode);
+    const {game_type, game_mode} = await this.getTypeModeID(type, mode);
     const record = this.recordRepository.create({
-      type_id,
-      mode_id,
+      game_type,
+      game_mode,
       winner_id,
       loser_id,
       winner_score: 5,
@@ -195,30 +196,45 @@ export class GameGateway
       is_forfeit: isForfeit,
     });
     await this.recordRepository.save(record);
-    await this.saveRankScore(winner_id, loser_id);
+    if (type === 'rank') {
+      await this.saveRankScore(winner_id, true);
+      await this.saveRankScore(loser_id, false);
+    }
   };
 
-  saveRankScore = async (winnerID: string, loserID: string) => {
-    const winner = await this.userRepository.findOneBy({user_id: winnerID});
-    if (winner === null) {
+  saveRankScore = async (userId: string, isWinner: boolean) => {
+    const user = await this.userRepository.findOneBy({user_id: userId});
+    if (user === null) {
       // user not found
-    } else {
-      const score = winner.rank_score;
-      if (score < 1000000 || score.toString().length < 1000) {
-        // postgres에 저장할 수 있는 최대값
-        winner.rank_score += 3;
-      }
+      console.log('user not found');
+      return;
     }
-    const loser = await this.userRepository.findOneBy({user_id: loserID});
-    if (loser === null) {
-      // user not found
+
+    let score: number;
+    if (isWinner === true) {
+      score = 3;
     } else {
-      const score = loser.rank_score;
-      if (score >= 1) {
-        // 점수의 최소값을 0점으로 설정
-        loser.rank_score -= 1;
-      }
+      score = -1;
     }
+
+    const rankScore = user.rank_score;
+    const resultRankScore = rankScore + score;
+    if (
+      this.isUnderMinRankScore(resultRankScore) ||
+      this.isOverMaxRankScore(resultRankScore)
+    ) {
+      return;
+    }
+    user.rank_score += score;
+    await this.userRepository.save(user);
+  };
+
+  isUnderMinRankScore = (score: number): boolean => {
+    return score < 0;
+  };
+
+  isOverMaxRankScore = (score: number): boolean => {
+    return score >= 1000000 && score.toString().length >= 1000;
   };
 
   findRecordData = (
@@ -298,7 +314,7 @@ export class GameGateway
   getTypeModeID = async (
     type: string,
     mode: string
-  ): Promise<{type_id: number; mode_id: number}> => {
+  ): Promise<{game_type: number; game_mode: number}> => {
     let type_Record = await this.typeRepository.findOneBy({type});
     if (type_Record === null) {
       type_Record = this.typeRepository.create({
@@ -313,7 +329,7 @@ export class GameGateway
       });
       await this.modeRepository.save(mode_Record);
     }
-    return {type_id: type_Record.id, mode_id: mode_Record.id};
+    return {game_type: type_Record.id, game_mode: mode_Record.id};
   };
 
   createGameRoom(userId: string, gameUserSockets: GameUser[]): string {

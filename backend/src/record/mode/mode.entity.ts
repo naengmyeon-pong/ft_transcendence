@@ -9,6 +9,6 @@ export class Mode {
   @Column({unique: true})
   mode: string;
 
-  @OneToMany(() => Record, records => records.mode_id, {eager: true})
+  @OneToMany(() => Record, records => records.game_mode, {eager: true})
   records: Record[];
 }

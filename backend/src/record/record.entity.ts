@@ -23,8 +23,8 @@ export class Record {
   is_forfeit: boolean;
 
   @ManyToOne(() => Mode, mode_id => mode_id.records, {eager: false})
-  mode_id: number;
+  game_mode: number;
 
   @ManyToOne(() => Type, type_id => type_id.records, {eager: false})
-  type_id: number;
+  game_type: number;
 }

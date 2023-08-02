@@ -9,6 +9,6 @@ export class Type {
   @Column({unique: true})
   type: string;
 
-  @OneToMany(() => Record, records => records.type_id, {eager: true})
+  @OneToMany(() => Record, records => records.game_type, {eager: true})
   records: Record[];
 }
