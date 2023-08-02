@@ -6,6 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
+  BlockRepository,
   ChatBanRepository,
   ChatMemberRepository,
   ChatRoomRepository,
@@ -27,6 +28,7 @@ export class ChatService {
     private chatMemberRepository: ChatMemberRepository,
     private chatBanRepository: ChatBanRepository,
     private userRepository: UserRepository,
+    private blockRepository: BlockRepository,
     private socketArray: SocketArray
   ) {}
 
@@ -272,6 +274,21 @@ export class ChatService {
     return false;
   }
 
+  async blockMember(user_id: string, target_id: string) {
+    const block_list = this.blockRepository.create({
+      userId: user_id,
+      blockId: target_id,
+    });
+    await this.blockRepository.save(block_list);
+  }
+
+  async unBlockMember(user_id: string, target_id: string) {
+    await this.blockRepository.delete({
+      userId: user_id,
+      blockId: target_id,
+    });
+  }
+
   async isOwner(room_id: number, user_id: string) {
     const member = await this.isChatMember(user_id);
     if (member.permission === 2) {
@@ -311,7 +328,7 @@ export class ChatService {
 
   async getLoginUser(user_nickname: string) {
     if (!user_nickname) {
-      throw new BadRequestException('empty usre_nickname param.');
+      throw new BadRequestException('empty user_nickname param.');
     }
     const ret: UserInfo[] = [];
     const users = await this.userRepository
@@ -340,5 +357,21 @@ export class ChatService {
       users.push(key);
     });
     return users;
+  }
+
+  async getBlockList(user_id: string) {
+    if (!user_id) {
+      throw new BadRequestException('empty user_id param.');
+    }
+    const ret: string[] = [];
+    const block_list = await this.blockRepository.find({
+      where: {
+        userId: user_id,
+      },
+    });
+    block_list.forEach(e => {
+      ret.push(e.blockId);
+    });
+    return ret;
   }
 }

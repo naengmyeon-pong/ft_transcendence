@@ -1,4 +1,4 @@
-import {ChatBan, ChatMember, SocketId} from 'src/chat/chat.entity';
+import {ChatBan, ChatMember} from 'src/chat/chat.entity';
 import {
   Column,
   Entity,
@@ -33,7 +33,4 @@ export class User {
 
   @OneToMany(() => ChatBan, chatban => chatban.user)
   chatbans: ChatBan[];
-
-  @OneToOne(() => SocketId, socket_id => socket_id.user)
-  socket_id: SocketId;
 }

@@ -1,4 +1,4 @@
-import {Body, Controller, Get, Post, Query} from '@nestjs/common';
+import {Body, Controller, Get, Param, Post, Query} from '@nestjs/common';
 import {ChatService} from './chat.service';
 import {RoomDto} from './dto/room.dto';
 import {ApiOperation, ApiQuery, ApiResponse, ApiTags} from '@nestjs/swagger';
@@ -70,5 +70,24 @@ export class ChatController {
   @Get('join_room') //http://localhost:3001/chatroom/join_room?room_id=id
   async getRoom(@Query('room_id') room_id: number) {
     return await this.chatService.getRoom(room_id);
+  }
+
+  @Get('users')
+  getLoginUsers() {
+    const member = this.chatService.getLoginUsers();
+    // console.log('members :', member);
+    return member;
+  }
+
+  @Get('user/:user_nickname')
+  async getLoginUser(@Param('user_nickname') user_nickname: string) {
+    const member = await this.chatService.getLoginUser(user_nickname);
+    console.log('members :', member);
+    return member;
+  }
+
+  @Get('block_list')
+  async getBlockList(@Query('user_id') user_id: string) {
+    return await this.chatService.getBlockList(user_id);
   }
 }

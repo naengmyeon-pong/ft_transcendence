@@ -235,15 +235,53 @@ export class ChatGateway
     @MessageBody() {room_id, target_id}: ExecPayload
   ) {
     const user_id = socket.handshake.query.user_id as string;
-    if (await this.handleKickMember(socket, {room_id, target_id})) {
-      try {
+    try {
+      if (await this.handleKickMember(socket, {room_id, target_id})) {
         if (await this.chatService.banMember(room_id, user_id, target_id)) {
           return true;
         }
-      } catch (e) {
-        console.log(e.message);
       }
+    } catch (e) {
+      console.log(e.message);
     }
     return false;
+  }
+
+  @SubscribeMessage('block-member')
+  async handleBlockMember(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() target_id: string
+  ) {
+    const user_id = socket.handshake.query.user_id as string;
+    try {
+      await this.chatService.blockMember(user_id, target_id);
+    } catch (e) {
+      console.log(e.message);
+    }
+  }
+
+  @SubscribeMessage('unblock-member')
+  async handleUnBlockMember(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() target_id: string
+  ) {
+    const user_id = socket.handshake.query.user_id as string;
+    try {
+      await this.chatService.unBlockMember(user_id, target_id);
+    } catch (e) {
+      console.log(e.message);
+    }
+  }
+
+  @SubscribeMessage('update-user-info')
+  async handleUpdateUserInfo(@ConnectedSocket() socket: Socket) {
+    const user_id = socket.handshake.query.user_id as string;
+    try {
+      const user = await this.chatService.getUser(user_id);
+      socket.handshake.query.nickname = user.user_nickname;
+      socket.handshake.query.image = user.user_image;
+    } catch (e) {
+      console.log(e.message);
+    }
   }
 }

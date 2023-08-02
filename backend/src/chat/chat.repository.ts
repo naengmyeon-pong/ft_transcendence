@@ -1,6 +1,6 @@
 import {Injectable} from '@nestjs/common';
 import {Repository} from 'typeorm';
-import {ChatBan, ChatMember, ChatRoom, SocketId} from './chat.entity';
+import {BlockList, ChatBan, ChatMember, ChatRoom} from './chat.entity';
 import {InjectRepository} from '@nestjs/typeorm';
 
 @Injectable()
@@ -34,11 +34,11 @@ export class ChatBanRepository extends Repository<ChatBan> {
 }
 
 @Injectable()
-export class SocketRepository extends Repository<SocketId> {
+export class BlockRepository extends Repository<BlockList> {
   constructor(
-    @InjectRepository(SocketId)
-    private readonly socketId: Repository<SocketId>
+    @InjectRepository(BlockList)
+    private readonly blockList: Repository<BlockList>
   ) {
-    super(socketId.target, socketId.manager, socketId.queryRunner);
+    super(blockList.target, blockList.manager, blockList.queryRunner);
   }
 }

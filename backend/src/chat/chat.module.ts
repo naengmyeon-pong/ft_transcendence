@@ -3,12 +3,12 @@ import {ChatGateway} from './chat.gateway';
 import {ChatController} from './chat.controller';
 import {ChatService} from './chat.service';
 import {TypeOrmModule} from '@nestjs/typeorm';
-import {ChatBan, ChatMember, ChatRoom, SocketId} from './chat.entity';
+import {BlockList, ChatBan, ChatMember, ChatRoom} from './chat.entity';
 import {
+  BlockRepository,
   ChatBanRepository,
   ChatMemberRepository,
   ChatRoomRepository,
-  SocketRepository,
 } from './chat.repository';
 import {User} from 'src/user/user.entitiy';
 import {UserRepository} from 'src/user/user.repository';
@@ -19,8 +19,8 @@ import {SocketArray} from 'src/globalVariable/global.socket';
     TypeOrmModule.forFeature([ChatRoom]),
     TypeOrmModule.forFeature([ChatMember]),
     TypeOrmModule.forFeature([ChatBan]),
-    TypeOrmModule.forFeature([SocketId]),
     TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([BlockList]),
   ],
   providers: [
     ChatGateway,
@@ -28,8 +28,8 @@ import {SocketArray} from 'src/globalVariable/global.socket';
     ChatRoomRepository,
     ChatMemberRepository,
     ChatBanRepository,
-    SocketRepository,
     UserRepository,
+    BlockRepository,
     SocketArray,
   ],
   controllers: [ChatController],

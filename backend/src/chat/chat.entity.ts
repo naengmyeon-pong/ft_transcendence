@@ -1,5 +1,6 @@
 import {User} from 'src/user/user.entitiy';
 import {
+  BeforeInsert,
   Column,
   Entity,
   JoinColumn,
@@ -96,17 +97,59 @@ export class ChatBan {
   user: User;
 }
 
-@Entity('socketId')
-export class SocketId {
+// @Entity('socketId')
+// export class SocketId {
+//   @PrimaryColumn()
+//   user_id: string;
+
+//   @Column()
+//   socket_id: string;
+
+//   @OneToOne(() => User, user => user.socket_id, {
+//     onDelete: 'CASCADE',
+//   })
+//   @JoinColumn({name: 'user_id'})
+//   user: User;
+// }
+
+@Entity('blockList')
+export class BlockList {
   @PrimaryColumn()
-  user_id: string;
+  userId: string;
 
-  @Column()
-  socket_id: string;
+  @PrimaryColumn()
+  blockId: string;
 
-  @OneToOne(() => User, user => user.socket_id, {
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn({name: 'user_id'})
+  @ManyToOne(() => User, {onDelete: 'CASCADE'})
+  @JoinColumn({name: 'userId'})
   user: User;
+
+  @ManyToOne(() => User, {onDelete: 'CASCADE'})
+  @JoinColumn({name: 'blockId'})
+  blockUser: User;
 }
+
+// @Entity('directmessage')
+// export class DirectMessage {
+//   @PrimaryColumn()
+//   userId: string;
+
+//   @PrimaryColumn()
+//   friendId: string;
+
+//   @ManyToOne(() => User, {onDelete: 'CASCADE'})
+//   @JoinColumn({name: 'userId'})
+//   user: User;
+
+//   @ManyToOne(() => User, {onDelete: 'CASCADE'})
+//   @JoinColumn({name: 'friendId'})
+//   friendkUser: User;
+
+//   @BeforeInsert()
+//   sortIds() {
+//     // 데이터베이스에 삽입하기 전에 id와 friend_id 값을 정렬
+//     const sortedIds = [this.userId, this.friendId].sort();
+//     this.userId = sortedIds[0];
+//     this.friendId = sortedIds[1];
+//   }
+// }
