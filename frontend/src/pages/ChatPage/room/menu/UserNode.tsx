@@ -2,13 +2,13 @@ import {Menu, MenuItem, Typography} from '@mui/material';
 import React, {useContext} from 'react';
 import ServiceModal from '../service/ServiceModal';
 import AddAdmin from '../service/AddAdmin';
-import Block from '../service/Block';
 import Kick from '../service/Kick';
 import Mute from '../service/Mute';
 import Ban from '../service/Ban';
 import {UserContext} from 'Context';
 import {useParams} from 'react-router-dom';
 import DelAdmin from '../service/DelAdmin';
+import AddBlock from '../service/Block';
 
 /*
  * @PARAM: 클릭당한 유저의 id, nickname, image를 가진 객체
@@ -19,7 +19,9 @@ function UserNode({user, permission, myPermission}: UserProps) {
   const [anchorEl, setAnchorEl] = React.useState<HTMLLIElement | null>(null);
   const [modalState, setModalState] = React.useState(false);
   const [menuItem, setMenuItem] = React.useState<string | null>(null);
-  const socket = React.useContext(UserContext).socket;
+  const {socket} = React.useContext(UserContext);
+  const {block_users} = useContext(UserContext);
+  const {setBlockUsers} = useContext(UserContext);
   const {roomId} = useParams();
   const {user_id} = useContext(UserContext);
   const open = Boolean(anchorEl);
@@ -49,8 +51,8 @@ function UserNode({user, permission, myPermission}: UserProps) {
         case 'Mute':
           Mute(user, socket, roomId);
           break;
-        case 'Block':
-          Block(user, socket, roomId);
+        case 'AddBlock':
+          AddBlock(user, socket, block_users, setBlockUsers);
           break;
         case 'Ban':
           Ban(user, socket, roomId);
@@ -131,7 +133,7 @@ function UserNode({user, permission, myPermission}: UserProps) {
           </div>
         )}
 
-        <MenuItem onClick={() => handleMenuItemClick('Block')}>
+        <MenuItem onClick={() => handleMenuItemClick('AddBlock')}>
           <Typography>차단</Typography>
         </MenuItem>
       </Menu>

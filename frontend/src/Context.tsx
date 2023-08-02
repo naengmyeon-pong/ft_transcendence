@@ -5,24 +5,37 @@ import {Socket} from 'socket.io-client';
 
 interface UserContextType {
   socket: Socket | null;
-  user_id: string | null;
-  user_image: string | null;
-  user_nickname: string | null;
   setSocket: (socket: Socket) => void;
+
+  user_id: string | null;
   setUserId: (user_id: string) => void;
+
+  user_image: string | null;
   setUserImage: (user_image: string) => void;
+
+  user_nickname: string | null;
   setUserNickName: (user_nickname: string) => void;
+
+  room_id: number | null;
+  setRoomId: (room_id: number) => void;
+
+  block_users: Set<string>;
+  setBlockUsers: (block_users: Set<string>) => void;
 }
 
 const initUserState: UserContextType = {
   socket: null,
-  user_id: null,
-  user_image: null,
-  user_nickname: null,
   setSocket: () => {},
+  user_id: null,
   setUserId: () => {},
+  user_image: null,
   setUserImage: () => {},
+  user_nickname: null,
   setUserNickName: () => {},
+  block_users: new Set(),
+  setBlockUsers: () => {},
+  room_id: null,
+  setRoomId: () => {},
 };
 
 const UserContext = createContext(initUserState);
@@ -32,18 +45,24 @@ const UserProvider: React.FC<{children: ReactNode}> = ({children}) => {
   const [user_id, setUserId] = useState<string | null>(null);
   const [user_image, setUserImage] = useState<string | null>(null);
   const [user_nickname, setUserNickName] = useState<string | null>(null);
+  const [room_id, setRoomId] = useState<number | null>(null);
+  const [block_users, setBlockUsers] = useState<Set<string>>(new Set());
 
   return (
     <UserContext.Provider
       value={{
         socket,
-        user_id,
-        user_image,
-        user_nickname,
         setSocket,
+        user_id,
         setUserId,
+        user_image,
         setUserImage,
+        user_nickname,
         setUserNickName,
+        block_users,
+        setBlockUsers,
+        room_id,
+        setRoomId,
       }}
     >
       {children}

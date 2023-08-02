@@ -25,7 +25,7 @@ function ModalPrint({user, menuItem}: ModalPrintInstance) {
       case 'Mute':
         title = '음소거(5분)';
         break;
-      case 'Block':
+      case 'AddBlock':
         title = '차단';
         break;
       case 'Ban':
@@ -49,7 +49,7 @@ function ModalPrint({user, menuItem}: ModalPrintInstance) {
       case 'Mute':
         detail = ' 님을 음소거 시키시겠습니까?';
         break;
-      case 'Block':
+      case 'AddBlock':
         detail = ' 님을 차단하시겠습니까?';
         break;
       case 'Ban':

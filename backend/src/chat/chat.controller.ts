@@ -86,8 +86,8 @@ export class ChatController {
     return member;
   }
 
-  @Get('block_list')
-  async getBlockList(@Query('user_id') user_id: string) {
+  @Get('block_list/:user_id')
+  async getBlockList(@Param('user_id') user_id: string) {
     return await this.chatService.getBlockList(user_id);
   }
 }

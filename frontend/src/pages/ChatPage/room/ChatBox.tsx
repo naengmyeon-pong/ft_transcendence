@@ -15,22 +15,13 @@ import {Socket} from 'socket.io-client';
 import MuteModal from '../modal/MuteModal';
 
 interface IChat {
-  username: string;
+  user_id: string;
+  user_image: string;
+  user_nickname: string;
   message: string;
 }
 
-const Message = ({
-  message,
-  username,
-  user_image,
-}: {
-  message: IChat;
-  username: string | null;
-  user_image: string | null;
-}) => {
-  const user_nickname = username;
-  const user_convert_image: string | undefined =
-    user_image === null ? undefined : user_image;
+const Message = ({user_image, user_nickname, message}: IChat) => {
   return (
     <Box
       sx={{
@@ -39,10 +30,11 @@ const Message = ({
         //   mb: 2,
       }}
     >
-      <Avatar src={user_convert_image} sx={{margin: '10px'}} />
+      <Avatar src={user_image} sx={{margin: '10px'}} />
 
       <Typography sx={{margin: '20px'}}>{user_nickname}</Typography>
-      <Typography sx={{margin: '20px'}}>{message.message}</Typography>
+      <Typography sx={{margin: '20px'}}>{message}</Typography>
+      {/* <Typography sx={{margin: '20px'}}>{message.message}</Typography> */}
 
       {/* <Paper
         variant="outlined"
@@ -65,10 +57,9 @@ function ChatBox() {
   const {socket, setSocket} = useContext(UserContext);
   const [chats, setChats] = useState<IChat[]>([]);
   const [message, setMessage] = useState<string>('');
-  const {user_nickname} = useContext(UserContext);
-  const {user_image} = useContext(UserContext);
   const [muteTimer, setMuteTimer] = useState<number>(0);
   const [muteModal, setMuteModal] = useState<boolean>(false);
+  const {block_users} = useContext(UserContext);
 
   const {roomId} = useParams();
   // 채팅창 스크롤을 제어하는 변수
@@ -104,11 +95,13 @@ function ChatBox() {
     };
 
     function handleMute(mute_time: number) {
-      console.log(mute_time);
       setMuteTimer(mute_time);
     }
 
     function handleMessage(chat: IChat) {
+      if (block_users?.has(chat.user_id)) {
+        return;
+      }
       setChats(prevChats => [...prevChats, chat]);
     }
 
@@ -150,7 +143,6 @@ function ChatBox() {
       if (!socket) {
         return alert('소켓가 발생했습니다.');
       }
-      console.log(muteTimer);
       if (muteTimer !== 0) {
         const five_minute = 5 * 60 * 1000;
         const mute = Math.abs(new Date().getTime() - muteTimer);
@@ -187,9 +179,10 @@ function ChatBox() {
         <Box ref={chatContainerEl} sx={{flexGrow: 1, overflow: 'auto'}}>
           {chats.map((message_node, index) => (
             <Message
-              message={message_node}
-              username={user_nickname}
-              user_image={user_image}
+              message={message_node.message}
+              user_image={message_node.user_image}
+              user_nickname={message_node.user_nickname}
+              user_id={message_node.user_id}
               key={index}
             />
           ))}

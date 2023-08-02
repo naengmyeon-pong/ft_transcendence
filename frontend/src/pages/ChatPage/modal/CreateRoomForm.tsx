@@ -1,4 +1,10 @@
-import React, {ChangeEvent, MouseEvent, useCallback, useState} from 'react';
+import React, {
+  ChangeEvent,
+  MouseEvent,
+  useCallback,
+  useContext,
+  useState,
+} from 'react';
 import {
   Box,
   Button,
@@ -10,6 +16,7 @@ import {
 } from '@mui/material';
 import {useNavigate} from 'react-router-dom';
 import apiManager from '@apiManager/apiManager';
+import {UserContext} from 'Context';
 
 const style = {
   position: 'absolute',
@@ -51,6 +58,7 @@ function CreateRoomForm({setCreateModal}: CreateModalProps) {
   const [password, setPassword] = useState<string>('');
   const [maxUser, setMaxUser] = useState<number>(4);
   const navigate = useNavigate();
+  const {setRoomId} = useContext(UserContext);
 
   const handleClose = useCallback(() => {
     setCreateModal(false);

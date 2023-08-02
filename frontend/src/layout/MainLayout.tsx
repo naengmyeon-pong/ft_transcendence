@@ -14,22 +14,41 @@ function MainLayout() {
   const {setUserImage} = useContext(UserContext);
   const {roomId} = useParams();
   const [initMainLayout, setInitMainLayout] = useState(false);
+  const {setBlockUsers} = useContext(UserContext);
+
+  function init_setBlockUsers(data: string[]) {
+    const a = new Set<string>();
+    for (const node of data) {
+      a.add(node);
+    }
+    setBlockUsers(a);
+  }
 
   async function init() {
-    const response = await apiManager.get('/user/user-info');
-    console.log('response: ', response);
-    setUserId(response.data.user_id);
-    setUserNickName(response.data.user_nickname);
-    setUserImage(`http://localhost:3001/${response.data.user_image}`);
-    const socketIo = io(`http://localhost:3001/chat`, {
-      query: {
-        user_id: response.data.user_id,
-        nickname: response.data.user_nickname,
-        room_id: roomId === undefined ? undefined : roomId,
-      },
-    });
-    setSocket(socketIo);
-    setInitMainLayout(true);
+    try {
+      const response = await apiManager.get('/user/user-info');
+      console.log('response: ', response);
+      setUserId(response.data.user_id);
+      setUserNickName(response.data.user_nickname);
+      setUserImage(`http://localhost:3001/${response.data.user_image}`);
+      const socketIo = io(`http://localhost:3001/chat`, {
+        query: {
+          user_id: response.data.user_id,
+          nickname: response.data.user_nickname,
+          user_image: `http://localhost:3001/${response.data.user_image}`,
+        },
+      });
+      setSocket(socketIo);
+
+      const rep = await apiManager.get(
+        `/chatroom/block_list/${response.data.user_id}`
+      );
+      console.log('block list: ', rep.data);
+      init_setBlockUsers(rep.data);
+      setInitMainLayout(true);
+    } catch (error) {
+      console.log(error);
+    }
   }
   useEffect(() => {
     init();

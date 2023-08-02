@@ -26,16 +26,17 @@ export default function MuteModal({
   muteTimer,
 }: MuteModalProps) {
   function getTimer() {
-    // const five_minute = 5 * 60 * 1000;
-    const timer = Math.abs(new Date().getTime() - muteTimer) / 1000;
-    return timer;
+    const timer = 300 - Math.floor((new Date().getTime() - muteTimer) / 1000);
+    const minute = Math.floor(timer / 60);
+    const second = timer % 60;
+    return minute + '분' + (second + '초');
   }
 
   return (
     <>
       <Modal open={muteModal} onClose={handleMuteClose}>
         <Box sx={style}>
-          <Typography variant="h4">음소거(5분)</Typography>
+          <Typography variant="h4">음소거</Typography>
           <Typography variant="body1">
             5분 동안 채팅을 하실 수 없습니다.
           </Typography>
