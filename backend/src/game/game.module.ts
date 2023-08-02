@@ -9,6 +9,8 @@ import {Mode} from 'src/record/mode/mode.entity';
 import {Type} from 'src/record/type/type.entity';
 import {ModeRepository} from 'src/record/mode/mode.repository';
 import {TypeRepository} from 'src/record/type/type.repository';
+import {JwtModule} from '@nestjs/jwt';
+import {JwtStrategy} from 'src/user/jwt.strategy';
 
 @Module({
   imports: [
@@ -16,6 +18,10 @@ import {TypeRepository} from 'src/record/type/type.repository';
     TypeOrmModule.forFeature([Record]),
     TypeOrmModule.forFeature([Mode]),
     TypeOrmModule.forFeature([Type]),
+    JwtModule.register({
+      secret: process.env.SIGNIN_JWT_SECRET_KEY,
+      signOptions: {expiresIn: '1h'},
+    }),
   ],
   providers: [
     GameGateway,
@@ -23,6 +29,7 @@ import {TypeRepository} from 'src/record/type/type.repository';
     UserRepository,
     ModeRepository,
     TypeRepository,
+    JwtStrategy,
   ],
 })
 export class GameModule {}

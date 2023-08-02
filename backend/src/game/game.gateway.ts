@@ -23,6 +23,7 @@ import {UserRepository} from 'src/user/user.repository';
 import {RecordRepository} from 'src/record/record.repository';
 import {ModeRepository} from 'src/record/mode/mode.repository';
 import {TypeRepository} from 'src/record/type/type.repository';
+import {JwtService} from '@nestjs/jwt';
 
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
@@ -116,7 +117,8 @@ export class GameGateway
     private userRepository: UserRepository,
     private recordRepository: RecordRepository,
     private modeRepository: ModeRepository,
-    private typeRepository: TypeRepository
+    private typeRepository: TypeRepository,
+    private jwtService: JwtService
   ) {}
 
   @WebSocketServer() nsp: Namespace;
@@ -332,13 +334,24 @@ export class GameGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody() joinGameInfo: JoinGameInfo
   ) {
-    const keys: KeyData = {up: false, down: false};
-    const {user_id} = joinGameInfo;
-    const userSocket: GameUser = {user_id, socket, keys, type_mode: -1};
-    if (this.isGameMatched(joinGameInfo, userSocket) === false) {
-      return;
-    } else {
-      this.createRoom(userSocket);
+    let user_id: string;
+    try {
+      const decodedToken = this.jwtService.verify(joinGameInfo.jwt);
+      user_id = decodedToken.user_id;
+      const keys: KeyData = {up: false, down: false};
+      const userSocket: GameUser = {
+        user_id,
+        socket,
+        keys,
+        type_mode: -1,
+      };
+      if (this.isGameMatched(joinGameInfo, userSocket) === false) {
+        return;
+      } else {
+        this.createRoom(userSocket);
+      }
+    } catch (err) {
+      console.error('JWT verification error: ', err.message);
     }
   }
 

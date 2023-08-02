@@ -1,5 +1,5 @@
 export interface JoinGameInfo {
-  user_id: string;
+  jwt: string;
   type: string;
   mode: string;
 }
