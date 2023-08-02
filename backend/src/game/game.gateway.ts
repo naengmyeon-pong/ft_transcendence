@@ -192,7 +192,7 @@ export class GameGateway
       loser_id,
       winner_score: 5,
       loser_score,
-      is_forfeit: true,
+      is_forfeit: isForfeit,
     });
     await this.recordRepository.save(record);
     await this.saveRankScore(winner_id, loser_id);
