@@ -131,6 +131,7 @@ function Game() {
     if (socket) {
       socket.emit('update_frame', room_name);
       setIsStartingGame(true);
+      setIsWaitingGame(false);
     }
   };
 
