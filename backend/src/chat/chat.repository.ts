@@ -1,6 +1,6 @@
 import {Injectable} from '@nestjs/common';
 import {Repository} from 'typeorm';
-import {BlockList, ChatBan, ChatMember, ChatRoom} from './chat.entity';
+import {BlockList, ChatBan, ChatMember, ChatRoom, DirectMessage} from './chat.entity';
 import {InjectRepository} from '@nestjs/typeorm';
 
 @Injectable()
@@ -40,5 +40,15 @@ export class BlockRepository extends Repository<BlockList> {
     private readonly blockList: Repository<BlockList>
   ) {
     super(blockList.target, blockList.manager, blockList.queryRunner);
+  }
+}
+
+@Injectable()
+export class DMRepository extends Repository<DirectMessage> {
+  constructor(
+    @InjectRepository(DirectMessage)
+    private readonly directMessage: Repository<DirectMessage>
+  ) {
+    super(directMessage.target, directMessage.manager, directMessage.queryRunner);
   }
 }

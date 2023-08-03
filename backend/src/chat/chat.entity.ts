@@ -129,27 +129,28 @@ export class BlockList {
   blockUser: User;
 }
 
-// @Entity('directmessage')
-// export class DirectMessage {
-//   @PrimaryColumn()
-//   userId: string;
+@Entity('directMessage')
+export class DirectMessage {
+  @PrimaryGeneratedColumn()
+  id : number;
 
-//   @PrimaryColumn()
-//   friendId: string;
+  @Column()
+  userId: string;
 
-//   @ManyToOne(() => User, {onDelete: 'CASCADE'})
-//   @JoinColumn({name: 'userId'})
-//   user: User;
+  @Column()
+  someoneId: string;
 
-//   @ManyToOne(() => User, {onDelete: 'CASCADE'})
-//   @JoinColumn({name: 'friendId'})
-//   friendkUser: User;
+  @Column()
+  date: Date;
 
-//   @BeforeInsert()
-//   sortIds() {
-//     // 데이터베이스에 삽입하기 전에 id와 friend_id 값을 정렬
-//     const sortedIds = [this.userId, this.friendId].sort();
-//     this.userId = sortedIds[0];
-//     this.friendId = sortedIds[1];
-//   }
-// }
+  @Column()
+  message: string;
+
+  @ManyToOne(() => User, {onDelete: 'CASCADE'})
+  @JoinColumn({name: 'userId'})
+  user: User;
+
+  @ManyToOne(() => User, {onDelete: 'CASCADE'})
+  @JoinColumn({name: 'someoneId'})
+  someoneUser: User;
+}
