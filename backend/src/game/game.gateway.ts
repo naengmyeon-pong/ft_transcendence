@@ -606,22 +606,24 @@ const updateBallPosition = (gameInfo: GameInfo): boolean => {
   const paddle = ball.vel.x < 0 ? leftPaddle : rightPaddle;
 
   if (isCollidingPaddle(ball, paddle)) {
+    console.log(paddle, ball.pos);
+    console.log('ball.vel.x: ', ball.vel);
+    if (ball.vel.x < 0 && ball.pos.x - BALL_RADIUS <= PADDLE_WIDTH) {
+      ball.pos.x = PADDLE_WIDTH + BALL_RADIUS;
+      console.log('left:', ball.pos.x);
+    } else if (ball.vel.x > 0 && ball.pos.x + BALL_RADIUS >= paddle.x) {
+      ball.pos.x = paddle.x - BALL_RADIUS;
+      console.log('right: ', ball.pos.x);
+    }
+
     let collidePoint = nextY - (paddle.y + PADDLE_HEIGHT / 2);
     collidePoint = collidePoint / (PADDLE_HEIGHT / 2);
 
     const angleRadian = (Math.PI / 4) * collidePoint;
-    const direction = ball.pos.x + BALL_RADIUS < CANVAS_WIDTH / 2 ? 1 : -1;
+    const direction = ball.vel.x < 0 ? 1 : -1;
     ball.vel.x = direction * ball.speed * Math.cos(angleRadian);
     ball.vel.y = ball.speed * Math.sin(angleRadian);
-    // if (ball.vel.x < 0) {
-    //   if (ball.pos.x - BALL_RADIUS < PADDLE_WIDTH) {
-    //     ball.pos.x = PADDLE_WIDTH + BALL_RADIUS;
-    //   }
-    // } else {
-    //   if (ball.pos.x + BALL_RADIUS > CANVAS_WIDTH - PADDLE_WIDTH) {
-    //     ball.pos.x = CANVAS_WIDTH - PADDLE_WIDTH - BALL_RADIUS;
-    //   }
-    // }
+
     return false;
   }
 
