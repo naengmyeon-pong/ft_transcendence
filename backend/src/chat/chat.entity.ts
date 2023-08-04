@@ -62,6 +62,7 @@ export class ChatMember {
     nullable: false,
     onDelete: 'CASCADE',
   })
+  @JoinColumn({name: 'chatroomId'})
   chatroom: ChatRoom;
 
   @ManyToOne(() => User, user => user.chatmembers, {
@@ -132,7 +133,7 @@ export class BlockList {
 @Entity('directMessage')
 export class DirectMessage {
   @PrimaryGeneratedColumn()
-  id : number;
+  id: number;
 
   @Column()
   userId: string;

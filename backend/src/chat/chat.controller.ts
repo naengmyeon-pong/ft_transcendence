@@ -86,6 +86,21 @@ export class ChatController {
     return member;
   }
 
+  @Get('dm')
+  async getDirectMessage(
+    @Query('user_id') user_id: string,
+    @Query('other_id') other_id: string
+  ) {
+    const dm = await this.chatService.getDirectMessage(user_id, other_id);
+    console.log(dm);
+    return dm;
+  }
+
+  @Get('dm_list')
+  async getDMList(@Query('user_id') user_id: string) {
+    return await this.chatService.directMessageList(user_id);
+  }
+
   @Get('block_list/:user_id')
   async getBlockList(@Param('user_id') user_id: string) {
     return await this.chatService.getBlockList(user_id);

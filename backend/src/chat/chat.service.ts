@@ -10,6 +10,7 @@ import {
   ChatBanRepository,
   ChatMemberRepository,
   ChatRoomRepository,
+  DMRepository,
 } from './chat.repository';
 import {UserRepository} from 'src/user/user.repository';
 import {RoomDto} from './dto/room.dto';
@@ -21,6 +22,12 @@ export interface UserInfo {
   image: string;
 }
 
+// export interface DMInfo {
+//   user_id: string;
+//   other_id: string;
+//   message: string;
+// }
+
 @Injectable()
 export class ChatService {
   constructor(
@@ -29,6 +36,7 @@ export class ChatService {
     private chatBanRepository: ChatBanRepository,
     private userRepository: UserRepository,
     private blockRepository: BlockRepository,
+    private dmRepository: DMRepository,
     private socketArray: SocketArray
   ) {}
 
@@ -326,6 +334,7 @@ export class ChatService {
     return room;
   }
 
+  //초대 검색할 때, 비슷한 닉네임 다 조회.
   async getLoginUser(user_nickname: string) {
     if (!user_nickname) {
       throw new BadRequestException('empty user_nickname param.');
@@ -350,6 +359,7 @@ export class ChatService {
     return ret;
   }
 
+  //모든 로그인 유저 조회
   getLoginUsers() {
     const members = this.socketArray.getSocketArray();
     const users: string[] = [];
@@ -371,6 +381,78 @@ export class ChatService {
     });
     block_list.forEach(e => {
       ret.push(e.blockId);
+    });
+    return ret;
+  }
+
+  async getDirectMessage(user_id: string, other_id: string) {
+    const directmessage = await this.dmRepository.find({
+      select: {
+        userId: true,
+        someoneId: true,
+        message: true,
+      },
+      where: [
+        {
+          userId: user_id,
+          someoneId: other_id,
+        },
+        {
+          userId: other_id,
+          someoneId: user_id,
+        },
+      ],
+      order: {
+        date: 'ASC',
+      },
+    });
+
+    return directmessage;
+  }
+  // async getDirectMessage(user_id: string, other_id: string) {
+  //   const ret: DMInfo[] = [];
+  //   const directmessage = await this.dmRepository.find({
+  //     where: [
+  //       {
+  //         userId: user_id,
+  //         someoneId: other_id,
+  //       },
+  //       {
+  //         userId: other_id,
+  //         someoneId: user_id,
+  //       },
+  //     ],
+  //     order: {
+  //       date: 'ASC',
+  //     },
+  //   });
+  //   directmessage.forEach(e => {
+  //     const temp: DMInfo = {
+  //       user_id: e.userId,
+  //       other_id: e.someoneId,
+  //       message: e.message,
+  //     };
+  //     ret.push(temp);
+  //   });
+  //   return ret;
+  // }
+
+  async directMessageList(user_id: string) {
+    const ret = [];
+    const dm_list = await this.dmRepository
+      .createQueryBuilder('dm')
+      .select(`GREATEST("userId", "someoneId") AS user1`)
+      .addSelect(`LEAST("userId", "someoneId") AS user2`)
+      .distinct(true)
+      .where('dm.userId = :user_id OR dm.someoneId = :user_id', {user_id})
+      .getRawMany();
+
+    dm_list.forEach(e => {
+      const temp = {
+        user1: user_id,
+        user2: e.user1 === user_id ? e.user2 : e.user1,
+      };
+      ret.push(temp);
     });
     return ret;
   }

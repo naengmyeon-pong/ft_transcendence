@@ -21,6 +21,15 @@ INSERT INTO "chatMember" (permission, "chatroomId", "userId") VALUES
  (2, 3, 'tester3'),
  (2, 4, 'tester4');
 
+ INSERT INTO "directMessage" ("userId", "someoneId", date, message) VALUES
+  ('tester1', 'tester2', '2023-08-04', 'hi'),
+  ('tester2', 'tester1', '2023-08-05', 'hello'),
+  ('tester1', 'tester2', '2023-08-06', 'WRU?'),
+  ('tester2', 'tester1', '2023-08-07', 'i am tester2'),
+  ('tester1', 'tester3', '2023-08-04', 'hi'),
+  ('tester3', 'tester1', '2023-08-05', 'hello'),
+  ('tester1', 'tester2', '2023-07-01', 'firestmessage');
+
 -- INSERT INTO "chatBan" VALUES
 
 -- SELECT * FROM "chatRoom" LEFT JOIN "chatMember" ON "chatRoom"."id" = "chatMember"."chatroomId";
