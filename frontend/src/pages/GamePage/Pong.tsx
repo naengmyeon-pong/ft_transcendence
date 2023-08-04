@@ -39,6 +39,7 @@ function Pong({socket, gameInfo}: PongProps) {
   const [ctx, setCtx] = useState<CanvasRenderingContext2D | null>(null);
   const [leftUser, setLeftUser] = useState<string | null>(null);
   const [rightUser, setRightUser] = useState<string | null>(null);
+  const [timeStamp, setTimeStamp] = useState<number>(0);
   const [leftScore, setLeftScore] = useState<number>(0);
   const [rightScore, setRightScore] = useState<number>(0);
   const [leftPaddle, setLeftPaddle] = useState<Coordinate>({
@@ -148,6 +149,7 @@ function Pong({socket, gameInfo}: PongProps) {
       ctx.strokeStyle = 'black';
       ctx.setLineDash([]);
       ctx.arc(ball.pos.x, ball.pos.y, BALL_RADIUS, 0, 2 * Math.PI);
+      ctx.fill();
       ctx.stroke();
     }
   }, [ctx, ball]);
@@ -187,6 +189,7 @@ function Pong({socket, gameInfo}: PongProps) {
 
   const onAnimation = useCallback(() => {
     if (gameInfo) {
+      setTimeStamp(gameInfo.timeStamp);
       setRightPaddle(gameInfo.rightPaddle);
       setLeftPaddle(gameInfo.leftPaddle);
       setBall(gameInfo.ball);
