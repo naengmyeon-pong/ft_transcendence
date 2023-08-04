@@ -4,7 +4,8 @@ import {Socket} from 'socket.io-client';
 function Mute(
   user: UserType,
   socket: Socket | null,
-  roomId: string | undefined
+  roomId: string | null
+  // roomId: string | undefined
 ) {
   socket?.emit('mute-member', {
     room_id: roomId,

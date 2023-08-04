@@ -40,7 +40,8 @@ function ShowRoomList({roomList, refersh}: ComponentProps) {
   const [passwordModal, setPasswordModal] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const {setRoomId} = useContext(UserContext);
+  const {setConvertPage} = useContext(UserContext);
+  // const {setRoomId} = useContext(UserContext);
 
   const handlePasswordModalOpen = () => setPasswordModal(true);
   const handlePasswordModalClose = () => setPasswordModal(false);
@@ -75,8 +76,10 @@ function ShowRoomList({roomList, refersh}: ComponentProps) {
       // TODO: 서버에 채팅방 이름과 패스워드를 보낸 후 맞는지 확인하고 들여보낸다
       const rep = await apiManager.get(`/chatroom/join_room?room_id=${row.id}`);
       console.log(rep);
-      setRoomId(row.id);
-      navigate(`/menu/chat/room/${row.name}/${row.id}`);
+      // navigate(`/menu/chat/room/${row.name}/${row.id}`);
+      console.log(row.id.toString());
+      sessionStorage.setItem('room_id', row.id.toString());
+      setConvertPage(row.id);
     } catch (error) {
       alert('존재하지 않는 채팅방입니다, ');
       refersh();

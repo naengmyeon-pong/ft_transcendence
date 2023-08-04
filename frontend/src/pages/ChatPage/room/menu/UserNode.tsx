@@ -22,7 +22,8 @@ function UserNode({user, permission, myPermission}: UserProps) {
   const {socket} = React.useContext(UserContext);
   const {block_users} = useContext(UserContext);
   const {setBlockUsers} = useContext(UserContext);
-  const {roomId} = useParams();
+  // const {roomId} = useParams();
+  const roomId = sessionStorage.getItem('room_id');
   const {user_id} = useContext(UserContext);
   const open = Boolean(anchorEl);
 

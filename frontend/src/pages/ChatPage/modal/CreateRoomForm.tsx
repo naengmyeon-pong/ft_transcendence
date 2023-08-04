@@ -59,6 +59,7 @@ function CreateRoomForm({setCreateModal}: CreateModalProps) {
   const [maxUser, setMaxUser] = useState<number>(4);
   const navigate = useNavigate();
   const {setRoomId} = useContext(UserContext);
+  const {setConvertPage} = useContext(UserContext);
 
   const handleClose = useCallback(() => {
     setCreateModal(false);
@@ -94,7 +95,9 @@ function CreateRoomForm({setCreateModal}: CreateModalProps) {
         password: password.trim() === '' ? null : password,
         user_id: response?.data?.user_id,
       });
-      navigate(`/menu/chat/room/${name}/${rep?.data?.id}`);
+      sessionStorage.setItem('room_id', rep?.data?.id);
+      setConvertPage(rep?.data?.id);
+      // navigate(`/menu/chat/room/${name}/${rep?.data?.id}`);
     } catch (error) {
       // TODO: 에러처리
       alert('에러가 발생하였습니다');

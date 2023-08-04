@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import './App.css';
 import {Route, Routes} from 'react-router-dom';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -16,6 +16,7 @@ import WaitingChannelRoom from 'layout/Buffer/WaitingChannelRoom';
 import ChatList from 'pages/ChatPage';
 import ChatRoom from 'pages/ChatPage/room';
 import {UserProvider} from 'Context';
+import ChatPage from 'pages/ChatPage/ChatPage';
 
 function App() {
   return (
@@ -33,11 +34,12 @@ function App() {
             <Route path="/main" element={<MainPage />} />
             <Route path="/menu/mainPage" element={<MainPage />} />
             <Route path="/menu/ranking" element={<Ranking />} />
-            <Route path="/menu/chat/list" element={<ChatList />} />
-            <Route
+            <Route path="/menu/chat" element={<ChatPage />} />
+            {/* <Route path="/menu/chat/list" element={<ChatList />} /> */}
+            {/* <Route
               path="/menu/chat/room/:roomName/:roomId"
               element={<ChatRoom />}
-            />
+            /> */}
             <Route path="/menu/chat" element={<WaitingChannelRoom />} />
           </Route>
           {/* 마이페이지 링크 추가 */}

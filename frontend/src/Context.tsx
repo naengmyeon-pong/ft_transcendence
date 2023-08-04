@@ -1,6 +1,6 @@
 // SocketContext.tsx
 
-import React, {createContext, useState, useContext, ReactNode} from 'react';
+import React, {createContext, useState, ReactNode, useRef} from 'react';
 import {Socket} from 'socket.io-client';
 
 interface UserContextType {
@@ -21,6 +21,9 @@ interface UserContextType {
 
   block_users: Set<string>;
   setBlockUsers: (block_users: Set<string>) => void;
+
+  convert_page: number;
+  setConvertPage: (convert_page: number) => void;
 }
 
 const initUserState: UserContextType = {
@@ -36,6 +39,8 @@ const initUserState: UserContextType = {
   setBlockUsers: () => {},
   room_id: null,
   setRoomId: () => {},
+  convert_page: 0,
+  setConvertPage: () => {},
 };
 
 const UserContext = createContext(initUserState);
@@ -47,6 +52,7 @@ const UserProvider: React.FC<{children: ReactNode}> = ({children}) => {
   const [user_nickname, setUserNickName] = useState<string | null>(null);
   const [room_id, setRoomId] = useState<number | null>(null);
   const [block_users, setBlockUsers] = useState<Set<string>>(new Set());
+  const [convert_page, setConvertPage] = useState<number>(0);
 
   return (
     <UserContext.Provider
@@ -63,6 +69,8 @@ const UserProvider: React.FC<{children: ReactNode}> = ({children}) => {
         setBlockUsers,
         room_id,
         setRoomId,
+        convert_page,
+        setConvertPage,
       }}
     >
       {children}

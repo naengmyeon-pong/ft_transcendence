@@ -174,7 +174,8 @@ function FtAppBar() {
             <Link to="/menu/ranking">
               <Button>전체랭킹</Button>
             </Link>
-            <Link to="/menu/chat/list">
+            <Link to="/menu/chat">
+              {/* <Link to="/menu/chat/list"> */}
               <Button>채팅목록</Button>
             </Link>
           </Box>

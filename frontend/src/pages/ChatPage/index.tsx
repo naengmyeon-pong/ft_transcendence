@@ -13,6 +13,7 @@ function ChatList() {
   const handleCreateModalOpen = () => setCreateModal(true);
   const handleCreateModalClose = () => setCreateModal(false);
 
+  console.log('ChatList');
   async function refershChatList() {
     try {
       const rep = await apiManager.get('/chatroom/room_list');

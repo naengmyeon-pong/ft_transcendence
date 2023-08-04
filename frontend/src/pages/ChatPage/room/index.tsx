@@ -16,11 +16,13 @@ const BoxBorder = styled('div')({
 // 채팅방에 입장해서 실행하는 컴포넌트
 function ChatRoom() {
   const {roomName} = useParams();
-  const {roomId} = useParams();
+  // const {roomId} = useParams();
+  const roomId = sessionStorage.getItem('room_id');
   const navigate = useNavigate();
   const [init_chat_room, setInitChatRoom] = useState(false);
-  const {room_id} = useContext(UserContext);
+  // const {room_id} = useContext(UserContext);
 
+  console.log('ChatRoom');
   async function SearchRoom() {
     try {
       // 없는 방번호로 직접(url 등) 접근하는 경우

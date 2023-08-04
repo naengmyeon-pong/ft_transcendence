@@ -35,8 +35,10 @@ export default function UserList() {
 
   const {socket} = useContext(UserContext);
   const {user_id} = useContext(UserContext);
+  const {setConvertPage} = useContext(UserContext);
 
-  const {roomId} = useParams();
+  // const {roomId} = useParams();
+  const roomId = sessionStorage.getItem('room_id');
 
   const navigate = useNavigate();
 
@@ -86,7 +88,9 @@ export default function UserList() {
 
   function exit() {
     socket?.emit('leave-room', {room_id: roomId}, () => {
-      navigate('/menu/chat/list');
+      sessionStorage.removeItem('room_id');
+      setConvertPage(0);
+      // navigate('/menu/chat/list');
     });
   }
 
@@ -112,7 +116,7 @@ export default function UserList() {
           채팅방 관리자
         </Typography>
         {/* 나를 제외한 관리자 유저 등급 출력 */}
-        <ul style={{marginTop: '5px', width: 'auto'}}>
+        <ul style={{marginTop: '5px', width: 'auto', overflow: 'auto'}}>
           {adminUser?.map((node, index) => {
             return (
               <UserNode
@@ -130,7 +134,7 @@ export default function UserList() {
           채팅 참여자
         </Typography>
         {/* 나를 제외한 일반 유저 등급 */}
-        <ul>
+        <ul style={{overflow: 'auto'}}>
           {users?.map((node, index) => {
             return (
               <UserNode

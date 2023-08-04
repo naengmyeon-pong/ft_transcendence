@@ -12,7 +12,6 @@ function MainLayout() {
   const {socket, setSocket} = useContext(UserContext);
   const {setUserNickName} = useContext(UserContext);
   const {setUserImage} = useContext(UserContext);
-  const {roomId} = useParams();
   const [initMainLayout, setInitMainLayout] = useState(false);
   const {setBlockUsers} = useContext(UserContext);
 
