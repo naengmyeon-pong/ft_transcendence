@@ -1,4 +1,4 @@
-import {Logger} from '@nestjs/common';
+import {Logger, UseGuards} from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -22,7 +22,6 @@ import {ModeRepository} from 'src/record/mode/mode.repository';
 import {TypeRepository} from 'src/record/type/type.repository';
 import {JwtService} from '@nestjs/jwt';
 import {GameService} from './game.service';
-import {number} from 'joi';
 
 const NORMAL_EASY = 0;
 const NORMAL_HARD = 1;
@@ -214,12 +213,12 @@ export class GameGateway
     }
     gameInfo.timeStamp = Date.now();
     roomInfo.interval = setInterval(() => {
-      let currTime = Date.now();
+      const currentTime = Date.now();
       const gameOver: boolean = this.gameService.updateBallPosition(
         gameInfo,
-        currTime
+        currentTime
       );
-      gameInfo.timeStamp = currTime;
+      gameInfo.timeStamp = currentTime;
       this.sendGameInfo(roomInfo);
       this.gameService.updatePaddlePosition(
         gameInfo.leftPaddle,

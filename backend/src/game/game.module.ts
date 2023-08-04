@@ -11,7 +11,7 @@ import {ModeRepository} from 'src/record/mode/mode.repository';
 import {TypeRepository} from 'src/record/type/type.repository';
 import {JwtModule} from '@nestjs/jwt';
 import {JwtStrategy} from 'src/user/jwt.strategy';
-import { GameService } from './game.service';
+import {GameService} from './game.service';
 
 @Module({
   imports: [

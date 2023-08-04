@@ -145,9 +145,9 @@ export class GameService {
     return false;
   };
 
-  updateBallPosition = (gameInfo: GameInfo, currTime: number): boolean => {
+  updateBallPosition = (gameInfo: GameInfo, currentTime: number): boolean => {
     const {ball, leftPaddle, rightPaddle} = gameInfo;
-    const elapse = currTime - gameInfo.timeStamp;
+    const elapse = currentTime - gameInfo.timeStamp;
     ball.pos.x = ball.pos.x + (ball.speed * ball.vel.x * elapse) / 10;
     ball.pos.y = ball.pos.y + (ball.speed * ball.vel.y * elapse) / 10;
 
