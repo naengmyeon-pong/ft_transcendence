@@ -27,4 +27,7 @@ export class Record {
 
   @ManyToOne(() => Type, type_id => type_id.records, {eager: false})
   game_type: number;
+
+  @Column({type: 'timestamp', default: () => 'CURRENT_TIMESTAMP'})
+  datetime: Date;
 }
