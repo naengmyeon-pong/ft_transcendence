@@ -13,10 +13,8 @@ import Ranking from 'layout/Buffer/Ranking';
 import MainLayout from 'layout/MainLayout';
 
 import WaitingChannelRoom from 'layout/Buffer/WaitingChannelRoom';
-import ChatList from 'pages/ChatPage';
-import ChatRoom from 'pages/ChatPage/room';
 import {UserProvider} from 'Context';
-import ChatPage from 'pages/ChatPage/ChatPage';
+import ChatPage from 'pages/ChatPage';
 
 function App() {
   return (
@@ -35,12 +33,6 @@ function App() {
             <Route path="/menu/mainPage" element={<MainPage />} />
             <Route path="/menu/ranking" element={<Ranking />} />
             <Route path="/menu/chat" element={<ChatPage />} />
-            {/* <Route path="/menu/chat/list" element={<ChatList />} /> */}
-            {/* <Route
-              path="/menu/chat/room/:roomName/:roomId"
-              element={<ChatRoom />}
-            /> */}
-            <Route path="/menu/chat" element={<WaitingChannelRoom />} />
           </Route>
           {/* 마이페이지 링크 추가 */}
           <Route path="*" element={<NotFoundPage />} />

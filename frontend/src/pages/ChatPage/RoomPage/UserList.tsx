@@ -3,8 +3,8 @@ import {Box, Button, Typography, styled} from '@mui/material';
 import {UserContext} from 'Context';
 import React, {useContext, useEffect, useState} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
-import ChatInvite from '../modal/ChatInvite';
-import UserNode from './menu/UserNode';
+import UserNode from './UserNode';
+import ChatInvite from './modal/ChatInvite';
 
 const BoxBorder = styled('div')({
   border: '1px solid black',

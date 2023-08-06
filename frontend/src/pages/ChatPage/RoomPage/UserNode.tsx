@@ -1,14 +1,12 @@
 import {Menu, MenuItem, Typography} from '@mui/material';
 import React, {useContext} from 'react';
-import ServiceModal from '../service/ServiceModal';
-import AddAdmin from '../service/AddAdmin';
-import Kick from '../service/Kick';
-import Mute from '../service/Mute';
-import Ban from '../service/Ban';
+import ServiceModal from './modal/ServiceModal';
+import Kick from './service/Kick';
+import Mute from './service/Mute';
+import Ban from './service/Ban';
 import {UserContext} from 'Context';
-import {useParams} from 'react-router-dom';
-import DelAdmin from '../service/DelAdmin';
-import AddBlock from '../service/Block';
+import {AddBlock, DelBlock} from './service/Block';
+import {AddAdmin, DelAdmin} from './service/Admin';
 
 /*
  * @PARAM: 클릭당한 유저의 id, nickname, image를 가진 객체
@@ -21,8 +19,6 @@ function UserNode({user, permission, myPermission}: UserProps) {
   const [menuItem, setMenuItem] = React.useState<string | null>(null);
   const {socket} = React.useContext(UserContext);
   const {block_users} = useContext(UserContext);
-  const {setBlockUsers} = useContext(UserContext);
-  // const {roomId} = useParams();
   const roomId = sessionStorage.getItem('room_id');
   const {user_id} = useContext(UserContext);
   const open = Boolean(anchorEl);
@@ -53,7 +49,10 @@ function UserNode({user, permission, myPermission}: UserProps) {
           Mute(user, socket, roomId);
           break;
         case 'AddBlock':
-          AddBlock(user, socket, block_users, setBlockUsers);
+          AddBlock(user, socket, block_users);
+          break;
+        case 'DelBlock':
+          DelBlock(user, socket, block_users);
           break;
         case 'Ban':
           Ban(user, socket, roomId);
@@ -85,6 +84,20 @@ function UserNode({user, permission, myPermission}: UserProps) {
   }
   function addAdminMenu() {
     if (myPermission === 'owner' && permission !== 'admin') {
+      return true;
+    }
+    return false;
+  }
+
+  function addBlock() {
+    if (block_users.has(user.id) === false) {
+      return true;
+    }
+    return false;
+  }
+
+  function delBlock() {
+    if (block_users.has(user.id) === true) {
       return true;
     }
     return false;
@@ -133,10 +146,17 @@ function UserNode({user, permission, myPermission}: UserProps) {
             </MenuItem>
           </div>
         )}
-
-        <MenuItem onClick={() => handleMenuItemClick('AddBlock')}>
-          <Typography>차단</Typography>
-        </MenuItem>
+        {/* TODO: 차단한 유저가 있다면 차단해제 */}
+        {addBlock() && (
+          <MenuItem onClick={() => handleMenuItemClick('AddBlock')}>
+            <Typography>차단</Typography>
+          </MenuItem>
+        )}
+        {delBlock() && (
+          <MenuItem onClick={() => handleMenuItemClick('DelBlock')}>
+            <Typography>차단해제</Typography>
+          </MenuItem>
+        )}
       </Menu>
     );
   }

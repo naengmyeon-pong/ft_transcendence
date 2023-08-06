@@ -1,4 +1,4 @@
-import {Box, Button, Modal, Typography} from '@mui/material';
+import {Box, Button, Modal} from '@mui/material';
 import React from 'react';
 import ModalPrint from './ModalPrint';
 const style = {
@@ -29,16 +29,13 @@ function ServiceModal({
   user,
 }: ServiceModalProps) {
   const handleYesClick = () => {
-    // "예" 버튼이 클릭되었을 때 수행할 로직을 구현합니다.
-    // 예를 들어, `menuItem`에 따라 각기 다른 기능을 수행합니다.
-
-    onRequestClose(true); // 모달을 닫고, 기능을 수행했음을 부모 컴포넌트에 알립니다.
+    // 모달을 닫고, 기능을 수행했음을 부모 컴포넌트에 알립니다.
+    onRequestClose(true);
   };
 
   const handleNoClick = () => {
-    // "아니오" 버튼이 클릭되었을 때 수행할 로직을 구현합니다.
-
-    onRequestClose(false); // 모달을 닫고, 기능을 수행하지 않았음을 부모 컴포넌트에 알립니다.
+    // 모달을 닫고, 기능을 수행하지 않았음을 부모 컴포넌트에 알립니다.
+    onRequestClose(false);
   };
 
   return (

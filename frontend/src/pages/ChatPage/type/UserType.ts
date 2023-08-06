@@ -30,3 +30,14 @@ interface ComponentProps {
   roomList: ChatListData[];
   refersh: () => Promise<void>;
 }
+
+interface DmListData {
+  user1: string;
+  user2: string;
+}
+
+interface DmChat {
+  userId: string;
+  someoneId: string;
+  message: string;
+}

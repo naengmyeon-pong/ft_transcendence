@@ -1,26 +1,26 @@
 import React, {useContext, useEffect, useState} from 'react';
-import {Box, CssBaseline, Grid, Toolbar} from '@mui/material';
+import {Box, CssBaseline, Grid, Toolbar, Typography} from '@mui/material';
 import FtAppBar from './Buffer/FtAppBar';
 import FtSideBar from './Buffer/SideBar/FtSideBar';
 import {Outlet, useParams} from 'react-router-dom';
 import apiManager from '@apiManager/apiManager';
 import {UserContext} from 'Context';
 import {io} from 'socket.io-client';
+import Dm from 'pages/ChatPage/DmPage';
 
 function MainLayout() {
-  const {user_id, setUserId} = useContext(UserContext);
-  const {socket, setSocket} = useContext(UserContext);
+  const {setUserId} = useContext(UserContext);
+  const {setSocket} = useContext(UserContext);
   const {setUserNickName} = useContext(UserContext);
   const {setUserImage} = useContext(UserContext);
+  const {block_users} = useContext(UserContext);
+
   const [initMainLayout, setInitMainLayout] = useState(false);
-  const {setBlockUsers} = useContext(UserContext);
 
   function init_setBlockUsers(data: string[]) {
-    const a = new Set<string>();
     for (const node of data) {
-      a.add(node);
+      block_users.add(node);
     }
-    setBlockUsers(a);
   }
 
   async function init() {
@@ -65,12 +65,17 @@ function MainLayout() {
             </Box>
             {/* <Box width="80vw" paddingLeft="150px"> */}
             {/* <Box flexGrow="1"> */}
-            <Grid container justifyContent="center">
-              <Grid item xs={8}>
+            <Grid container rowSpacing={20}>
+              <Grid item xs={12}>
                 {/* <Box> */}
                 {/* 게임하기, 전체랭킹, 채팅목록 */}
+                {/* <Grid item xs={8}> */}
                 <Outlet />
-                {/* 개인 채팅창 위치 */}
+                {/* </Grid> */}
+              </Grid>
+              {/* 개인 채팅창 위치 */}
+              <Grid item xs={3} alignItems={'flex-start'}>
+                <Dm />
               </Grid>
             </Grid>
             {/* </Box> */}

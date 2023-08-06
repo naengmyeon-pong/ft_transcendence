@@ -16,11 +16,7 @@ interface UserContextType {
   user_nickname: string | null;
   setUserNickName: (user_nickname: string) => void;
 
-  room_id: number | null;
-  setRoomId: (room_id: number) => void;
-
   block_users: Set<string>;
-  setBlockUsers: (block_users: Set<string>) => void;
 
   convert_page: number;
   setConvertPage: (convert_page: number) => void;
@@ -29,16 +25,18 @@ interface UserContextType {
 const initUserState: UserContextType = {
   socket: null,
   setSocket: () => {},
+
   user_id: null,
   setUserId: () => {},
+
   user_image: null,
   setUserImage: () => {},
+
   user_nickname: null,
   setUserNickName: () => {},
+
   block_users: new Set(),
-  setBlockUsers: () => {},
-  room_id: null,
-  setRoomId: () => {},
+
   convert_page: 0,
   setConvertPage: () => {},
 };
@@ -50,8 +48,7 @@ const UserProvider: React.FC<{children: ReactNode}> = ({children}) => {
   const [user_id, setUserId] = useState<string | null>(null);
   const [user_image, setUserImage] = useState<string | null>(null);
   const [user_nickname, setUserNickName] = useState<string | null>(null);
-  const [room_id, setRoomId] = useState<number | null>(null);
-  const [block_users, setBlockUsers] = useState<Set<string>>(new Set());
+  const block_users = useRef<Set<string>>(new Set());
   const [convert_page, setConvertPage] = useState<number>(0);
 
   return (
@@ -65,10 +62,7 @@ const UserProvider: React.FC<{children: ReactNode}> = ({children}) => {
         setUserImage,
         user_nickname,
         setUserNickName,
-        block_users,
-        setBlockUsers,
-        room_id,
-        setRoomId,
+        block_users: block_users.current,
         convert_page,
         setConvertPage,
       }}

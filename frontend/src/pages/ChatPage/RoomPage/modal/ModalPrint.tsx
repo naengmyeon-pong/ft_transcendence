@@ -28,6 +28,9 @@ function ModalPrint({user, menuItem}: ModalPrintInstance) {
       case 'AddBlock':
         title = '차단';
         break;
+      case 'DelBlock':
+        title = '차단해제';
+        break;
       case 'Ban':
         title = '밴';
         break;
@@ -51,6 +54,9 @@ function ModalPrint({user, menuItem}: ModalPrintInstance) {
         break;
       case 'AddBlock':
         detail = ' 님을 차단하시겠습니까?';
+        break;
+      case 'DelBlock':
+        detail = ' 님을 차단해제하시겠습니까?';
         break;
       case 'Ban':
         detail = ' 님을 밴하시겠습니까?';

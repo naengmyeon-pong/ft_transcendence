@@ -36,12 +36,10 @@ async function checkRoomPassword(name: string) {
 }
 
 function ShowRoomList({roomList, refersh}: ComponentProps) {
-  const navigate = useNavigate();
   const [passwordModal, setPasswordModal] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const {setConvertPage} = useContext(UserContext);
-  // const {setRoomId} = useContext(UserContext);
 
   const handlePasswordModalOpen = () => setPasswordModal(true);
   const handlePasswordModalClose = () => setPasswordModal(false);

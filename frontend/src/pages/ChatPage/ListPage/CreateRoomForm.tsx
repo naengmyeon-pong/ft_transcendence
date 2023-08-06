@@ -57,8 +57,6 @@ function CreateRoomForm({setCreateModal}: CreateModalProps) {
   const [isHide, setIsHide] = useState<boolean>(false);
   const [password, setPassword] = useState<string>('');
   const [maxUser, setMaxUser] = useState<number>(4);
-  const navigate = useNavigate();
-  const {setRoomId} = useContext(UserContext);
   const {setConvertPage} = useContext(UserContext);
 
   const handleClose = useCallback(() => {

@@ -284,4 +284,21 @@ export class ChatGateway
       console.log(e.message);
     }
   }
+
+  @SubscribeMessage('dm-message')
+  async handleDmMessage(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() {target_id, message}: {target_id: string; message: string}
+  ) {
+    const user_id = socket.handshake.query.user_id as string;
+    const target_socket_id = this.socketArray.getUserSocket(target_id);
+    try {
+      socket
+        .to(`${target_socket_id}`)
+        .emit('dm-message', {message, userId: user_id, someoneId: target_id});
+    } catch (e) {
+      console.log(e.message);
+    }
+    return {message, userId: user_id, someoneId: target_id};
+  }
 }

@@ -12,7 +12,7 @@ import React, {
 } from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import {Socket} from 'socket.io-client';
-import MuteModal from '../modal/MuteModal';
+import MuteModal from './modal/MuteModal';
 
 interface IChat {
   user_id: string;
@@ -26,28 +26,12 @@ const Message = ({user_image, user_nickname, message}: IChat) => {
     <Box
       sx={{
         display: 'flex',
-        //   justifyContent: me ? 'flex-start' : 'flex-end',
-        //   mb: 2,
       }}
     >
       <Avatar src={user_image} sx={{margin: '10px'}} />
 
       <Typography sx={{margin: '20px'}}>{user_nickname}</Typography>
       <Typography sx={{margin: '20px'}}>{message}</Typography>
-      {/* <Typography sx={{margin: '20px'}}>{message.message}</Typography> */}
-
-      {/* <Paper
-        variant="outlined"
-        sx={{
-          p: 2,
-          backgroundColor: me ? '#898da3' : '#2196f3',
-          borderRadius: me ? '20px 20px 20px 5px' : '20px 20px 5px 20px',
-        }}
-      >
-        <Typography variant="body1" color={'white'}>
-          {message.message}
-        </Typography>
-      </Paper> */}
     </Box>
   );
 };
@@ -62,7 +46,6 @@ function ChatBox() {
   const [muteTimer, setMuteTimer] = useState<number>(0);
   const [muteModal, setMuteModal] = useState<boolean>(false);
 
-  // const {roomId} = useParams();
   const roomId = sessionStorage.getItem('room_id');
 
   // 채팅창 스크롤을 제어하는 변수
@@ -82,8 +65,6 @@ function ChatBox() {
     }
   }, [chats.length]);
 
-  // const navigate = useNavigate();
-
   useEffect(() => {
     socket?.emit('join-room', roomId, (res: boolean) => {
       if (res === false) {
@@ -91,14 +72,6 @@ function ChatBox() {
         alert('에러가 발생하였습니다.');
       }
     });
-
-    const handleListener = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      // e.returnValue = '';
-      socket?.emit('leave-room', {room_id: roomId});
-      sessionStorage.removeItem('room_id');
-      setConvertPage(0);
-    };
 
     function handleMute(mute_time: number) {
       setMuteTimer(mute_time);
@@ -111,25 +84,45 @@ function ChatBox() {
       setChats(prevChats => [...prevChats, chat]);
     }
 
+    const handleListener = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+
     window.addEventListener('beforeunload', handleListener);
+    // TODO: 뒤로가기 이벤트 알림
+    // const handlePopState = (e: PopStateEvent) => {
+    // e.preventDefault();
+    //   console.log('TEST popstae');
+    // };
+
+    // window.addEventListener('popstate', handlePopState);
+    // window.addEventListener('popstate', (e: PopStateEvent) => {
+    // e.preventDefault();
+    //   console.log('TEST popstate2');
+    // });
     socket?.on('mute-member', handleMute);
     socket?.on('message', handleMessage);
 
     function leaveRoomHandler(ret: boolean) {
-      // navigate('/menu/chat/list');
-      navigate('/menu/chat');
+      setConvertPage(0);
     }
 
     socket?.once('leave-room', leaveRoomHandler);
 
     socket?.once('kick-member', () => {
       socket?.emit('leave-room', {room_id: roomId}, () => {
-        navigate(-1);
+        setConvertPage(0);
       });
     });
 
     return () => {
       window.removeEventListener('beforeunload', handleListener);
+      socket?.emit('message', {
+        room_id: roomId,
+        message: `${socket?.id}: 나감`,
+      });
+      // window.removeEventListener('popstate', handlePopState);
       socket?.emit('leave-room', {room_id: roomId});
       socket?.off('message', handleMessage);
       socket?.off('mute_time', handleMute);
@@ -144,7 +137,6 @@ function ChatBox() {
 
   const onSendMessage = useCallback(
     (e: FormEvent<HTMLFormElement>) => {
-      //form은 submit 후에 페이지를 새로고침함, 방지하기 위해 사용됨
       e.preventDefault();
       if (!message) {
         return alert('메시지를 입력해 주세요.');
