@@ -437,15 +437,29 @@ export class ChatService {
   //   return ret;
   // }
 
+  async saveDirectMessage(user_id: string, target_id: string, message: string) {
+    const dm = this.dmRepository.create({
+      userId: user_id,
+      someoneId: target_id,
+      date: new Date(),
+      message,
+    });
+    await this.dmRepository.save(dm);
+  }
+
   async directMessageList(user_id: string) {
     const ret = [];
     const dm_list = await this.dmRepository
       .createQueryBuilder('dm')
+      .distinct(true)
       .select(`GREATEST("userId", "someoneId") AS user1`)
       .addSelect(`LEAST("userId", "someoneId") AS user2`)
-      .distinct(true)
+      // .addSelect('user_nickname')
+      .innerJoin('dm.someoneUser', 'users')
       .where('dm.userId = :user_id OR dm.someoneId = :user_id', {user_id})
       .getRawMany();
+
+    // console.log('dm_list :', dm_list);
 
     dm_list.forEach(e => {
       const temp = {
@@ -455,5 +469,13 @@ export class ChatService {
       ret.push(temp);
     });
     return ret;
+  }
+
+  async checkChatRoomPw(room_id: number, password: number): Promise<boolean> {
+    const room = await this.getRoom(room_id);
+    if (room.password === password) {
+      return true;
+    }
+    return false;
   }
 }

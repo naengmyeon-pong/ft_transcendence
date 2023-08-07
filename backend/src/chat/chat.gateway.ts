@@ -296,9 +296,23 @@ export class ChatGateway
       socket
         .to(`${target_socket_id}`)
         .emit('dm-message', {message, userId: user_id, someoneId: target_id});
+      this.chatService.saveDirectMessage(user_id, target_id, message);
     } catch (e) {
       console.log(e.message);
     }
     return {message, userId: user_id, someoneId: target_id};
+  }
+
+  @SubscribeMessage('chatroom-notification')
+  handleNotification(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() {room_id, target_id}: ExecPayload
+  ) {
+    const user_id = socket.handshake.query.user_id as string;
+    const target_socket_id = this.socketArray.getUserSocket(target_id);
+    socket
+      .to(`${target_socket_id}`)
+      .emit('chatroom-notification', {room_id, user_id});
+    return true;
   }
 }
