@@ -1,4 +1,4 @@
-import {Logger} from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -9,9 +9,9 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import {Socket, Namespace} from 'socket.io';
-import {ChatService} from './chat.service';
-import {SocketArray} from 'src/globalVariable/global.socket';
+import { Socket, Namespace } from 'socket.io';
+import { ChatService } from './chat.service';
+import { SocketArray } from 'src/globalVariable/global.socket';
 
 interface MessagePayload {
   room_id: number;
@@ -36,12 +36,11 @@ interface MutePayload {
   },
 })
 export class ChatGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private chatService: ChatService,
     private socketArray: SocketArray
-  ) {}
+  ) { }
   @WebSocketServer() nsp: Namespace;
 
   private logger = new Logger('ChatGateway');
@@ -52,7 +51,7 @@ export class ChatGateway
 
   async handleConnection(@ConnectedSocket() socket: Socket) {
     const user_id = socket.handshake.query.user_id as string;
-    this.socketArray.addSocketArray({user_id, socket_id: socket.id});
+    this.socketArray.addSocketArray({ user_id, socket_id: socket.id });
     try {
       const member = await this.chatService.isChatMember(user_id);
       if (member.mute !== null) {
@@ -73,17 +72,17 @@ export class ChatGateway
   @SubscribeMessage('message')
   handleMessage(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() {room_id, message}: MessagePayload
+    @MessageBody() { room_id, message }: MessagePayload
   ) {
     const user_id = socket.handshake.query.user_id as string;
     const user_nickname = socket.handshake.query.nickname as string;
     const user_image = socket.handshake.query.user_image as string;
     socket
       .to(`${room_id}`)
-      .emit('message', {message, user_id, user_nickname, user_image}); //front로 메세지 전송
+      .emit('message', { message, user_id, user_nickname, user_image }); //front로 메세지 전송
 
     this.logger.log(`들어온 메세지: ${message}.`);
-    return {message, user_id, user_nickname, user_image};
+    return { message, user_id, user_nickname, user_image };
   }
 
   @SubscribeMessage('join-room')
@@ -148,7 +147,7 @@ export class ChatGateway
   @SubscribeMessage('add-admin')
   async handleAddAdmin(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() {room_id, target_id}: ExecPayload
+    @MessageBody() { room_id, target_id }: ExecPayload
   ) {
     const user_id = socket.handshake.query.user_id as string;
     try {
@@ -167,7 +166,7 @@ export class ChatGateway
   @SubscribeMessage('del-admin')
   async handleDelAdmin(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() {room_id, target_id}: ExecPayload
+    @MessageBody() { room_id, target_id }: ExecPayload
   ) {
     const user_id = socket.handshake.query.user_id as string;
     try {
@@ -186,7 +185,7 @@ export class ChatGateway
   @SubscribeMessage('mute-member')
   async handleMuteMember(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() {room_id, target_id, mute_time}: MutePayload
+    @MessageBody() { room_id, target_id, mute_time }: MutePayload
   ) {
     const user_id = socket.handshake.query.user_id as string;
     try {
@@ -214,7 +213,7 @@ export class ChatGateway
   @SubscribeMessage('kick-member')
   async handleKickMember(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() {room_id, target_id}: ExecPayload
+    @MessageBody() { room_id, target_id }: ExecPayload
   ) {
     const user_id = socket.handshake.query.user_id as string;
     try {
@@ -232,11 +231,11 @@ export class ChatGateway
   @SubscribeMessage('ban-member')
   async handleBanMember(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() {room_id, target_id}: ExecPayload
+    @MessageBody() { room_id, target_id }: ExecPayload
   ) {
     const user_id = socket.handshake.query.user_id as string;
     try {
-      if (await this.handleKickMember(socket, {room_id, target_id})) {
+      if (await this.handleKickMember(socket, { room_id, target_id })) {
         if (await this.chatService.banMember(room_id, user_id, target_id)) {
           return true;
         }
@@ -288,31 +287,86 @@ export class ChatGateway
   @SubscribeMessage('dm-message')
   async handleDmMessage(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() {target_id, message}: {target_id: string; message: string}
+    @MessageBody() { target_id, message }: { target_id: string; message: string }
   ) {
     const user_id = socket.handshake.query.user_id as string;
     const target_socket_id = this.socketArray.getUserSocket(target_id);
     try {
       socket
         .to(`${target_socket_id}`)
-        .emit('dm-message', {message, userId: user_id, someoneId: target_id});
+        .emit('dm-message', { message, userId: user_id, someoneId: target_id });
       this.chatService.saveDirectMessage(user_id, target_id, message);
     } catch (e) {
       console.log(e.message);
     }
-    return {message, userId: user_id, someoneId: target_id};
+    return { message, userId: user_id, someoneId: target_id };
   }
 
   @SubscribeMessage('chatroom-notification')
   handleNotification(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() {room_id, target_id}: ExecPayload
+    @MessageBody() { room_id, target_id }: ExecPayload
   ) {
     const user_id = socket.handshake.query.user_id as string;
     const target_socket_id = this.socketArray.getUserSocket(target_id);
     socket
       .to(`${target_socket_id}`)
-      .emit('chatroom-notification', {room_id, user_id});
+      .emit('chatroom-notification', { room_id, user_id });
     return true;
   }
+
+  /*
+  [
+    {id: 'tester1, nickname:'nick1'},
+    {id: 'tester2, nickname:'nick2'}
+  }
+  이런 형태의 배열. 친구 제거 할 때, 서버에서 db 조회하려면 id도 필요할 것 같아서 이런형태로 만들었음.
+  */
+  @SubscribeMessage('friend-list')
+  async handleFriendList(
+    @ConnectedSocket() socket: Socket
+  ) {
+    const user_id = socket.handshake.query.user_id as string;
+    try {
+      const friend_list = await this.chatService.getFriendList(user_id);
+      socket.emit('friend-list', friend_list);
+      return true;
+    } catch (e) {
+      console.log(e.message);
+      return false;
+    }
+  }
+
+  @SubscribeMessage('add-friend')
+  async handleAddFriend(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() friend_id: string
+  ) {
+    const user_id = socket.handshake.query.user_id as string;
+    try {
+      await this.chatService.addFriend(user_id, friend_id);
+      return await this.handleFriendList(socket);
+    } catch (e) {
+      console.log(e.message);
+      return false;
+    }
+  }
+
+  @SubscribeMessage('del-friend')
+  async handleDelFriend(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() friend_id: string
+  ) {
+    const user_id = socket.handshake.query.user_id as string;
+    try {
+      await this.chatService.delFriend(user_id, friend_id);
+      return await this.handleFriendList(socket);
+    } catch (e) {
+      console.log(e.message);
+      return false;
+    }
+  }
+
+  // add, del 실행한 후에 friend-list 호출해서 친구목록 변화한거 바로바로 적용하도록 했음
+  // 나중에 온, 오프라인, 게임상태 추가해야 함.
 }

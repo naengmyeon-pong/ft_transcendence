@@ -1,12 +1,13 @@
-import {TypeOrmModuleOptions} from '@nestjs/typeorm';
-import {User} from 'src/user/user.entitiy';
-import {IsUserAuth} from 'src/signup/signup.entity';
+import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { User } from 'src/user/user.entitiy';
+import { IsUserAuth } from 'src/signup/signup.entity';
 import {
   ChatBan,
   ChatMember,
   ChatRoom,
   BlockList,
   DirectMessage,
+  FriendList,
 } from 'src/chat/chat.entity';
 
 export const userTypeORMconf: TypeOrmModuleOptions = {
@@ -24,6 +25,7 @@ export const userTypeORMconf: TypeOrmModuleOptions = {
     ChatMember,
     BlockList,
     DirectMessage,
+    FriendList
   ],
   synchronize: true,
   // logging: true,
