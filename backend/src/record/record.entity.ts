@@ -29,5 +29,5 @@ export class Record {
   game_type: number;
 
   @Column({type: 'timestamp', default: () => 'CURRENT_TIMESTAMP'})
-  datetime: Date;
+  date: Date;
 }
