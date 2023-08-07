@@ -59,4 +59,13 @@ export class UserService {
     }
     throw new UnauthorizedException('login failed');
   }
+
+  async setTwoFactorAuthSecret(userID: string, secret: string) {
+    return this.userRepository.update(
+      {user_id: userID},
+      {
+        two_factor_auth_secret: secret,
+      }
+    );
+  }
 }

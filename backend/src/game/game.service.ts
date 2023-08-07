@@ -1,8 +1,8 @@
 import {Injectable} from '@nestjs/common';
 import {Socket} from 'socket.io';
 import {Coordinate, Ball, GameInfo, DEFAULT_BALL_SPEED} from '@/types/game';
-import {RoomInfo} from './types/room_info.interface';
-import {EUserIndex} from './types/user_index.enum';
+import {RoomInfo} from './types/room-info.interface';
+import {EUserIndex} from './types/user-index.enum';
 import {gameRooms} from './game.gateway';
 import {UserRepository} from 'src/user/user.repository';
 import {RecordRepository} from 'src/record/record.repository';

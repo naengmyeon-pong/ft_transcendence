@@ -39,4 +39,7 @@ export class User {
 
   @Column({default: 1000})
   rank_score: number;
+
+  @Column({nullable: true})
+  two_factor_auth_secret: string;
 }
