@@ -1,4 +1,4 @@
-import {GameUser} from './game_user.interface';
+import {GameUser} from './game-user.interface';
 import {GameInfo} from '@/types/game';
 
 export interface RoomInfo {
