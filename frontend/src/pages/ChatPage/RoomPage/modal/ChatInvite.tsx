@@ -34,7 +34,8 @@ const style = {
 function ChatInvite({inviteModal, handleInviteClose}: CreateModalProps) {
   const [nickName, setNickName] = useState('');
   const [list, setList] = useState<UserType[]>([]);
-  const {socket, convert_page} = useContext(UserContext);
+  const {user_id, socket, convert_page} = useContext(UserContext);
+  const [invite_list, setInviteList] = useState<Set<string>>(new Set());
 
   function handleNickName(e: ChangeEvent<HTMLInputElement>) {
     setNickName(e.target.value);
@@ -58,6 +59,9 @@ function ChatInvite({inviteModal, handleInviteClose}: CreateModalProps) {
 
   function handleClick(e: React.MouseEvent<unknown>, row: UserType) {
     e.preventDefault();
+    if (invite_list.has(row.id)) {
+      return;
+    }
     socket?.emit(
       'chatroom-notification',
       {room_id: convert_page, target_id: row.id},
@@ -65,10 +69,11 @@ function ChatInvite({inviteModal, handleInviteClose}: CreateModalProps) {
         console.log('chatroom-notification: ', rep);
       }
     );
-
-    console.log(row);
+    const new_invite_list = new Set(invite_list);
+    new_invite_list.add(row.id);
+    setInviteList(new_invite_list);
   }
-
+  console.log('랜더링');
   function listInModal() {
     return (
       <>
@@ -79,7 +84,10 @@ function ChatInvite({inviteModal, handleInviteClose}: CreateModalProps) {
                 src={`${process.env.REACT_APP_BACKEND_SERVER}/${row.image}`}
               />
               <Typography>{row.nickName}</Typography>
-              <Button type="button" onClick={e => handleClick(e, row)}>
+              <Button
+                disabled={invite_list.has(row.id) ? true : false}
+                onClick={e => handleClick(e, row)}
+              >
                 초대하기
               </Button>
             </Box>

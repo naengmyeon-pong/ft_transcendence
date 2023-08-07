@@ -88,7 +88,6 @@ function ChatBox() {
     function handleUnload() {
       socket?.emit('leave-room', {room_id: roomId});
       setConvertPage(0);
-      sessionStorage.removeItem('room_id');
     }
     window.addEventListener('unload', handleUnload);
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -128,7 +127,6 @@ function ChatBox() {
       socket?.emit('leave-room', {room_id: roomId});
       socket?.off('message', handleMessage);
       socket?.off('mute_time', handleMute);
-      sessionStorage.removeItem('room_id');
       setConvertPage(0);
     };
   }, []);

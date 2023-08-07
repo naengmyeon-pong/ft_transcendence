@@ -87,7 +87,6 @@ export default function UserList() {
 
   function exit() {
     socket?.emit('leave-room', {room_id: roomId}, () => {
-      sessionStorage.removeItem('room_id');
       setConvertPage(0);
       // navigate('/menu/chat/list');
     });
