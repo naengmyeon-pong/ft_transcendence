@@ -105,4 +105,14 @@ export class ChatController {
   async getBlockList(@Param('user_id') user_id: string) {
     return await this.chatService.getBlockList(user_id);
   }
+
+  // if no chat room, 404 error
+  // return true, false
+  @Post('chatroom_pw')
+  async checkChatRoomPw(
+    @Body('room_id') room_id: number,
+    @Body('password') password: number
+  ): Promise<boolean> {
+    return await this.chatService.checkChatRoomPw(room_id, password);
+  }
 }
