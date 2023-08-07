@@ -57,7 +57,7 @@ function CreateRoomForm({setCreateModal}: CreateModalProps) {
   const [isHide, setIsHide] = useState<boolean>(false);
   const [password, setPassword] = useState<string>('');
   const [maxUser, setMaxUser] = useState<number>(4);
-  const {setConvertPage} = useContext(UserContext);
+  const {user_id, setConvertPage} = useContext(UserContext);
 
   const handleClose = useCallback(() => {
     setCreateModal(false);
@@ -69,6 +69,11 @@ function CreateRoomForm({setCreateModal}: CreateModalProps) {
   }, []);
 
   const handlePassword = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    const check = /^[0-9]+$/;
+    if (!check.test(e.target.value) && e.target.value !== '') {
+      alert('숫자만 입력해주세요.');
+      return;
+    }
     setPassword(e.target.value);
   }, []);
 
@@ -83,25 +88,22 @@ function CreateRoomForm({setCreateModal}: CreateModalProps) {
       return;
     }
     try {
-      // TODO: 사용자 정보 처리 강구할것
-      const response = await apiManager.get('/user/user-info');
+      console.log('password: ', password);
       const rep = await apiManager.post('/chatroom/create_room', {
         room_name: name,
         max_nums: maxUser,
         is_public: !isHide,
         is_password: password.trim() === '' ? false : true,
         password: password.trim() === '' ? null : password,
-        user_id: response?.data?.user_id,
+        user_id: user_id,
       });
       sessionStorage.setItem('room_id', rep?.data?.id);
       setConvertPage(rep?.data?.id);
-      // navigate(`/menu/chat/room/${name}/${rep?.data?.id}`);
     } catch (error) {
       // TODO: 에러처리
-      alert('에러가 발생하였습니다');
+      alert('에러가 발생하였습니다.');
       console.log(error);
     }
-    // 전송 보낸 후 성공적으로 저장하면
   }
 
   function handleHideRoom(event: MouseEvent<HTMLElement>) {

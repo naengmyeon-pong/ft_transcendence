@@ -19,7 +19,7 @@ function UserNode({user, permission, myPermission}: UserProps) {
   const [menuItem, setMenuItem] = React.useState<string | null>(null);
   const {socket} = React.useContext(UserContext);
   const {block_users} = useContext(UserContext);
-  const roomId = sessionStorage.getItem('room_id');
+  const roomId = useContext(UserContext).convert_page.toString();
   const {user_id} = useContext(UserContext);
   const open = Boolean(anchorEl);
 

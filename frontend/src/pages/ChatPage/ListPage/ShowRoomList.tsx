@@ -1,4 +1,11 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, {
+  ChangeEvent,
+  FormEvent,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import {
   Box,
   Button,
@@ -31,15 +38,13 @@ const style = {
   p: 4,
 };
 
-async function checkRoomPassword(name: string) {
-  console.log(name);
-}
-
 function ShowRoomList({roomList, refersh}: ComponentProps) {
   const [passwordModal, setPasswordModal] = useState(false);
+  const [password, setPassword] = useState<string>('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const {setConvertPage} = useContext(UserContext);
+  const room_id = useRef(0);
 
   const handlePasswordModalOpen = () => setPasswordModal(true);
   const handlePasswordModalClose = () => setPasswordModal(false);
@@ -63,6 +68,7 @@ function ShowRoomList({roomList, refersh}: ComponentProps) {
   async function enterRoom(e: React.MouseEvent<unknown>, row: ChatListData) {
     e.preventDefault();
     if (row.is_password) {
+      room_id.current = row.id;
       setPasswordModal(true);
       return;
     }
@@ -73,16 +79,29 @@ function ShowRoomList({roomList, refersh}: ComponentProps) {
     try {
       // TODO: 서버에 채팅방 이름과 패스워드를 보낸 후 맞는지 확인하고 들여보낸다
       const rep = await apiManager.get(`/chatroom/join_room?room_id=${row.id}`);
-      console.log(rep);
-      // navigate(`/menu/chat/room/${row.name}/${row.id}`);
       console.log(row.id.toString());
-      sessionStorage.setItem('room_id', row.id.toString());
       setConvertPage(row.id);
     } catch (error) {
       alert('존재하지 않는 채팅방입니다, ');
       refersh();
       console.log(error);
     }
+  }
+
+  async function checkPassword(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    console.log('room_id: ', room_id);
+    console.log('password: ', password);
+  }
+
+  function handlePassword(e: ChangeEvent<HTMLInputElement>) {
+    const check = /^[0-9]+$/;
+    if (!check.test(e.target.value) && e.target.value !== '') {
+      alert('숫자만 입력해주세요.');
+      return;
+    }
+    setPassword(e.target.value);
   }
   return (
     <TableContainer>
@@ -141,7 +160,8 @@ function ShowRoomList({roomList, refersh}: ComponentProps) {
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
       <Modal open={passwordModal} onClose={handlePasswordModalClose}>
-        <Box sx={style}>
+        <Box component="form" onSubmit={checkPassword} noValidate sx={style}>
+          {/* <Box component="form" onSubmit={checkPassword} noValidate sx={style}> */}
           <Typography variant="h4">비밀번호 입력</Typography>
           <TextField
             required
@@ -149,9 +169,12 @@ function ShowRoomList({roomList, refersh}: ComponentProps) {
             fullWidth
             variant="outlined"
             helperText="비밀번호가 일치하지 않습니다"
+            type="password"
+            value={password}
+            onChange={handlePassword}
           />
           <Box display="flex" justifyContent="flex-end" sx={{mt: '10px'}}>
-            <Button>확인</Button>
+            <Button type="submit">확인</Button>
             <Button onClick={handlePasswordModalClose}>닫기</Button>
           </Box>
         </Box>

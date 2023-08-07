@@ -1,10 +1,11 @@
 import apiManager from '@apiManager/apiManager';
 import {Grid, Typography, styled} from '@mui/material';
-import React, {useEffect, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 
 import ChatBox from './ChatBox';
 import UserList from './UserList';
+import {UserContext} from 'Context';
 
 const BoxBorder = styled('div')({
   border: '1px solid black',
@@ -14,7 +15,8 @@ const BoxBorder = styled('div')({
 // 채팅방에 입장해서 실행하는 컴포넌트
 function ChatRoom() {
   const [roomName, setRoomName] = useState();
-  const roomId = sessionStorage.getItem('room_id');
+  const roomId = useContext(UserContext).convert_page;
+  const {setConvertPage} = useContext(UserContext);
   const navigate = useNavigate();
   const [init_chat_room, setInitChatRoom] = useState(false);
 
@@ -28,7 +30,7 @@ function ChatRoom() {
     } catch (error) {
       console.log(error);
       alert('비정상 접근입니다');
-      sessionStorage.removeItem('room_id');
+      setConvertPage(0);
       navigate(-1);
     }
   }
