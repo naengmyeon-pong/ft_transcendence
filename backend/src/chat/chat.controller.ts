@@ -75,14 +75,12 @@ export class ChatController {
   @Get('users')
   getLoginUsers() {
     const member = this.chatService.getLoginUsers();
-    // console.log('members :', member);
     return member;
   }
 
   @Get('user/:user_nickname')
   async getLoginUser(@Param('user_nickname') user_nickname: string) {
     const member = await this.chatService.getLoginUser(user_nickname);
-    console.log('members :', member);
     return member;
   }
 
@@ -92,7 +90,6 @@ export class ChatController {
     @Query('other_id') other_id: string
   ) {
     const dm = await this.chatService.getDirectMessage(user_id, other_id);
-    console.log(dm);
     return dm;
   }
 

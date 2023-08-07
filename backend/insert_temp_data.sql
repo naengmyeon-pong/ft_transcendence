@@ -28,6 +28,8 @@ INSERT INTO "chatMember" (permission, "chatroomId", "userId") VALUES
   ('tester2', 'tester1', '2023-08-07', 'i am tester2'),
   ('tester1', 'tester3', '2023-08-04', 'hi'),
   ('tester3', 'tester1', '2023-08-05', 'hello'),
+  ('tester1', 'tester4', '2023-08-05', 'hi tester4'),
+  ('tester5', 'tester1', '2023-08-05', 'hi tester1'),
   ('tester1', 'tester2', '2023-07-01', 'firestmessage');
 
 -- INSERT INTO "chatBan" VALUES

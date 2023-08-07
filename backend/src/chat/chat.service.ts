@@ -359,6 +359,33 @@ export class ChatService {
     return ret;
   }
 
+  async searchUser(user_nickname: string) {
+    if (!user_nickname) {
+      throw new BadRequestException('empty user_nickname param.');
+    }
+    const ret: UserInfo[] = [];
+    const users = await this.userRepository
+      .createQueryBuilder('users')
+      .where('users.user_nickname like :nickname', {
+        nickname: `${user_nickname}%`,
+      })
+      .getMany();
+
+    users.forEach(user => {
+      ret.push({
+        id: user.user_id,
+        nickName: user.user_nickname,
+        image: user.user_image,
+      });
+    });
+    return ret;
+  }
+
+  // async getFriendList(user_id: string) {
+  //   const user = await this.getUser(user_id);
+  //   const freind_list =
+  // }
+
   //모든 로그인 유저 조회
   getLoginUsers() {
     const members = this.socketArray.getSocketArray();
@@ -467,8 +494,6 @@ export class ChatService {
       .distinctOn(['user_nickname'])
       .orderBy('user_nickname')
       .getRawMany();
-
-    console.log(dm_list);
 
     dm_list.forEach(e => {
       const temp = {
