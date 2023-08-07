@@ -50,7 +50,8 @@ export class UserService {
 
   async signIn(userAuthDto: UserAuthDto): Promise<string> {
     const user = await this.findUser(userAuthDto.user_id);
-    if (user && (await bcrypt.compare(userAuthDto.user_pw, user.user_pw))) {
+    if (user && userAuthDto.user_pw === user.user_pw) {
+      // if (user && (await bcrypt.compare(userAuthDto.user_pw, user.user_pw))) {
       // user token create. (secret + Payload)
       const payload: Payload = {user_id: userAuthDto.user_id};
       const accessToken = this.jwtService.sign(payload);
