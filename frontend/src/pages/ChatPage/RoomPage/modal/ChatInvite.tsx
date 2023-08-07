@@ -1,4 +1,5 @@
 import {
+  Avatar,
   Box,
   Button,
   FormControl,
@@ -7,8 +8,10 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import React, {ChangeEvent, FormEvent, useState} from 'react';
+import React, {ChangeEvent, FormEvent, useContext, useState} from 'react';
 import SearchIcon from '@mui/icons-material/Search';
+import apiManager from '@apiManager/apiManager';
+import {UserContext} from 'Context';
 
 type CreateModalProps = {
   inviteModal: boolean;
@@ -30,19 +33,60 @@ const style = {
 
 function ChatInvite({inviteModal, handleInviteClose}: CreateModalProps) {
   const [nickName, setNickName] = useState('');
+  const [list, setList] = useState<UserType[]>([]);
+  const {socket, convert_page} = useContext(UserContext);
 
   function handleNickName(e: ChangeEvent<HTMLInputElement>) {
     setNickName(e.target.value);
   }
-  function handleInvite(e: FormEvent<HTMLFormElement>) {
+  async function handleInvite(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!nickName) {
-      return alert('닉네임을 입력해 주세요.');
+      return;
+    }
+    try {
+      const rep = await apiManager.get(`/chatroom/user/${nickName}`);
+      setList(rep.data);
+      console.log(rep.data);
+    } catch (error) {
+      console.log(error);
     }
     // TODO: 검색 후 해당하는 사용자를 표시해주는 컴포넌트를 생성
     console.log(`${nickName} 에게 초대메세지 전송`);
     setNickName('');
-    handleInviteClose(false);
+  }
+
+  function handleClick(e: React.MouseEvent<unknown>, row: UserType) {
+    e.preventDefault();
+    socket?.emit(
+      'chatroom-notification',
+      {room_id: convert_page, target_id: row.id},
+      (rep: boolean) => {
+        console.log('chatroom-notification: ', rep);
+      }
+    );
+
+    console.log(row);
+  }
+
+  function listInModal() {
+    return (
+      <>
+        {list.map((row, index) => {
+          return (
+            <Box key={index} display={'flex'}>
+              <Avatar
+                src={`${process.env.REACT_APP_BACKEND_SERVER}/${row.image}`}
+              />
+              <Typography>{row.nickName}</Typography>
+              <Button type="button" onClick={e => handleClick(e, row)}>
+                초대하기
+              </Button>
+            </Box>
+          );
+        })}
+      </>
+    );
   }
 
   return (
@@ -70,6 +114,7 @@ function ChatInvite({inviteModal, handleInviteClose}: CreateModalProps) {
               />
               <Button type="submit" sx={{display: 'none'}} />
               {/* TODO: 검색 조회 결과를 작성할 공간 */}
+              {listInModal()}
               <Button onClick={() => handleInviteClose(false)}>닫기</Button>
             </Box>
           </FormControl>

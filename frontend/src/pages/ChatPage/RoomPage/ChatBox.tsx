@@ -23,11 +23,7 @@ interface IChat {
 
 const Message = ({user_image, user_nickname, message}: IChat) => {
   return (
-    <Box
-      sx={{
-        display: 'flex',
-      }}
-    >
+    <Box display={'flex'}>
       <Avatar src={user_image} sx={{margin: '10px'}} />
 
       <Typography sx={{margin: '20px'}}>{user_nickname}</Typography>

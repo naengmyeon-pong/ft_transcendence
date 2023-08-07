@@ -2,7 +2,6 @@ import React, {
   ChangeEvent,
   FormEvent,
   useContext,
-  useEffect,
   useRef,
   useState,
 } from 'react';
@@ -21,7 +20,6 @@ import {
   Typography,
 } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
-import {useNavigate} from 'react-router-dom';
 import apiManager from '@apiManager/apiManager';
 import {UserContext} from 'Context';
 
@@ -45,6 +43,7 @@ function ShowRoomList({roomList, refersh}: ComponentProps) {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const {setConvertPage} = useContext(UserContext);
   const room_id = useRef(0);
+  const [password_error, setPasswordError] = useState(false);
 
   const handlePasswordModalOpen = () => setPasswordModal(true);
   const handlePasswordModalClose = () => setPasswordModal(false);
@@ -90,9 +89,15 @@ function ShowRoomList({roomList, refersh}: ComponentProps) {
 
   async function checkPassword(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-
-    console.log('room_id: ', room_id);
-    console.log('password: ', password);
+    const rep = await apiManager.post(`/chatroom/chatroom_pw`, {
+      room_id: room_id.current,
+      password: Number(password),
+    });
+    if (rep.data === false) {
+      setPasswordError(true);
+      return;
+    }
+    setConvertPage(room_id.current);
   }
 
   function handlePassword(e: ChangeEvent<HTMLInputElement>) {
@@ -164,11 +169,12 @@ function ShowRoomList({roomList, refersh}: ComponentProps) {
           {/* <Box component="form" onSubmit={checkPassword} noValidate sx={style}> */}
           <Typography variant="h4">비밀번호 입력</Typography>
           <TextField
+            error={password_error ? true : false}
             required
             margin="normal"
             fullWidth
             variant="outlined"
-            helperText="비밀번호가 일치하지 않습니다"
+            helperText={password_error ? '비밀번호가 일치하지 않습니다' : ''}
             type="password"
             value={password}
             onChange={handlePassword}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useContext, useEffect} from 'react';
 import {
   AppBar,
   Avatar,
@@ -16,7 +16,8 @@ import {
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import {MouseEvent, useState} from 'react';
 import MenuIcon from '@mui/icons-material/Menu';
-import {Link} from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
+import {UserContext} from 'Context';
 
 const customTheme = createTheme({
   components: {
@@ -39,6 +40,13 @@ function FtAppBar() {
   console.log('AppBar');
   const [anchorElOther, setAnchorElOther] = useState<null | HTMLElement>(null);
   const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
+  const [notificate_menu, setNotificateMenu] =
+    React.useState<null | HTMLElement>(null);
+  const notificate_open = Boolean(notificate_menu);
+  const [notificates, setNotificates] = useState<Notificate[]>([]);
+  const [read_notificate, setReadNotificate] = useState<boolean>(false);
+  const {socket, setConvertPage} = useContext(UserContext);
+  const navigate = useNavigate();
 
   const handleOpenOtherMenu = (event: MouseEvent<HTMLElement>) => {
     setAnchorElOther(event.currentTarget);
@@ -47,13 +55,35 @@ function FtAppBar() {
     setAnchorElUser(event.currentTarget);
   };
 
-  const handleCloseOtherMenu = (event: MouseEvent<HTMLElement>) => {
+  const handleCloseOtherMenu = () => {
     setAnchorElOther(null);
   };
 
   const handleCloseUserMenu = () => {
     setAnchorElUser(null);
   };
+
+  useEffect(() => {
+    function handleChatNotification(rep: Notificate) {
+      setNotificates(preNotis => [...preNotis, rep]);
+      setReadNotificate(true);
+    }
+    socket?.on('chatroom-notification', handleChatNotification);
+  }, []);
+
+  function handleNotificate(event: MouseEvent<HTMLElement>) {
+    setReadNotificate(false);
+    setNotificateMenu(event.currentTarget);
+  }
+  function handleNotificateMenuClose() {
+    setNotificateMenu(null);
+  }
+
+  function handleSendRoom(row: Notificate, index: number) {
+    notificates.splice(index, 1);
+    setConvertPage(Number(row.room_id));
+    navigate('/menu/chat');
+  }
 
   return (
     <ThemeProvider theme={customTheme}>
@@ -166,7 +196,10 @@ function FtAppBar() {
             href="/"
             sx={{display: {xs: 'none', sm: 'flex'}}}
           >
-            <Avatar alt="로고" src="http://localhost:3001/images/logo.jpeg" />
+            <Avatar
+              alt="로고"
+              src={`${process.env.REACT_APP_BACKEND_SERVER}/images/logo.jpeg`}
+            />
           </Typography>
           <Box sx={{flexGrow: 1, display: {xs: 'none', sm: 'flex'}}}>
             <Link to="/menu/mainPage">
@@ -181,16 +214,57 @@ function FtAppBar() {
             </Link>
           </Box>
           <Box sx={{flexGrow: 0, display: {xs: 'none', sm: 'flex'}}}>
-            <Button>
-              <Badge
-                overlap="circular"
-                color="error"
-                anchorOrigin={{vertical: 'top', horizontal: 'right'}}
-                variant="dot"
-              >
+            <IconButton
+              onClick={handleNotificate}
+              aria-label="more"
+              id="long-button"
+              aria-controls={notificate_open ? 'long-menu' : undefined}
+              aria-expanded={notificate_open ? 'true' : undefined}
+              aria-haspopup="true"
+            >
+              {read_notificate ? (
+                <Badge
+                  overlap="circular"
+                  color="error"
+                  anchorOrigin={{vertical: 'top', horizontal: 'right'}}
+                  variant="dot"
+                >
+                  <NotificationsIcon sx={{color: 'black'}} />
+                </Badge>
+              ) : (
                 <NotificationsIcon sx={{color: 'black'}} />
-              </Badge>
-            </Button>
+              )}
+            </IconButton>
+            <Menu
+              id="long-menu"
+              MenuListProps={{
+                'aria-labelledby': 'long-button',
+              }}
+              anchorEl={notificate_menu}
+              open={notificate_open}
+              onClose={handleNotificateMenuClose}
+            >
+              {notificates.map((row, index) => (
+                <MenuItem
+                  key={index}
+                  onClick={() => handleSendRoom(row, index)}
+                >
+                  <Typography>
+                    {`${row.user_id}님이 채팅방으로 초대하였습니다`}
+                  </Typography>
+                </MenuItem>
+              ))}
+
+              {/* {options.map(option => (
+                <MenuItem
+                  key={option}
+                  selected={option === 'Pyxis'}
+                  onClick={handleClose}
+                >
+                  {option}
+                </MenuItem>
+              ))} */}
+            </Menu>
             <Button>마이페이지</Button>
             <Button>로그아웃</Button>
           </Box>

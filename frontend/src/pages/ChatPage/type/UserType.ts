@@ -41,3 +41,8 @@ interface DmChat {
   someoneId: string;
   message: string;
 }
+
+interface Notificate {
+  user_id: string;
+  room_id: string;
+}

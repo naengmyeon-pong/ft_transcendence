@@ -97,7 +97,6 @@ function CreateRoomForm({setCreateModal}: CreateModalProps) {
         password: password.trim() === '' ? null : password,
         user_id: user_id,
       });
-      sessionStorage.setItem('room_id', rep?.data?.id);
       setConvertPage(rep?.data?.id);
     } catch (error) {
       // TODO: 에러처리
