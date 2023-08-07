@@ -37,8 +37,7 @@ export default function UserList() {
   const {user_id} = useContext(UserContext);
   const {setConvertPage} = useContext(UserContext);
 
-  // const {roomId} = useParams();
-  const roomId = sessionStorage.getItem('room_id');
+  const roomId = useContext(UserContext).convert_page;
 
   const navigate = useNavigate();
 

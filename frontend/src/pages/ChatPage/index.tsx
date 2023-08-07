@@ -8,11 +8,6 @@ export default function ChatPage() {
   const {convert_page, setConvertPage} = useContext(UserContext);
 
   useEffect(() => {
-    // 채팅방안에 접근해서 새로고침 할 경우 유지할때 사용함
-    const room_id = sessionStorage.getItem('room_id');
-    if (room_id !== null) {
-      setConvertPage(Number(room_id));
-    }
     return () => {};
   }, []);
   return (

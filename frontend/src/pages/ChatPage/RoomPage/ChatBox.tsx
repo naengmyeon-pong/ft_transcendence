@@ -46,7 +46,7 @@ function ChatBox() {
   const [muteTimer, setMuteTimer] = useState<number>(0);
   const [muteModal, setMuteModal] = useState<boolean>(false);
 
-  const roomId = sessionStorage.getItem('room_id');
+  const roomId = useContext(UserContext).convert_page;
 
   // 채팅창 스크롤을 제어하는 변수
   const chatContainerEl = useRef<HTMLDivElement>(null);
@@ -84,12 +84,18 @@ function ChatBox() {
       setChats(prevChats => [...prevChats, chat]);
     }
 
-    const handleListener = (e: BeforeUnloadEvent) => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
       e.returnValue = '';
     };
 
-    window.addEventListener('beforeunload', handleListener);
+    function handleUnload() {
+      socket?.emit('leave-room', {room_id: roomId});
+      setConvertPage(0);
+      sessionStorage.removeItem('room_id');
+    }
+    window.addEventListener('unload', handleUnload);
+    window.addEventListener('beforeunload', handleBeforeUnload);
     // TODO: 뒤로가기 이벤트 알림
     // const handlePopState = (e: PopStateEvent) => {
     // e.preventDefault();
@@ -117,7 +123,7 @@ function ChatBox() {
     });
 
     return () => {
-      window.removeEventListener('beforeunload', handleListener);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       socket?.emit('message', {
         room_id: roomId,
         message: `${socket?.id}: 나감`,

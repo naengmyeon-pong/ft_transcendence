@@ -2,6 +2,7 @@ import React from 'react';
 import {
   AppBar,
   Avatar,
+  Badge,
   Box,
   Button,
   IconButton,
@@ -181,7 +182,14 @@ function FtAppBar() {
           </Box>
           <Box sx={{flexGrow: 0, display: {xs: 'none', sm: 'flex'}}}>
             <Button>
-              <NotificationsIcon sx={{color: 'black'}} />
+              <Badge
+                overlap="circular"
+                color="error"
+                anchorOrigin={{vertical: 'top', horizontal: 'right'}}
+                variant="dot"
+              >
+                <NotificationsIcon sx={{color: 'black'}} />
+              </Badge>
             </Button>
             <Button>마이페이지</Button>
             <Button>로그아웃</Button>
