@@ -223,7 +223,7 @@ export default function Dm() {
                 return (
                   <TableRow key={index} onClick={e => changeUser(e, row)}>
                     <TableCell>
-                      <Typography>{`${row.user2}`}</Typography>
+                      <Typography>{`${row.nickname}`}</Typography>
                     </TableCell>
                   </TableRow>
                 );
