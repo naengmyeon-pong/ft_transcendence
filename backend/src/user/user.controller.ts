@@ -74,4 +74,10 @@ export class UserController {
   getUserInfo(@Request() req): Promise<string> {
     return req.user;
   }
+
+  @Get('/validation-token')
+  @UseGuards(AuthGuard('jwt'))
+  validateJwtToken(): boolean {
+    return true;
+  }
 }
