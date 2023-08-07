@@ -449,22 +449,32 @@ export class ChatService {
 
   async directMessageList(user_id: string) {
     const ret = [];
+
     const dm_list = await this.dmRepository
       .createQueryBuilder('dm')
-      .distinct(true)
-      .select(`GREATEST("userId", "someoneId") AS user1`)
-      .addSelect(`LEAST("userId", "someoneId") AS user2`)
-      // .addSelect('user_nickname')
-      .innerJoin('dm.someoneUser', 'users')
-      .where('dm.userId = :user_id OR dm.someoneId = :user_id', {user_id})
+      .select(['dm.userId', 'dm.someoneId', 'user_nickname'])
+      .innerJoin(
+        'users',
+        'users',
+        `
+      CASE
+        WHEN dm.userId = :user_id THEN dm.someoneId = users.user_id
+        WHEN dm.someoneId = :user_id THEN dm.userId = users.user_id
+      END
+    `,
+        {user_id}
+      )
+      .distinctOn(['user_nickname'])
+      .orderBy('user_nickname')
       .getRawMany();
 
-    // console.log('dm_list :', dm_list);
+    console.log(dm_list);
 
     dm_list.forEach(e => {
       const temp = {
         user1: user_id,
-        user2: e.user1 === user_id ? e.user2 : e.user1,
+        user2: e.dm_userId === user_id ? e.dm_someoneId : e.dm_userId,
+        nickname: e.user_nickname,
       };
       ret.push(temp);
     });

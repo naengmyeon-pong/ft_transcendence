@@ -34,6 +34,7 @@ interface ComponentProps {
 interface DmListData {
   user1: string;
   user2: string;
+  nickname: string;
 }
 
 interface DmChat {
