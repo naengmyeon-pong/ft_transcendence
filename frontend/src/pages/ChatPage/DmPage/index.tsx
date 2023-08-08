@@ -57,14 +57,18 @@ const Message = ({
 };
 
 export default function Dm() {
-  const {socket, user_id} = useContext(UserContext);
+  const {socket, user_id, block_users} = useContext(UserContext);
   const [list, setList] = useState<Array<DmListData>>([]);
   const dm_user = useRef<string>('');
+  // 리스트에 사용자가 추가되어있는지 확인하는 변수
+  const display_list = useRef<Set<string>>(new Set());
+  const list_storage = useRef<Set<DmListData>>(new Set());
   const [chats, setChats] = useState<DmChat[]>([]);
   const [message, setMessage] = useState<string>('');
-
   const chat_scroll = useRef<HTMLDivElement>(null);
   const list_scroll = useRef<HTMLDivElement>(null);
+
+  const [update_state, setUpdateState] = useState<boolean>(false);
 
   const onChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     setMessage(e.target.value);
@@ -99,7 +103,6 @@ export default function Dm() {
       },
     });
     dm_user.current = row.user2;
-
     setChats(rep.data);
     setMessage('');
   }
@@ -111,21 +114,57 @@ export default function Dm() {
           user_id: user_id,
         },
       });
-      setList(rep.data);
+      const tmp = [];
+      for (const node of rep.data) {
+        list_storage.current.add(node);
+        if (!block_users.has(node?.user2)) {
+          tmp.push(node);
+          display_list.current.add(node?.user2);
+        }
+      }
+      setList(tmp);
     } catch (error) {
       console.log('List.tsx: ', error);
     }
   }
 
   function handleDmMessage(chat: DmChat) {
+    // TODO: 채팅 내용안에 닉네임이 추가
+    if (
+      !display_list.current.has(chat.userId) &&
+      !block_users.has(chat.userId)
+    ) {
+      setList(prevList => [
+        ...prevList,
+        {user1: chat.userId, user2: chat.someoneId, nickname: chat.someoneId},
+      ]);
+    }
     if (chat.userId === dm_user.current && chat.someoneId === user_id) {
       setChats(prevChats => [...prevChats, chat]);
     }
   }
 
+  function handleUpdateState() {
+    setList(() => {
+      const tmp: DmListData[] = [];
+      list_storage.current.forEach(item => {
+        if (!block_users.has(item.user2)) {
+          tmp.push(item);
+        }
+      });
+      return tmp;
+    });
+  }
+
   useEffect(() => {
     init();
     socket?.on('dm-message', handleDmMessage);
+    socket?.on('ft_sidebar', handleUpdateState);
+
+    return () => {
+      socket?.off('ft_sidebar', handleUpdateState);
+      socket?.off('dm-message', handleDmMessage);
+    };
   }, []);
 
   useEffect(() => {
@@ -154,7 +193,6 @@ export default function Dm() {
     <>
       <Box display={'flex'}>
         {/*  Chat */}
-        {/* <Chat /> */}
         <Box
           overflow={'auto'}
           minWidth={'400px'}
@@ -216,7 +254,6 @@ export default function Dm() {
           border={'1px solid black'}
         >
           {/* List */}
-          {/* <List /> */}
           <Table>
             <TableBody>
               {list?.map((row, index) => {

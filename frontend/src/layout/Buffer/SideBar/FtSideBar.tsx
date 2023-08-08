@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useContext, useEffect} from 'react';
 import {
   Box,
   Button,
@@ -12,12 +12,17 @@ import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
 import Profile from './Profile';
 import {useState} from 'react';
 import FriedList from './FriedList';
-import ConnectUserList from './ConnectUserList';
+import {UserContext} from 'Context';
+import BlockUserList from './BlockUserList';
 
 function SideBar() {
   console.log('SideBar');
   // lstState: true = 친구목록, flase = 접속 유저
   const [lstState, setLstState] = useState(true);
+  const {socket, block_users} = useContext(UserContext);
+  const [block_users_size, setBlockUsersSize] = useState<number>(
+    block_users.size
+  );
   const drawerWidth = 240;
 
   function friendList() {
@@ -35,13 +40,23 @@ function SideBar() {
   }
 
   function connectUserCount() {
-    return '(1)';
+    return `${block_users_size}`;
   }
 
   function friendListCount() {
     return '(0/1)';
   }
 
+  useEffect(() => {
+    function updateSideBar() {
+      setBlockUsersSize(block_users.size);
+    }
+
+    socket?.on('ft_sidebar', updateSideBar);
+    return () => {
+      socket?.off('ft_sidebar', updateSideBar);
+    };
+  }, []);
   return (
     <>
       <Drawer
@@ -98,7 +113,7 @@ function SideBar() {
                 }}
               >
                 <Box display="flex" sx={{flexDirection: 'column'}}>
-                  <Typography>접속 유저</Typography>
+                  <Typography>차단 목록</Typography>
                   <Typography>{connectUserCount()}</Typography>
                 </Box>
               </Button>
@@ -109,7 +124,7 @@ function SideBar() {
             <PersonAddAlt1Icon />
           </Box>
           {/* true: 친구목록, flase: 접속 유저 */}
-          {lstState ? <FriedList /> : <ConnectUserList />}
+          {lstState ? <FriedList /> : <BlockUserList />}
           {/* 밑줄 */}
           <Divider />
         </Box>

@@ -102,6 +102,7 @@ function ChatBox() {
     // e.preventDefault();
     //   console.log('TEST popstate2');
     // });
+    console.log('socket_id: ', socket?.id);
     socket?.on('mute-member', handleMute);
     socket?.on('message', handleMessage);
 

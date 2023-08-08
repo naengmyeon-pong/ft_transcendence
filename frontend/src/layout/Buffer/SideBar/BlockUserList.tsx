@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {
   Avatar,
   Badge,
@@ -8,11 +8,21 @@ import {
   ListItemText,
   Typography,
 } from '@mui/material';
+import {UserContext} from 'Context';
 
-export default function ConnectUserList() {
+export default function BlockUserList() {
+  const {block_users} = useContext(UserContext);
+
   return (
     <List>
-      <ListItem alignItems="flex-start">
+      {Array.from(block_users).map(node => (
+        <ListItem alignItems="flex-start" key={node}>
+          {/* ListItem 내부에서 JSX 요소 생성 */}
+          <ListItemText primary={`${node.toString()}`} />
+          {/* 아바타 및 기타 컴포넌트 추가 */}
+        </ListItem>
+      ))}
+      {/* <ListItem alignItems="flex-start">
         <ListItemAvatar>
           <Badge
             overlap="circular"
@@ -36,7 +46,7 @@ export default function ConnectUserList() {
             </Typography>
           }
         />
-      </ListItem>
+      </ListItem> */}
     </List>
   );
 }
