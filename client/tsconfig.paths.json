@@ -3,6 +3,7 @@
     "baseUrl": "src",
     "paths": {
       "@/*": ["app/*"],
+      "@/hooks/*": ["hooks/*"],
       "@/public/*": ["../public/*"],
       "@/types/*": ["../types/*"]
     }
