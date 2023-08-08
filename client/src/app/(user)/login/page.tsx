@@ -61,6 +61,7 @@ export default function LoginPage() {
           autoComplete="text"
           autoFocus
         />
+
         <TextField
           margin="normal"
           required
@@ -71,9 +72,11 @@ export default function LoginPage() {
           type="password"
           autoComplete="current-password"
         />
+
         <Button type="submit" fullWidth variant="contained" sx={{mt: 3, mb: 2}}>
           로그인
         </Button>
+
         <Button
           component={Link}
           href={process.env.NEXT_PUBLIC_OAUTH_URL}
@@ -90,6 +93,7 @@ export default function LoginPage() {
           <Svg42Logo />
           회원가입
         </Button>
+
         <Grid container>
           <Grid item xs>
             <Link href="/password-reset" variant="body2">
