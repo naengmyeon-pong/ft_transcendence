@@ -12,7 +12,7 @@ all:
 	@echo $(GREEN)✅ Successfully started! $(NC)
 .PHONY: all
 
-dev: prune
+dev: stop
 	@echo $(BLUE)🚧 Development containers are starting... $(NC)
 	@docker-compose -f ./docker-compose.dev.yml up -d --build
 .PHONY: dev
