@@ -1,4 +1,4 @@
-import apiManager from '@/api/apiManager';
+import apiManager from '@/app/api/apiManager';
 
 export const getJwtToken = (): string => {
   const jwtToken: string | null = sessionStorage.getItem('accessToken');
