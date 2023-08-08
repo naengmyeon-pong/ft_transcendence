@@ -1,4 +1,4 @@
-import {User} from 'src/user/user.entitiy';
+import { User } from 'src/user/user.entitiy';
 import {
   BeforeInsert,
   Column,
@@ -31,7 +31,7 @@ export class ChatRoom {
   @Column()
   is_password: boolean;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   password: number;
 
   @OneToMany(() => ChatMember, chatmember => chatmember.chatroom)
@@ -49,7 +49,7 @@ export class ChatMember {
   @Column()
   permission: number;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   mute: string;
 
   @Column()
@@ -62,14 +62,14 @@ export class ChatMember {
     nullable: false,
     onDelete: 'CASCADE',
   })
-  @JoinColumn({name: 'chatroomId'})
+  @JoinColumn({ name: 'chatroomId' })
   chatroom: ChatRoom;
 
   @ManyToOne(() => User, user => user.chatmembers, {
     nullable: false,
     onDelete: 'CASCADE',
   })
-  @JoinColumn({name: 'userId'})
+  @JoinColumn({ name: 'userId' })
   user: User;
 }
 
@@ -94,7 +94,7 @@ export class ChatBan {
     nullable: false,
     onDelete: 'CASCADE',
   })
-  @JoinColumn({name: 'userId'})
+  @JoinColumn({ name: 'userId' })
   user: User;
 }
 
@@ -121,12 +121,12 @@ export class BlockList {
   @PrimaryColumn()
   blockId: string;
 
-  @ManyToOne(() => User, {onDelete: 'CASCADE'})
-  @JoinColumn({name: 'userId'})
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'userId' })
   user: User;
 
-  @ManyToOne(() => User, {onDelete: 'CASCADE'})
-  @JoinColumn({name: 'blockId'})
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'blockId' })
   blockUser: User;
 }
 
@@ -147,11 +147,28 @@ export class DirectMessage {
   @Column()
   message: string;
 
-  @ManyToOne(() => User, {onDelete: 'CASCADE'})
-  @JoinColumn({name: 'userId'})
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'userId' })
   user: User;
 
-  @ManyToOne(() => User, {onDelete: 'CASCADE'})
-  @JoinColumn({name: 'someoneId'})
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'someoneId' })
   someoneUser: User;
+}
+
+@Entity('friendList')
+export class FriendList {
+  @PrimaryColumn()
+  userId: string;
+
+  @PrimaryColumn()
+  friendId: string;
+
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'userId' })
+  user: User;
+
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'friendId' })
+  FriendUser: User;
 }

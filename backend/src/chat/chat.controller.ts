@@ -1,12 +1,12 @@
-import {Body, Controller, Get, Param, Post, Query} from '@nestjs/common';
-import {ChatService} from './chat.service';
-import {RoomDto} from './dto/room.dto';
-import {ApiOperation, ApiQuery, ApiResponse, ApiTags} from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { ChatService } from './chat.service';
+import { RoomDto } from './dto/room.dto';
+import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @Controller('chatroom')
 @ApiTags('Chat Room')
 export class ChatController {
-  constructor(private chatService: ChatService) {}
+  constructor(private chatService: ChatService) { }
 
   @ApiOperation({
     summary: '채팅방 목록 조회 API',
@@ -111,5 +111,21 @@ export class ChatController {
     @Body('password') password: number
   ): Promise<boolean> {
     return await this.chatService.checkChatRoomPw(room_id, password);
+  }
+
+  // http://localhost:3001/chatroom/search_user?user_id=tester1&user_nickname=nick =>이런식으로 사용
+  // 자기 자신의 user_id도 같이 받아서, 자기 자신을 제외한 유저만 검색해서 반환하도록 했음.
+  @Get('search_user')
+  async searchUser(
+    @Query('user_id') user_id: string,
+    @Query('user_nickname') user_nickname: string) {
+    return await this.chatService.searchUser(user_id, user_nickname);
+  }
+
+  @Get('friend_list')
+  async getFriendList(
+    @Query('user_id') user_id: string
+  ) {
+    return await this.chatService.getFriendList(user_id);
   }
 }

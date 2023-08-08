@@ -11,22 +11,17 @@ import {
   ChatMemberRepository,
   ChatRoomRepository,
   DMRepository,
+  FriendListRepository,
 } from './chat.repository';
-import {UserRepository} from 'src/user/user.repository';
-import {RoomDto} from './dto/room.dto';
-import {SocketArray} from 'src/globalVariable/global.socket';
+import { UserRepository } from 'src/user/user.repository';
+import { RoomDto } from './dto/room.dto';
+import { SocketArray } from 'src/globalVariable/global.socket';
 
 export interface UserInfo {
   id: string;
   nickName: string;
   image: string;
 }
-
-// export interface DMInfo {
-//   user_id: string;
-//   other_id: string;
-//   message: string;
-// }
 
 @Injectable()
 export class ChatService {
@@ -37,8 +32,9 @@ export class ChatService {
     private userRepository: UserRepository,
     private blockRepository: BlockRepository,
     private dmRepository: DMRepository,
+    private friendListRepository: FriendListRepository,
     private socketArray: SocketArray
-  ) {}
+  ) { }
 
   async getRoomList() {
     const room_list = [];
@@ -56,8 +52,8 @@ export class ChatService {
       ])
       .innerJoinAndSelect('chatRoom.chatmembers', 'chatMember')
       .innerJoinAndSelect('chatMember.user', 'users')
-      .where('chatRoom.is_public = :is_public', {is_public: true})
-      .andWhere('chatMember.permission = :permission', {permission: 2});
+      .where('chatRoom.is_public = :is_public', { is_public: true })
+      .andWhere('chatMember.permission = :permission', { permission: 2 });
 
     const ret = await chatrooms.getMany();
     ret.forEach(element => {
@@ -85,7 +81,7 @@ export class ChatService {
     const members = await this.chatMemberRepository
       .createQueryBuilder('chatMember')
       .innerJoinAndSelect('chatMember.user', 'users')
-      .where('chatMember.chatroom.id = :chatroomId', {chatroomId: room_id})
+      .where('chatMember.chatroom.id = :chatroomId', { chatroomId: room_id })
       .getMany();
 
     members.forEach(e => {
@@ -194,7 +190,7 @@ export class ChatService {
       throw new BadRequestException('empty parameter.');
     }
     const user = await this.getUser(user_id);
-    const room = await this.chatRoomRepository.findOneBy({id: room_id});
+    const room = await this.chatRoomRepository.findOneBy({ id: room_id });
     if (!room) {
       return;
     }
@@ -207,7 +203,7 @@ export class ChatService {
       return;
     } else if (member.permission === 2) {
       //owner 일 때 방 전체가 터지게.
-      const check_del = await this.chatRoomRepository.delete({id: room_id});
+      const check_del = await this.chatRoomRepository.delete({ id: room_id });
       console.log('check_del :', check_del.affected);
       return member;
     } else {
@@ -319,7 +315,7 @@ export class ChatService {
   }
 
   async getUser(user_id: string) {
-    const user = await this.userRepository.findOneBy({user_id});
+    const user = await this.userRepository.findOneBy({ user_id });
     if (!user) {
       throw new NotFoundException(`${user_id} is not a user.`);
     }
@@ -327,7 +323,7 @@ export class ChatService {
   }
 
   async getRoom(room_id: number) {
-    const room = await this.chatRoomRepository.findOneBy({id: room_id});
+    const room = await this.chatRoomRepository.findOneBy({ id: room_id });
     if (!room) {
       throw new NotFoundException('Please enter right chat room.');
     }
@@ -359,7 +355,7 @@ export class ChatService {
     return ret;
   }
 
-  async searchUser(user_nickname: string) {
+  async searchUser(user_id: string, user_nickname: string) {
     if (!user_nickname) {
       throw new BadRequestException('empty user_nickname param.');
     }
@@ -372,19 +368,60 @@ export class ChatService {
       .getMany();
 
     users.forEach(user => {
-      ret.push({
-        id: user.user_id,
-        nickName: user.user_nickname,
-        image: user.user_image,
-      });
+      if (user.user_id !== user_id) {
+        ret.push({
+          id: user.user_id,
+          nickName: user.user_nickname,
+          image: user.user_image,
+        });
+      }
     });
+    console.log(users);
     return ret;
   }
 
-  // async getFriendList(user_id: string) {
-  //   const user = await this.getUser(user_id);
-  //   const freind_list =
-  // }
+  async getFriendList(user_id: string) {
+    // const user = await this.getUser(user_id);
+    const friend_list = await this.friendListRepository.createQueryBuilder('friendList')
+      .select([
+        'friendList.friendId',
+        'user_nickname'
+      ])
+      .innerJoin('friendList.FriendUser', 'user')
+      .where('friendList.userId = :user_id', { user_id })
+      .getRawMany();
+
+    const ret = [];
+    friend_list.forEach(e => {
+      const temp = {
+        id: e.friendList_friendId,
+        nickname: e.user_nickname
+      }
+      ret.push(temp);
+    })
+    return ret;
+  }
+
+  async addFriend(user_id: string, friend_id: string) {
+    // const user = await this.getUser(user_id);
+    // const friend = await this.getUser(friend_id);
+
+    const new_friend = this.friendListRepository.create({
+      userId: user_id,
+      friendId: friend_id
+    });
+    await this.friendListRepository.save(new_friend);
+  }
+
+  async delFriend(user_id: string, friend_id: string) {
+    // const user = await this.getUser(user_id);
+    // const friend = await this.getUser(friend_id);
+
+    const new_friend = this.friendListRepository.delete({
+      userId: user_id,
+      friendId: friend_id
+    });
+  }
 
   //모든 로그인 유저 조회
   getLoginUsers() {
@@ -436,33 +473,6 @@ export class ChatService {
 
     return directmessage;
   }
-  // async getDirectMessage(user_id: string, other_id: string) {
-  //   const ret: DMInfo[] = [];
-  //   const directmessage = await this.dmRepository.find({
-  //     where: [
-  //       {
-  //         userId: user_id,
-  //         someoneId: other_id,
-  //       },
-  //       {
-  //         userId: other_id,
-  //         someoneId: user_id,
-  //       },
-  //     ],
-  //     order: {
-  //       date: 'ASC',
-  //     },
-  //   });
-  //   directmessage.forEach(e => {
-  //     const temp: DMInfo = {
-  //       user_id: e.userId,
-  //       other_id: e.someoneId,
-  //       message: e.message,
-  //     };
-  //     ret.push(temp);
-  //   });
-  //   return ret;
-  // }
 
   async saveDirectMessage(user_id: string, target_id: string, message: string) {
     const dm = this.dmRepository.create({
@@ -489,7 +499,7 @@ export class ChatService {
         WHEN dm.someoneId = :user_id THEN dm.userId = users.user_id
       END
     `,
-        {user_id}
+        { user_id }
       )
       .distinctOn(['user_nickname'])
       .orderBy('user_nickname')
