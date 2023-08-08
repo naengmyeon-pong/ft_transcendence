@@ -10,7 +10,6 @@ import Typography from '@mui/material/Typography';
 const HTTP_STATUS = require('http-status');
 
 import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
-import {AlertSnackbarType} from '@/types/alertSnackbar';
 import apiManager from '@/api/apiManager';
 
 export const getServerSideProps: GetServerSideProps = async ({query}) => {
@@ -26,14 +25,8 @@ function AuthPage({
 
   useEffect(() => {
     (async () => {
-      const alertSnackbarData: AlertSnackbarType = {
-        message: '',
-        severity: 'error',
-      };
-
       if (!code) {
-        alertSnackbarData.message = '정상적인 접근이 아닙니다.';
-        openAlertSnackbar(alertSnackbarData);
+        openAlertSnackbar({message: '잘못된 접근입니다.'});
         router.push('/user/login');
         return;
       }
@@ -44,6 +37,10 @@ function AuthPage({
         if (response.status === HTTP_STATUS.OK) {
           const {is_already_signup, signup_jwt} = response.data;
           if (is_already_signup) {
+            openAlertSnackbar({
+              severity: 'info',
+              message: '이미 회원가입이 되어있습니다.',
+            });
             router.push('/user/login');
           } else {
             sessionStorage.setItem('accessToken', signup_jwt);
@@ -54,11 +51,12 @@ function AuthPage({
         if (axios.isAxiosError(error)) {
           if (error.response) {
             const {message} = error.response.data;
-            alertSnackbarData.message = message;
+            openAlertSnackbar({
+              message,
+            });
           }
+          router.push('/user/login');
         }
-        openAlertSnackbar(alertSnackbarData);
-        router.push('/user/login');
       }
     })();
   }, []);
