@@ -23,15 +23,20 @@ export const useAlertSnackbar = () => {
   );
 
   const openAlertSnackbar = useCallback(
-    ({message, severity, callback}: OpenSnackbarType) =>
+    ({message, severity, callback}: OpenSnackbarType) => {
       setAlertSnackbarDataState({
         isOpen: true,
-        severity,
-        message,
+        message: message || '오류가 발생했습니다. 다시 시도해주세요.',
+        severity: severity || 'error',
         callBack: callback,
-      }),
+      });
+    },
     [setAlertSnackbarDataState]
   );
 
-  return {alertSnackbarDataState, closeAlertSnackbar, openAlertSnackbar};
+  return {
+    alertSnackbarDataState,
+    closeAlertSnackbar,
+    openAlertSnackbar,
+  };
 };
