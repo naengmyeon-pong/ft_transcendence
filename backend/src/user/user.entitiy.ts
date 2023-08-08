@@ -25,7 +25,7 @@ export class User {
   @Column()
   user_image: string;
 
-  @Column('boolean', {default: false})
+  @Column({default: false})
   is_2fa_enabled: boolean;
 
   @OneToMany(() => ChatMember, chatmember => chatmember.user)

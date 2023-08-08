@@ -55,7 +55,7 @@ import {TwoFactorAuthModule} from './two-factor-auth/two-factor-auth.module';
     ConfigModule,
     TwoFactorAuthModule,
   ],
-  controllers: [TwoFactorAuthController],
-  providers: [TwoFactorAuthService],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}
