@@ -1,6 +1,6 @@
 'use client';
 
-import logo from '@/public/logo.jpeg';
+import {useRouter} from 'next/navigation';
 
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
@@ -9,12 +9,15 @@ import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
 
-import Svg42Logo from './Svg42Logo';
+import apiManager from '@/app/api/apiManager';
+
+import logo from '@/public/logo.jpeg';
+import Svg42Logo from '@/components/Svg42Logo';
 
 export default function LoginPage() {
+  const router = useRouter();
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     console.log();
@@ -23,15 +26,15 @@ export default function LoginPage() {
       user_pw: event.currentTarget.password.value,
     };
 
-    // try {
-    //   sessionStorage.removeItem('accessToken');
-    //   const response = await apiManager.post('/user/signin', data);
-    //   console.log(response.data);
-    //   sessionStorage.setItem('accessToken', response.data);
-    //   navigate('/main');
-    // } catch (error) {
-    //   console.log(error);
-    // }
+    try {
+      sessionStorage.removeItem('accessToken');
+      const response = await apiManager.post('/user/signin', data);
+      console.log(response.data);
+      sessionStorage.setItem('accessToken', response.data);
+      router.push('/main');
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -68,16 +71,12 @@ export default function LoginPage() {
           type="password"
           autoComplete="current-password"
         />
-        <FormControlLabel
-          control={<Checkbox value="remember" color="primary" />}
-          label="비밀번호 기억하기"
-        />
         <Button type="submit" fullWidth variant="contained" sx={{mt: 3, mb: 2}}>
           로그인
         </Button>
         <Button
           component={Link}
-          href={process.env.REACT_APP_OAUTH_URL}
+          href={process.env.NEXT_PUBLIC_OAUTH_URL}
           fullWidth
           variant="contained"
           sx={{
@@ -88,7 +87,6 @@ export default function LoginPage() {
             },
           }}
         >
-          {/* TODO: 로고를 텍스트에서 왼쪽으로 떨어뜨리기 */}
           <Svg42Logo />
           회원가입
         </Button>

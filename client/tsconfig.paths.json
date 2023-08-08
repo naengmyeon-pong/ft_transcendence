@@ -1,11 +1,10 @@
 {
   "compilerOptions": {
-    "baseUrl": "src",
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["app/*"],
-      "@/hooks/*": ["hooks/*"],
-      "@/public/*": ["../public/*"],
-      "@/types/*": ["../types/*"]
+      "@/*": ["src/*"],
+      "@/public/*": ["public/*"],
+      "@/types/*": ["types/*"]
     }
   }
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import {useRouter} from 'next/navigation';
-import {isValidJwtToken} from '@/api/auth';
+import {isValidJwtToken} from '@/app/api/auth';
 import {useEffect, useState} from 'react';
 import {CircularProgress} from '@mui/material';
 
