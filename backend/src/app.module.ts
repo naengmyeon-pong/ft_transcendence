@@ -30,8 +30,6 @@ import {GameModule} from './game/game.module';
         INTRA_API_UID: Joi.string().required(),
         INTRA_API_SECRET: Joi.string().required(),
         INTRA_API_REDIRECT_URI: Joi.string().required(),
-        REACT_APP_OAUTH_URL: Joi.string().required(),
-        REACT_APP_BACKEND_SERVER: Joi.string().required(),
       }),
     }),
     ServeStaticModule.forRoot(
