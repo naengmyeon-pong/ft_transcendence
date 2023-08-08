@@ -5,10 +5,11 @@ import {ModeModule} from './mode/mode.module';
 import {TypeController} from './type/type.controller';
 import {TypeService} from './type/type.service';
 import {TypeModule} from './type/type.module';
+import {UserRepository} from 'src/user/user.repository';
 
 @Module({
   controllers: [RecordController, TypeController],
-  providers: [RecordService, TypeService],
+  providers: [RecordService, TypeService, UserRepository],
   imports: [ModeModule, TypeModule],
 })
 export class RecordModule {}

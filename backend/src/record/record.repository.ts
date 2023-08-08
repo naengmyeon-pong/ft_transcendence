@@ -15,4 +15,13 @@ export class RecordRepository extends Repository<Record> {
       recordRepository.queryRunner
     );
   }
+  async getRecentGames(userID: string, limit: number): Promise<Record[]> {
+    return this.createQueryBuilder('record')
+      .where('record.winner_id = :userID OR record.loser_id = :userID', {
+        userID,
+      })
+      .orderBy('record.date', 'DESC')
+      .take(limit)
+      .getMany();
+  }
 }
