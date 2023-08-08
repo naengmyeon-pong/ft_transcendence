@@ -254,16 +254,6 @@ function FtAppBar() {
                   </Typography>
                 </MenuItem>
               ))}
-
-              {/* {options.map(option => (
-                <MenuItem
-                  key={option}
-                  selected={option === 'Pyxis'}
-                  onClick={handleClose}
-                >
-                  {option}
-                </MenuItem>
-              ))} */}
             </Menu>
             <Button>마이페이지</Button>
             <Button>로그아웃</Button>

@@ -2,7 +2,7 @@ import React, {useContext, useEffect, useState} from 'react';
 import {Box, CssBaseline, Grid, Toolbar, Typography} from '@mui/material';
 import FtAppBar from './Buffer/FtAppBar';
 import FtSideBar from './Buffer/SideBar/FtSideBar';
-import {Outlet, useParams} from 'react-router-dom';
+import {Outlet, useNavigate, useParams} from 'react-router-dom';
 import apiManager from '@apiManager/apiManager';
 import {UserContext} from 'Context';
 import {io} from 'socket.io-client';
@@ -14,6 +14,7 @@ function MainLayout() {
   const {setUserNickName} = useContext(UserContext);
   const {setUserImage} = useContext(UserContext);
   const {block_users} = useContext(UserContext);
+  const navigate = useNavigate();
 
   const [initMainLayout, setInitMainLayout] = useState(false);
 
@@ -46,6 +47,7 @@ function MainLayout() {
       init_setBlockUsers(rep.data);
       setInitMainLayout(true);
     } catch (error) {
+      navigate('/');
       console.log(error);
     }
   }

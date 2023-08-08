@@ -20,6 +20,11 @@ interface UserContextType {
 
   convert_page: number;
   setConvertPage: (convert_page: number) => void;
+
+  dm_list: DmListData[];
+  setDmList: (dm_list: DmListData[]) => void;
+  // dm_list: Array<DmListData>;
+  // setDmList: (list: Array<DmListData>) => void;
 }
 
 const initUserState: UserContextType = {
@@ -39,6 +44,9 @@ const initUserState: UserContextType = {
 
   convert_page: 0,
   setConvertPage: () => {},
+
+  dm_list: [],
+  setDmList: () => {},
 };
 
 const UserContext = createContext(initUserState);
@@ -50,6 +58,7 @@ const UserProvider: React.FC<{children: ReactNode}> = ({children}) => {
   const [user_nickname, setUserNickName] = useState<string | null>(null);
   const block_users = useRef<Set<string>>(new Set());
   const [convert_page, setConvertPage] = useState<number>(0);
+  const [dm_list, setDmList] = useState<DmListData[]>([]);
 
   return (
     <UserContext.Provider
@@ -65,6 +74,8 @@ const UserProvider: React.FC<{children: ReactNode}> = ({children}) => {
         block_users: block_users.current,
         convert_page,
         setConvertPage,
+        dm_list,
+        setDmList,
       }}
     >
       {children}

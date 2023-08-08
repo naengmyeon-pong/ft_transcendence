@@ -1,29 +1,55 @@
-import React, {useContext, useEffect} from 'react';
+import React, {ChangeEvent, FormEvent, useContext, useEffect} from 'react';
 import {
+  Avatar,
   Box,
   Button,
   ButtonGroup,
   Divider,
   Drawer,
+  FormControl,
+  IconButton,
+  InputAdornment,
+  List,
+  Modal,
+  TextField,
   Toolbar,
   Typography,
 } from '@mui/material';
 import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
+import SearchIcon from '@mui/icons-material/Search';
 import Profile from './Profile';
 import {useState} from 'react';
-import FriedList from './FriedList';
+import FriedList from './FriendList';
 import {UserContext} from 'Context';
 import BlockUserList from './BlockUserList';
+import apiManager from '@apiManager/apiManager';
+
+const style = {
+  position: 'absolute',
+  top: '40%',
+  left: '48%',
+  transform: 'translate(-50%, -50%)',
+  width: 400,
+  bgcolor: 'background.paper',
+  border: '2px solid #FFF',
+  boxShadow: 24,
+  borderRadius: 2,
+  p: 4,
+};
 
 function SideBar() {
   console.log('SideBar');
   // lstState: true = 친구목록, flase = 접속 유저
   const [lstState, setLstState] = useState(true);
-  const {socket, block_users} = useContext(UserContext);
+  const {socket, block_users, user_id} = useContext(UserContext);
   const [block_users_size, setBlockUsersSize] = useState<number>(
     block_users.size
   );
   const drawerWidth = 240;
+  const [friend_list, setFriendList] = useState<UserType[]>([]);
+  const [friend_modal, setFriendModal] = useState<boolean>(false);
+  const [friend_name, setFriendName] = useState<string>('');
+  const [friend_search_list, setFriendSearchList] = useState<UserType[]>([]);
 
   function friendList() {
     if (lstState === true) {
@@ -43,18 +69,85 @@ function SideBar() {
     return `${block_users_size}`;
   }
 
+  // TODO: 온라인, 오프라인 나눠서 출력
   function friendListCount() {
-    return '(0/1)';
+    return `${friend_list.length}`;
+  }
+  function handleFriendName(e: ChangeEvent<HTMLInputElement>) {
+    setFriendName(e.target.value);
+  }
+
+  function handleFriendModalOpen() {
+    setFriendModal(true);
+  }
+
+  function handleFriendModalClose() {
+    setFriendModal(false);
+  }
+
+  function handleAddFriend(e: React.MouseEvent<unknown>, row: UserType) {
+    socket?.emit('add-friend', row.id);
+  }
+
+  async function handleFriendSearch(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    try {
+      const rep = await apiManager.get('chatroom/search_user', {
+        params: {
+          user_id: user_id,
+          user_nickname: friend_name,
+        },
+      });
+      setFriendSearchList(rep.data);
+    } catch (error) {
+      console.log('FtSideBar.tsx: ', error);
+    }
+  }
+
+  function listInModal() {
+    const filter_search_list = friend_search_list.filter(
+      searchUser => !friend_list.some(friend => friend.id === searchUser.id)
+    );
+    return (
+      <>
+        {filter_search_list.map((row, index) => {
+          return (
+            <Box key={index} display={'flex'}>
+              <Avatar
+                src={`${process.env.REACT_APP_BACKEND_SERVER}/${row.image}`}
+              />
+              <Typography>{row.nickName}</Typography>
+              <Button
+                // disabled={friend_list.find() ? true : false}
+                onClick={e => handleAddFriend(e, row)}
+              >
+                친구 추가
+              </Button>
+            </Box>
+          );
+        })}
+      </>
+    );
   }
 
   useEffect(() => {
-    function updateSideBar() {
+    function handleSideBar() {
       setBlockUsersSize(block_users.size);
     }
 
-    socket?.on('ft_sidebar', updateSideBar);
+    function handleFriendList(res: UserType[]) {
+      console.log('res: ', res);
+      setFriendList(res);
+    }
+
+    socket?.on('friend-list', handleFriendList);
+    socket?.on('ft_sidebar', handleSideBar);
+    socket?.emit('friend-list');
+
     return () => {
-      socket?.off('ft_sidebar', updateSideBar);
+      socket?.off('friend-list', handleFriendList);
+      socket?.off('ft_sidebar', handleSideBar);
     };
   }, []);
   return (
@@ -121,10 +214,52 @@ function SideBar() {
           </Box>
 
           <Box display="flex" sx={{justifyContent: 'center', p: '0.5em'}}>
-            <PersonAddAlt1Icon />
+            {/* 친구 찾기 */}
+            <IconButton onClick={handleFriendModalOpen}>
+              <PersonAddAlt1Icon sx={{color: 'black'}} />
+            </IconButton>
           </Box>
+          <Modal open={friend_modal} onClose={handleFriendModalClose}>
+            <Box sx={style}>
+              <FormControl fullWidth>
+                <Typography variant="h4">친구 찾기</Typography>
+                <Typography variant="body1">
+                  닉네임으로 검색 가능합니다
+                </Typography>
+                <Box component={'form'} onSubmit={handleFriendSearch}>
+                  <TextField
+                    margin="normal"
+                    fullWidth
+                    variant="outlined"
+                    value={friend_name}
+                    onChange={handleFriendName}
+                    sx={{backgroundColor: 'white'}}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                  <Button type="submit" sx={{display: 'none'}} />
+                  {/* TODO: 검색 조회 결과를 작성할 공간 */}
+                  {listInModal()}
+                  <Button onClick={handleFriendModalClose}>닫기</Button>
+                </Box>
+              </FormControl>
+            </Box>
+          </Modal>
           {/* true: 친구목록, flase: 접속 유저 */}
-          {lstState ? <FriedList /> : <BlockUserList />}
+          {lstState ? (
+            <List>
+              {friend_list.map((node, index) => {
+                return <FriedList key={index} friend={node} />;
+              })}
+            </List>
+          ) : (
+            <BlockUserList />
+          )}
           {/* 밑줄 */}
           <Divider />
         </Box>

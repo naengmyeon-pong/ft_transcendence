@@ -58,7 +58,8 @@ const Message = ({
 
 export default function Dm() {
   const {socket, user_id, block_users} = useContext(UserContext);
-  const [list, setList] = useState<Array<DmListData>>([]);
+  // const [dm_list, setDmList] = useState<Array<DmListData>>([]);
+  const {dm_list, setDmList} = useContext(UserContext);
   const dm_user = useRef<string>('');
   // 리스트에 사용자가 추가되어있는지 확인하는 변수
   const display_list = useRef<Set<string>>(new Set());
@@ -67,8 +68,6 @@ export default function Dm() {
   const [message, setMessage] = useState<string>('');
   const chat_scroll = useRef<HTMLDivElement>(null);
   const list_scroll = useRef<HTMLDivElement>(null);
-
-  const [update_state, setUpdateState] = useState<boolean>(false);
 
   const onChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     setMessage(e.target.value);
@@ -122,7 +121,7 @@ export default function Dm() {
           display_list.current.add(node?.user2);
         }
       }
-      setList(tmp);
+      setDmList(tmp);
     } catch (error) {
       console.log('List.tsx: ', error);
     }
@@ -134,9 +133,13 @@ export default function Dm() {
       !display_list.current.has(chat.userId) &&
       !block_users.has(chat.userId)
     ) {
-      setList(prevList => [
-        ...prevList,
-        {user1: chat.userId, user2: chat.someoneId, nickname: chat.someoneId},
+      setDmList([
+        ...dm_list,
+        {
+          user1: chat.userId,
+          user2: chat.someoneId,
+          nickname: chat.someoneId,
+        },
       ]);
     }
     if (chat.userId === dm_user.current && chat.someoneId === user_id) {
@@ -145,15 +148,13 @@ export default function Dm() {
   }
 
   function handleUpdateState() {
-    setList(() => {
-      const tmp: DmListData[] = [];
-      list_storage.current.forEach(item => {
-        if (!block_users.has(item.user2)) {
-          tmp.push(item);
-        }
-      });
-      return tmp;
+    const tmp: DmListData[] = [];
+    list_storage.current.forEach(item => {
+      if (!block_users.has(item.user2)) {
+        tmp.push(item);
+      }
     });
+    setDmList(tmp);
   }
 
   useEffect(() => {
@@ -187,7 +188,7 @@ export default function Dm() {
     if (scrollHeight > clientHeight) {
       chatContainer.scrollTop = scrollHeight - clientHeight;
     }
-  }, [list.length]);
+  }, [dm_list.length]);
 
   return (
     <>
@@ -256,7 +257,7 @@ export default function Dm() {
           {/* List */}
           <Table>
             <TableBody>
-              {list?.map((row, index) => {
+              {dm_list?.map((row, index) => {
                 return (
                   <TableRow key={index} onClick={e => changeUser(e, row)}>
                     <TableCell>

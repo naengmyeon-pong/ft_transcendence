@@ -11,8 +11,6 @@ import NotFoundPage from './pages/NotFoundPage';
 import MainPage from 'layout/Buffer/MainPage/MainPage';
 import Ranking from 'layout/Buffer/Ranking';
 import MainLayout from 'layout/MainLayout';
-
-import WaitingChannelRoom from 'layout/Buffer/WaitingChannelRoom';
 import {UserProvider} from 'Context';
 import ChatPage from 'pages/ChatPage';
 
