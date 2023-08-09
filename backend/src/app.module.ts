@@ -13,6 +13,7 @@ import {GameModule} from './game/game.module';
 import {TwoFactorAuthController} from './two-factor-auth/two-factor-auth.controller';
 import {TwoFactorAuthService} from './two-factor-auth/two-factor-auth.service';
 import {TwoFactorAuthModule} from './two-factor-auth/two-factor-auth.module';
+import {RecordModule} from './record/record.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import {TwoFactorAuthModule} from './two-factor-auth/two-factor-auth.module';
     GameModule,
     ConfigModule,
     TwoFactorAuthModule,
+    RecordModule,
   ],
   controllers: [],
   providers: [],

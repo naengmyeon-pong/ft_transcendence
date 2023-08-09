@@ -9,7 +9,7 @@ import {SimpleRecordDto} from './dto/simple-record.dto';
 @Injectable()
 export class RecordService {
   constructor(
-    @InjectRepository(RecordRepository)
+    // @InjectRepository(RecordRepository)
     private recordRepository: RecordRepository,
     private userRepository: UserRepository
   ) {}
@@ -61,10 +61,7 @@ export class RecordService {
     if (win + lose < 5) {
       recentCount = win + lose;
     }
-    const recentRecord: Promise<RecentRecord> = await this.getRecentGames(
-      userID,
-      recentCount
-    );
+    const recentRecord = await this.getRecentGames(userID, recentCount);
     const simpleRecordDto: SimpleRecordDto = {
       win,
       lose,
