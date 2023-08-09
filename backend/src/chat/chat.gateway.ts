@@ -49,6 +49,7 @@ export class ChatGateway
   private logger = new Logger('ChatGateway');
 
   afterInit() {
+    this.block.setBlock();
     this.logger.log('웹소켓 서버 초기화 ✅');
   }
 
@@ -310,6 +311,12 @@ export class ChatGateway
       const ban_members = this.block.getBlockUsers(user_id);
       if (ban_members && ban_members.has(target_id)) {
         console.log('block~~');
+        this.chatService.saveDirectMessage(
+          user_id,
+          target_id,
+          message,
+          target_id
+        );
       } else {
         const target_socket_id = this.socketArray.getUserSocket(target_id);
         socket

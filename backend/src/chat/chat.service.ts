@@ -17,6 +17,7 @@ import {UserRepository} from 'src/user/user.repository';
 import {RoomDto} from './dto/room.dto';
 import {SocketArray} from 'src/globalVariable/global.socket';
 import {Block} from 'src/globalVariable/global.block';
+import {IsNull, Not} from 'typeorm';
 
 export interface UserInfo {
   id: string;
@@ -392,9 +393,9 @@ export class ChatService {
       .where('friendList.userId = :user_id', {user_id})
       .getRawMany();
 
-    const ret = [];
+    const ret: UserInfo[] = [];
     friend_list.forEach(e => {
-      const temp = {
+      const temp: UserInfo = {
         id: e.friendList_friendId,
         nickName: e.user_nickname,
         image: e.user_image,
@@ -434,6 +435,23 @@ export class ChatService {
     return users;
   }
 
+  // async getBlockList(user_id: string) {
+  //   if (!user_id) {
+  //     throw new BadRequestException('empty user_id param.');
+  //   }
+  //   const block_list = await this.blockRepository.find({
+  //     where: {
+  //       userId: user_id,
+  //     },
+  //   });
+
+  //   const ret = [];
+  //   block_list.forEach(e => {
+  //     ret.push(e.blockId);
+  //   });
+
+  //   return ret;
+  // }
   async getBlockList(user_id: string) {
     if (!user_id) {
       throw new BadRequestException('empty user_id param.');
@@ -469,10 +487,22 @@ export class ChatService {
         {
           userId: user_id,
           someoneId: other_id,
+          blockId: Not(user_id),
+        },
+        {
+          userId: user_id,
+          someoneId: other_id,
+          blockId: IsNull(),
         },
         {
           userId: other_id,
           someoneId: user_id,
+          blockId: Not(user_id),
+        },
+        {
+          userId: other_id,
+          someoneId: user_id,
+          blockId: IsNull(),
         },
       ],
       order: {
@@ -483,12 +513,18 @@ export class ChatService {
     return directmessage;
   }
 
-  async saveDirectMessage(user_id: string, target_id: string, message: string) {
+  async saveDirectMessage(
+    user_id: string,
+    target_id: string,
+    message: string,
+    blockId?: string
+  ) {
     const dm = this.dmRepository.create({
       userId: user_id,
       someoneId: target_id,
       date: new Date(),
       message,
+      blockId: blockId,
     });
     await this.dmRepository.save(dm);
   }
@@ -532,16 +568,4 @@ export class ChatService {
     }
     return false;
   }
-
-  // {
-  //   'tester1' : [
-  //     'tester2',
-  //     'tester3'
-  //   ],
-  //   'tester2' : [
-  //     'tester4',
-  //     'tester5'
-  //   ]
-  // }
-  // map <string, Set<string> >
 }

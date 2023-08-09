@@ -1,8 +1,17 @@
 import {Injectable} from '@nestjs/common';
+import {BlockRepository} from 'src/chat/chat.repository';
 
 @Injectable()
 export class Block {
   private block = new Map<string, Set<string>>();
+  constructor(private blockRepository: BlockRepository) {}
+
+  async setBlock() {
+    const block_list = await this.blockRepository.find();
+    block_list.forEach(e => {
+      this.addBlockUser(e.userId, e.blockId);
+    });
+  }
 
   getBlockUsers(block_id: string): Set<string> {
     const ret: Set<string> = this.block.get(block_id);
