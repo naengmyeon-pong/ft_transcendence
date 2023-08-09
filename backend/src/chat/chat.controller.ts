@@ -1,12 +1,12 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
-import { ChatService } from './chat.service';
-import { RoomDto } from './dto/room.dto';
-import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {Body, Controller, Get, Param, Post, Query} from '@nestjs/common';
+import {ChatService} from './chat.service';
+import {RoomDto} from './dto/room.dto';
+import {ApiOperation, ApiQuery, ApiResponse, ApiTags} from '@nestjs/swagger';
 
 @Controller('chatroom')
 @ApiTags('Chat Room')
 export class ChatController {
-  constructor(private chatService: ChatService) { }
+  constructor(private chatService: ChatService) {}
 
   @ApiOperation({
     summary: '채팅방 목록 조회 API',
@@ -118,14 +118,13 @@ export class ChatController {
   @Get('search_user')
   async searchUser(
     @Query('user_id') user_id: string,
-    @Query('user_nickname') user_nickname: string) {
+    @Query('user_nickname') user_nickname: string
+  ) {
     return await this.chatService.searchUser(user_id, user_nickname);
   }
 
   @Get('friend_list')
-  async getFriendList(
-    @Query('user_id') user_id: string
-  ) {
+  async getFriendList(@Query('user_id') user_id: string) {
     return await this.chatService.getFriendList(user_id);
   }
 }

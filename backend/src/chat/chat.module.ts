@@ -1,8 +1,8 @@
-import { Module } from '@nestjs/common';
-import { ChatGateway } from './chat.gateway';
-import { ChatController } from './chat.controller';
-import { ChatService } from './chat.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import {Module} from '@nestjs/common';
+import {ChatGateway} from './chat.gateway';
+import {ChatController} from './chat.controller';
+import {ChatService} from './chat.service';
+import {TypeOrmModule} from '@nestjs/typeorm';
 import {
   BlockList,
   ChatBan,
@@ -19,9 +19,10 @@ import {
   DMRepository,
   FriendListRepository,
 } from './chat.repository';
-import { User } from 'src/user/user.entitiy';
-import { UserRepository } from 'src/user/user.repository';
-import { SocketArray } from 'src/globalVariable/global.socket';
+import {User} from 'src/user/user.entitiy';
+import {UserRepository} from 'src/user/user.repository';
+import {SocketArray} from 'src/globalVariable/global.socket';
+import {Block} from 'src/globalVariable/global.block';
 
 @Module({
   imports: [
@@ -44,7 +45,8 @@ import { SocketArray } from 'src/globalVariable/global.socket';
     DMRepository,
     FriendListRepository,
     SocketArray,
+    Block,
   ],
   controllers: [ChatController],
 })
-export class ChatModule { }
+export class ChatModule {}

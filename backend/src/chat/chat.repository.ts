@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import {Injectable} from '@nestjs/common';
+import {Repository} from 'typeorm';
 import {
   BlockList,
   ChatBan,
@@ -8,7 +8,7 @@ import {
   DirectMessage,
   FriendList,
 } from './chat.entity';
-import { InjectRepository } from '@nestjs/typeorm';
+import {InjectRepository} from '@nestjs/typeorm';
 
 @Injectable()
 export class ChatRoomRepository extends Repository<ChatRoom> {
@@ -70,10 +70,6 @@ export class FriendListRepository extends Repository<FriendList> {
     @InjectRepository(FriendList)
     private readonly friendList: Repository<FriendList>
   ) {
-    super(
-      friendList.target,
-      friendList.manager,
-      friendList.queryRunner
-    );
+    super(friendList.target, friendList.manager, friendList.queryRunner);
   }
 }

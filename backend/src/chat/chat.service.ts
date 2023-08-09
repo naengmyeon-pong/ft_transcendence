@@ -16,6 +16,7 @@ import {
 import {UserRepository} from 'src/user/user.repository';
 import {RoomDto} from './dto/room.dto';
 import {SocketArray} from 'src/globalVariable/global.socket';
+import {Block} from 'src/globalVariable/global.block';
 
 export interface UserInfo {
   id: string;
@@ -33,7 +34,8 @@ export class ChatService {
     private blockRepository: BlockRepository,
     private dmRepository: DMRepository,
     private friendListRepository: FriendListRepository,
-    private socketArray: SocketArray
+    private socketArray: SocketArray,
+    private block: Block
   ) {}
 
   async getRoomList() {
@@ -284,6 +286,7 @@ export class ChatService {
       blockId: target_id,
     });
     await this.blockRepository.save(block_list);
+    this.block.addBlockUser(user_id, target_id);
   }
 
   async unBlockMember(user_id: string, target_id: string) {
@@ -291,6 +294,7 @@ export class ChatService {
       userId: user_id,
       blockId: target_id,
     });
+    this.block.removeBlockUser(user_id, target_id);
   }
 
   async isOwner(room_id: number, user_id: string) {
@@ -376,7 +380,6 @@ export class ChatService {
         });
       }
     });
-    console.log(users);
     return ret;
   }
 
@@ -435,15 +438,23 @@ export class ChatService {
     if (!user_id) {
       throw new BadRequestException('empty user_id param.');
     }
-    const ret: string[] = [];
-    const block_list = await this.blockRepository.find({
-      where: {
-        userId: user_id,
-      },
-    });
+    const block_list = await this.blockRepository
+      .createQueryBuilder('block')
+      .select(['user_id', 'user_nickname', 'user_image'])
+      .innerJoin('block.user', 'users')
+      .where('block.userId = :user_id', {user_id})
+      .getRawMany();
+
+    const ret: UserInfo[] = [];
     block_list.forEach(e => {
-      ret.push(e.blockId);
+      const temp: UserInfo = {
+        id: e.user_id,
+        nickName: e.user_nickname,
+        image: e.user_image,
+      };
+      ret.push(temp);
     });
+
     return ret;
   }
 
@@ -521,4 +532,16 @@ export class ChatService {
     }
     return false;
   }
+
+  // {
+  //   'tester1' : [
+  //     'tester2',
+  //     'tester3'
+  //   ],
+  //   'tester2' : [
+  //     'tester4',
+  //     'tester5'
+  //   ]
+  // }
+  // map <string, Set<string> >
 }

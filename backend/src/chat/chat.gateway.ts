@@ -12,6 +12,7 @@ import {
 import {Socket, Namespace} from 'socket.io';
 import {ChatService} from './chat.service';
 import {SocketArray} from 'src/globalVariable/global.socket';
+import {Block} from 'src/globalVariable/global.block';
 
 interface MessagePayload {
   room_id: number;
@@ -40,7 +41,8 @@ export class ChatGateway
 {
   constructor(
     private chatService: ChatService,
-    private socketArray: SocketArray
+    private socketArray: SocketArray,
+    private block: Block
   ) {}
   @WebSocketServer() nsp: Namespace;
 
@@ -59,7 +61,9 @@ export class ChatGateway
         socket.emit('mute-member', member.mute);
       }
     } catch (e) {
-      console.log(e.message);
+      if (e.status !== 404) {
+        console.log(e.message);
+      }
     }
     this.logger.log(`${socket.id} 소켓 연결`);
   }
@@ -78,7 +82,16 @@ export class ChatGateway
     const user_id = socket.handshake.query.user_id as string;
     const user_nickname = socket.handshake.query.nickname as string;
     const user_image = socket.handshake.query.user_image as string;
+    const block_members: Set<string> = this.block.getBlockUsers(user_id);
+    const except_member: string[] = [];
+
+    if (block_members) {
+      block_members.forEach(e => {
+        except_member.push(this.socketArray.getUserSocket(e));
+      });
+    }
     socket
+      .except(except_member)
       .to(`${room_id}`)
       .emit('message', {message, user_id, user_nickname, user_image}); //front로 메세지 전송
 
@@ -293,12 +306,17 @@ export class ChatGateway
     @MessageBody() {target_id, message}: {target_id: string; message: string}
   ) {
     const user_id = socket.handshake.query.user_id as string;
-    const target_socket_id = this.socketArray.getUserSocket(target_id);
     try {
-      socket
-        .to(`${target_socket_id}`)
-        .emit('dm-message', {message, userId: user_id, someoneId: target_id});
-      this.chatService.saveDirectMessage(user_id, target_id, message);
+      const ban_members = this.block.getBlockUsers(user_id);
+      if (ban_members && ban_members.has(target_id)) {
+        console.log('block~~');
+      } else {
+        const target_socket_id = this.socketArray.getUserSocket(target_id);
+        socket
+          .to(`${target_socket_id}`)
+          .emit('dm-message', {message, userId: user_id, someoneId: target_id});
+        this.chatService.saveDirectMessage(user_id, target_id, message);
+      }
     } catch (e) {
       console.log(e.message);
     }
