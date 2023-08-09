@@ -62,8 +62,6 @@ export default function Dm() {
   const {dm_list, setDmList} = useContext(UserContext);
   const dm_user = useRef<string>('');
   // 리스트에 사용자가 추가되어있는지 확인하는 변수
-  const display_list = useRef<Set<string>>(new Set());
-  const list_storage = useRef<Set<DmListData>>(new Set());
   const [chats, setChats] = useState<DmChat[]>([]);
   const [message, setMessage] = useState<string>('');
   const chat_scroll = useRef<HTMLDivElement>(null);
@@ -113,15 +111,7 @@ export default function Dm() {
           user_id: user_id,
         },
       });
-      const tmp = [];
-      for (const node of rep.data) {
-        list_storage.current.add(node);
-        if (!block_users.has(node?.user2)) {
-          tmp.push(node);
-          display_list.current.add(node?.user2);
-        }
-      }
-      setDmList(tmp);
+      setDmList(rep.data);
     } catch (error) {
       console.log('List.tsx: ', error);
     }
@@ -129,41 +119,32 @@ export default function Dm() {
 
   function handleDmMessage(chat: DmChat) {
     // TODO: 채팅 내용안에 닉네임이 추가
-    if (
-      !display_list.current.has(chat.userId) &&
-      !block_users.has(chat.userId)
-    ) {
-      setDmList([
-        ...dm_list,
-        {
-          user1: chat.userId,
-          user2: chat.someoneId,
-          nickname: chat.someoneId,
-        },
-      ]);
-    }
     if (chat.userId === dm_user.current && chat.someoneId === user_id) {
       setChats(prevChats => [...prevChats, chat]);
     }
+    // 없으면 유저 정보 불러와서 넣기
+    console.log(dm_list);
   }
 
   function handleUpdateState() {
-    const tmp: DmListData[] = [];
-    list_storage.current.forEach(item => {
-      if (!block_users.has(item.user2)) {
-        tmp.push(item);
-      }
-    });
+    // const tmp: DmListData[] = [];
+    // list_storage.current.forEach(item => {
+    //   if (!block_users.has(item.user2)) {
+    //     tmp.push(item);
+    //   }
+    // });
+    // setDmList(tmp);
+    const tmp = dm_list.filter(item => !block_users.has(item.user2));
+    console.log(tmp);
     setDmList(tmp);
   }
 
   useEffect(() => {
-    init();
     socket?.on('dm-message', handleDmMessage);
-    socket?.on('ft_sidebar', handleUpdateState);
+    // socket?.on('ft_sidebar', handleUpdateState);
 
     return () => {
-      socket?.off('ft_sidebar', handleUpdateState);
+      // socket?.off('ft_sidebar', handleUpdateState);
       socket?.off('dm-message', handleDmMessage);
     };
   }, []);
@@ -189,6 +170,11 @@ export default function Dm() {
       chatContainer.scrollTop = scrollHeight - clientHeight;
     }
   }, [dm_list.length]);
+
+  useEffect(() => {
+    init();
+    console.log('block 사이즈 변경 감지: ', block_users.size);
+  }, [block_users.size]);
 
   return (
     <>

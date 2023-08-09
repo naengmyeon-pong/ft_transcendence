@@ -16,9 +16,9 @@ export default function BlockUserList() {
   return (
     <List>
       {Array.from(block_users).map(node => (
-        <ListItem alignItems="flex-start" key={node}>
+        <ListItem alignItems="flex-start" key={node.id}>
           {/* ListItem 내부에서 JSX 요소 생성 */}
-          <ListItemText primary={`${node.toString()}`} />
+          <ListItemText primary={`${node.nickName}`} />
           {/* 아바타 및 기타 컴포넌트 추가 */}
         </ListItem>
       ))}

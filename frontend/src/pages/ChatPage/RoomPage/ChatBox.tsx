@@ -1,5 +1,4 @@
-import {CleaningServices, NavigateBefore} from '@mui/icons-material';
-import {Avatar, Box, Button, Paper, TextField, Typography} from '@mui/material';
+import {Avatar, Box, Button, TextField, Typography} from '@mui/material';
 import {UserContext} from 'Context';
 import React, {
   ChangeEvent,
@@ -10,8 +9,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {useNavigate, useParams} from 'react-router-dom';
-import {Socket} from 'socket.io-client';
+import {useNavigate} from 'react-router-dom';
 import MuteModal from './modal/MuteModal';
 
 interface IChat {
@@ -34,7 +32,6 @@ const Message = ({user_image, user_nickname, message}: IChat) => {
 
 function ChatBox() {
   const {socket} = useContext(UserContext);
-  const {block_users} = useContext(UserContext);
   const {setConvertPage} = useContext(UserContext);
 
   const [chats, setChats] = useState<IChat[]>([]);
@@ -74,9 +71,6 @@ function ChatBox() {
     }
 
     function handleMessage(chat: IChat) {
-      if (block_users?.has(chat.user_id)) {
-        return;
-      }
       setChats(prevChats => [...prevChats, chat]);
     }
 
@@ -106,7 +100,7 @@ function ChatBox() {
     socket?.on('mute-member', handleMute);
     socket?.on('message', handleMessage);
 
-    function leaveRoomHandler(ret: boolean) {
+    function leaveRoomHandler() {
       setConvertPage(0);
     }
 

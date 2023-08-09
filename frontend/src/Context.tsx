@@ -16,15 +16,13 @@ interface UserContextType {
   user_nickname: string | null;
   setUserNickName: (user_nickname: string) => void;
 
-  block_users: Set<string>;
+  block_users: Map<string, UserType>;
 
   convert_page: number;
   setConvertPage: (convert_page: number) => void;
 
   dm_list: DmListData[];
   setDmList: (dm_list: DmListData[]) => void;
-  // dm_list: Array<DmListData>;
-  // setDmList: (list: Array<DmListData>) => void;
 }
 
 const initUserState: UserContextType = {
@@ -40,7 +38,7 @@ const initUserState: UserContextType = {
   user_nickname: null,
   setUserNickName: () => {},
 
-  block_users: new Set(),
+  block_users: new Map(),
 
   convert_page: 0,
   setConvertPage: () => {},
@@ -56,7 +54,7 @@ const UserProvider: React.FC<{children: ReactNode}> = ({children}) => {
   const [user_id, setUserId] = useState<string | null>(null);
   const [user_image, setUserImage] = useState<string | null>(null);
   const [user_nickname, setUserNickName] = useState<string | null>(null);
-  const block_users = useRef<Set<string>>(new Set());
+  const block_users = useRef<Map<string>>(new Set());
   const [convert_page, setConvertPage] = useState<number>(0);
   const [dm_list, setDmList] = useState<DmListData[]>([]);
 
