@@ -1,5 +1,5 @@
 import {atom} from 'recoil';
-import {AlertSnackbarType} from '@/types/alertSnackbar';
+import {AlertSnackbarType} from '@/types/AlertSnackbar';
 
 export const alertSnackbarState = atom<AlertSnackbarType>({
   key: 'alertSnackbarState',

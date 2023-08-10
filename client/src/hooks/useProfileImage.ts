@@ -8,7 +8,7 @@ import {
   extractFileExtension,
   isAllowedImageExtension,
   isFileSizeExceeded,
-} from '@/utils/profileImage';
+} from '@/utils/ProfileImage';
 import {
   FILE_SIZE_MAX_LIMIT,
   ALLOWED_IMAGE_FILE_EXTENSIONS_STRING,
