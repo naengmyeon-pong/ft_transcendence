@@ -42,9 +42,7 @@ function SideBar() {
   // lstState: true = 친구목록, flase = 접속 유저
   const [lstState, setLstState] = useState(true);
   const {socket, block_users, user_id} = useContext(UserContext);
-  const [block_users_size, setBlockUsersSize] = useState<number>(
-    block_users.size
-  );
+  const [block_users_size, setBlockUsersSize] = useState<number>(0);
   const drawerWidth = 240;
   const [friend_list, setFriendList] = useState<UserType[]>([]);
   const [friend_modal, setFriendModal] = useState<boolean>(false);
@@ -82,6 +80,8 @@ function SideBar() {
   }
 
   function handleFriendModalClose() {
+    setFriendName('');
+    setFriendSearchList([]);
     setFriendModal(false);
   }
 
@@ -132,24 +132,25 @@ function SideBar() {
   }
 
   useEffect(() => {
-    function handleSideBar() {
+    function handleBlockList() {
       setBlockUsersSize(block_users.size);
+      socket?.emit('friend-list');
     }
 
     function handleFriendList(res: UserType[]) {
-      console.log('res: ', res);
       setFriendList(res);
     }
-
+    setBlockUsersSize(block_users.size);
     socket?.on('friend-list', handleFriendList);
-    socket?.on('ft_sidebar', handleSideBar);
+    socket?.on('block-list', handleBlockList);
     socket?.emit('friend-list');
 
     return () => {
       socket?.off('friend-list', handleFriendList);
-      socket?.off('ft_sidebar', handleSideBar);
+      socket?.off('block-list', handleBlockList);
     };
   }, []);
+
   return (
     <>
       <Drawer
@@ -250,7 +251,7 @@ function SideBar() {
               </FormControl>
             </Box>
           </Modal>
-          {/* true: 친구목록, flase: 접속 유저 */}
+          {/* true: 친구 목록, flase: 차단 목록 */}
           {lstState ? (
             <List>
               {friend_list.map((node, index) => {
@@ -258,7 +259,15 @@ function SideBar() {
               })}
             </List>
           ) : (
-            <BlockUserList />
+            <List>
+              {Array.from(block_users.values()).map((node, index) => {
+                return <BlockUserList key={index} block_user={node} />;
+              })}
+              {/* {Array.from(block_users.values()).map(node => (
+              return <BlockUserList key={index} block_user={node}/>;
+              
+            ))} */}
+            </List>
           )}
           {/* 밑줄 */}
           <Divider />

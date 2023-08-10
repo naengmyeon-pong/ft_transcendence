@@ -269,7 +269,7 @@ export class ChatGateway
     const user_id = socket.handshake.query.user_id as string;
     try {
       await this.chatService.blockMember(user_id, target_id);
-      // socket.emit('ft_sidebar');
+      socket.emit('block-list');
     } catch (e) {
       console.log(e.message);
     }
@@ -283,7 +283,7 @@ export class ChatGateway
     const user_id = socket.handshake.query.user_id as string;
     try {
       await this.chatService.unBlockMember(user_id, target_id);
-      // socket.emit('ft_sidebar');
+      socket.emit('block-list');
     } catch (e) {
       console.log(e.message);
     }

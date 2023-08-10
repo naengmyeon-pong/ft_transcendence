@@ -384,24 +384,21 @@ export class ChatService {
     return ret;
   }
 
+  // MEMO: 친구 목록에서 차단 유저를 필터링 하는 방식으로 변경하였습니다.
   async getFriendList(user_id: string) {
-    // const user = await this.getUser(user_id);
-    const friend_list = await this.friendListRepository
+    const ret = await this.friendListRepository
       .createQueryBuilder('friendList')
-      .select(['friendList.friendId', 'user_nickname'])
+      .select([
+        'user.user_id AS "id"',
+        'user.user_nickname AS "nickName"',
+        'user.user_image AS "image"',
+      ])
       .innerJoin('friendList.FriendUser', 'user')
+      .leftJoin('blockList', 'bl', 'bl.userId = :user_id', {user_id})
       .where('friendList.userId = :user_id', {user_id})
+      .andWhere('(bl.blockId is null or bl.blockId != friendList.friendId)')
       .getRawMany();
 
-    const ret: UserInfo[] = [];
-    friend_list.forEach(e => {
-      const temp: UserInfo = {
-        id: e.friendList_friendId,
-        nickName: e.user_nickname,
-        image: e.user_image,
-      };
-      ret.push(temp);
-    });
     return ret;
   }
 
@@ -435,45 +432,40 @@ export class ChatService {
     return users;
   }
 
-  // async getBlockList(user_id: string) {
-  //   if (!user_id) {
-  //     throw new BadRequestException('empty user_id param.');
-  //   }
-  //   const block_list = await this.blockRepository.find({
-  //     where: {
-  //       userId: user_id,
-  //     },
-  //   });
-
-  //   const ret = [];
-  //   block_list.forEach(e => {
-  //     ret.push(e.blockId);
-  //   });
-
-  //   return ret;
-  // }
+  // MEMO: tester3이 tester2를 차단했을때 tester2가 아닌 tester3을 반환하는 문제가 있었습니다
   async getBlockList(user_id: string) {
     if (!user_id) {
       throw new BadRequestException('empty user_id param.');
     }
+    //   const block_list = await this.blockRepository
+    //   .createQueryBuilder('block')
+    //   .select(['user_id', 'user_nickname', 'user_image'])
+    //   .innerJoin('block.user', 'users')
+    //   .where('block.userId = :user_id', {user_id})
+    //   .getRawMany();
+
     const block_list = await this.blockRepository
       .createQueryBuilder('block')
-      .select(['user_id', 'user_nickname', 'user_image'])
-      .innerJoin('block.user', 'users')
+      .select([
+        'user_id AS "id"',
+        'user_nickname AS "nickName"',
+        'user_image AS "image"',
+      ])
+      .innerJoin('block.blockUser', 'users', 'block.blockId = users.user_id')
       .where('block.userId = :user_id', {user_id})
       .getRawMany();
 
-    const ret: UserInfo[] = [];
-    block_list.forEach(e => {
-      const temp: UserInfo = {
-        id: e.user_id,
-        nickName: e.user_nickname,
-        image: e.user_image,
-      };
-      ret.push(temp);
-    });
+    // const ret: UserInfo[] = [];
+    // block_list.forEach(e => {
+    //   const temp: UserInfo = {
+    //     id: e.user_id,
+    //     nickName: e.user_nickname,
+    //     image: e.user_image,
+    //   };
+    //   ret.push(temp);
+    // });
 
-    return ret;
+    return block_list;
   }
 
   async getDirectMessage(user_id: string, other_id: string) {

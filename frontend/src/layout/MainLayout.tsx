@@ -18,10 +18,11 @@ function MainLayout() {
 
   const [initMainLayout, setInitMainLayout] = useState(false);
 
-  function init_setBlockUsers(data: string[]) {
+  function init_setBlockUsers(data: UserType[]) {
     for (const node of data) {
-      block_users.add(node);
+      block_users.set(node.id, node);
     }
+    console.log('block_users: ', block_users);
   }
 
   async function init() {

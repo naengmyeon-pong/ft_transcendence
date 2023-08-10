@@ -114,10 +114,6 @@ function ChatBox() {
 
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      socket?.emit('message', {
-        room_id: roomId,
-        message: `${socket?.id}: 나감`,
-      });
       // window.removeEventListener('popstate', handlePopState);
       socket?.emit('leave-room', {room_id: roomId});
       socket?.off('message', handleMessage);

@@ -54,7 +54,7 @@ const UserProvider: React.FC<{children: ReactNode}> = ({children}) => {
   const [user_id, setUserId] = useState<string | null>(null);
   const [user_image, setUserImage] = useState<string | null>(null);
   const [user_nickname, setUserNickName] = useState<string | null>(null);
-  const block_users = useRef<Map<string>>(new Set());
+  const block_users = useRef<Map<string, UserType>>(new Map());
   const [convert_page, setConvertPage] = useState<number>(0);
   const [dm_list, setDmList] = useState<DmListData[]>([]);
 

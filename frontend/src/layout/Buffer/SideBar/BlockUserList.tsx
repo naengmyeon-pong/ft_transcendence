@@ -1,52 +1,65 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useContext, useState} from 'react';
 import {
   Avatar,
-  Badge,
-  List,
   ListItem,
   ListItemAvatar,
   ListItemText,
+  Menu,
+  MenuItem,
   Typography,
 } from '@mui/material';
+import {DelBlock} from 'pages/ChatPage/RoomPage/service/Block';
 import {UserContext} from 'Context';
 
-export default function BlockUserList() {
-  const {block_users} = useContext(UserContext);
+export default function BlockUserList({block_user}: {block_user: UserType}) {
+  const [anchorEl, setAnchorEl] = useState<HTMLLIElement | null>(null);
+  const {socket, block_users} = useContext(UserContext);
+  const open = Boolean(anchorEl);
+
+  function handleMenuClose() {
+    setAnchorEl(null);
+  }
+
+  function handleMenu(event: React.MouseEvent<HTMLLIElement>) {
+    setAnchorEl(event.currentTarget);
+  }
+
+  function handleDeleteBlock() {
+    DelBlock(block_user, socket, block_users);
+    handleMenuClose();
+  }
 
   return (
-    <List>
-      {Array.from(block_users).map(node => (
-        <ListItem alignItems="flex-start" key={node.id}>
-          {/* ListItem 내부에서 JSX 요소 생성 */}
-          <ListItemText primary={`${node.nickName}`} />
-          {/* 아바타 및 기타 컴포넌트 추가 */}
-        </ListItem>
-      ))}
-      {/* <ListItem alignItems="flex-start">
+    <>
+      <ListItem alignItems="flex-start" onClick={handleMenu}>
         <ListItemAvatar>
-          <Badge
-            overlap="circular"
-            color="success"
-            anchorOrigin={{vertical: 'bottom', horizontal: 'right'}}
-            variant="dot"
-          >
-            <Avatar alt="friend profile memo" src="/logo.jpeg" />
-          </Badge>
+          <Avatar
+            alt="friend profile memo"
+            src={`${process.env.REACT_APP_BACKEND_SERVER}/${block_user.image}`}
+          />
         </ListItemAvatar>
-        <ListItemText
-          primary={'username'}
-          secondary={
-            <Typography
-              sx={{display: 'inline'}}
-              component="span"
-              variant="body2"
-              color="text.primary"
-            >
-              {'온라인'}
-            </Typography>
-          }
-        />
-      </ListItem> */}
-    </List>
+        <ListItemText primary={`${block_user.nickName}`} />
+      </ListItem>
+      <Menu
+        open={open}
+        onClose={handleMenuClose}
+        anchorEl={anchorEl}
+        anchorOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'left',
+        }}
+        // sx={{
+        //   marginLeft: '10px',
+        // }}
+      >
+        <MenuItem onClick={handleDeleteBlock}>
+          <Typography>차단 해제</Typography>
+        </MenuItem>
+      </Menu>
+    </>
   );
 }

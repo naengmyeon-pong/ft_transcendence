@@ -58,28 +58,35 @@ const Message = ({
 
 export default function Dm() {
   const {socket, user_id, block_users} = useContext(UserContext);
-  // const [dm_list, setDmList] = useState<Array<DmListData>>([]);
   const {dm_list, setDmList} = useContext(UserContext);
-  const dm_user = useRef<string>('');
+  const dm_user_id = useRef<string>('');
+  const dm_user_nickname = useRef<string>('');
   // 리스트에 사용자가 추가되어있는지 확인하는 변수
   const [chats, setChats] = useState<DmChat[]>([]);
   const [message, setMessage] = useState<string>('');
   const chat_scroll = useRef<HTMLDivElement>(null);
   const list_scroll = useRef<HTMLDivElement>(null);
-
   const onChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     setMessage(e.target.value);
   }, []);
+  // 차단기록이 일어나면 랜더링되게 설정
+  const [textFieldDisabled, setTextFieldDisabled] = useState(false);
+
+  console.log('DmPage');
 
   const onSendMessage = useCallback(
     (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
-      if (!message || !socket || !dm_user.current) {
+      if (!message || !socket || !dm_user_id.current) {
+        return;
+      }
+      if (block_users.has(dm_user_id.current)) {
+        alert('차단을 해제해주세요.');
         return;
       }
       socket?.emit(
         'dm-message',
-        {target_id: dm_user.current, message},
+        {target_id: dm_user_id.current, message},
         (chat: DmChat) => {
           setChats(prevChats => [...prevChats, chat]);
         }
@@ -90,7 +97,7 @@ export default function Dm() {
   );
 
   async function changeUser(e: React.MouseEvent<unknown>, row: DmListData) {
-    if (dm_user.current === row.user2) {
+    if (dm_user_id.current === row.user2) {
       return;
     }
     const rep = await apiManager.get('chatroom/dm', {
@@ -99,9 +106,15 @@ export default function Dm() {
         other_id: row.user2,
       },
     });
-    dm_user.current = row.user2;
+    dm_user_id.current = row.user2;
+    dm_user_nickname.current = row.nickname;
     setChats(rep.data);
     setMessage('');
+    if (block_users.has(`${dm_user_id.current}`)) {
+      setTextFieldDisabled(true);
+      return;
+    }
+    setTextFieldDisabled(false);
   }
 
   async function init() {
@@ -118,33 +131,26 @@ export default function Dm() {
   }
 
   function handleDmMessage(chat: DmChat) {
-    // TODO: 채팅 내용안에 닉네임이 추가
-    if (chat.userId === dm_user.current && chat.someoneId === user_id) {
+    if (chat.userId === dm_user_id.current && chat.someoneId === user_id) {
       setChats(prevChats => [...prevChats, chat]);
     }
-    // 없으면 유저 정보 불러와서 넣기
-    console.log(dm_list);
   }
 
-  function handleUpdateState() {
-    // const tmp: DmListData[] = [];
-    // list_storage.current.forEach(item => {
-    //   if (!block_users.has(item.user2)) {
-    //     tmp.push(item);
-    //   }
-    // });
-    // setDmList(tmp);
-    const tmp = dm_list.filter(item => !block_users.has(item.user2));
-    console.log(tmp);
-    setDmList(tmp);
+  function handleBlock() {
+    if (block_users.has(dm_user_id.current)) {
+      setTextFieldDisabled(true);
+      return;
+    }
+    setTextFieldDisabled(false);
   }
 
   useEffect(() => {
+    init();
+    socket?.on('block-list', handleBlock);
     socket?.on('dm-message', handleDmMessage);
-    // socket?.on('ft_sidebar', handleUpdateState);
 
     return () => {
-      // socket?.off('ft_sidebar', handleUpdateState);
+      socket?.off('block-list', handleBlock);
       socket?.off('dm-message', handleDmMessage);
     };
   }, []);
@@ -171,11 +177,6 @@ export default function Dm() {
     }
   }, [dm_list.length]);
 
-  useEffect(() => {
-    init();
-    console.log('block 사이즈 변경 감지: ', block_users.size);
-  }, [block_users.size]);
-
   return (
     <>
       <Box display={'flex'}>
@@ -187,7 +188,7 @@ export default function Dm() {
           border={'1px solid black'}
         >
           <Box border={'1px solid black'}>
-            <Typography ml={'10px'}>{dm_user.current}</Typography>
+            <Typography ml={'10px'}>{dm_user_nickname.current}</Typography>
           </Box>
           <Box
             sx={{
@@ -213,6 +214,7 @@ export default function Dm() {
                 {/* <Grid container sx={{ width: "100%" }}>
             <Grid item sx={{ width: "100%" }}> */}
                 <TextField
+                  disabled={textFieldDisabled}
                   fullWidth
                   size="small"
                   placeholder="메세지를 입력하세요"
