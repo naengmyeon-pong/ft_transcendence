@@ -1,6 +1,6 @@
 'use client';
 
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import {useRouter} from 'next/router';
 
 import axios from 'axios';
@@ -13,17 +13,13 @@ import CheckIcon from '@mui/icons-material/Check';
 import Checkbox from '@mui/material/Checkbox';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
-
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
-import DialogTitle from '@mui/material/DialogTitle';
 
 import apiManager from '@/api/apiManager';
 import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
 import {useProfileImage} from '@/hooks/useProfileImage';
 import ImageUpload from '@/components/signup/ImageUpload';
+import {useGlobalDialog} from '@/hooks/useGlobalDialog';
 
 const HTTP_STATUS = require('http-status');
 
@@ -32,6 +28,7 @@ export default function Signup() {
   const {
     profileImageDataState: {userId, uploadFile},
   } = useProfileImage();
+  const {openGlobalDialog, closeGlobalDialog} = useGlobalDialog();
   const {openAlertSnackbar} = useAlertSnackbar();
   const [password, setPassword] = useState('');
   const [nickname, setNickname] = useState('');
@@ -59,13 +56,8 @@ export default function Signup() {
     return regex.test(password);
   };
 
-  const [openDialog, setOpenDialog] = useState(false);
   const [isUniqueNickname, setIsUniqueNickname] = useState(false);
   const [is2faEnabled, setIs2faEnabled] = useState(false);
-
-  const handleDialogClose = () => {
-    setOpenDialog(false);
-  };
 
   const handle2FA = () => {
     setIs2faEnabled(!is2faEnabled);
@@ -73,7 +65,7 @@ export default function Signup() {
 
   const handleNicknameInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNickname(e.target.value);
-    setIsUniqueNickname(false);
+    // setIsUniqueNickname(false);
   };
 
   const handlePassword = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -91,16 +83,38 @@ export default function Signup() {
       });
       return;
     }
-    setOpenDialog(true);
+
     const response = await apiManager.get(
       `/signup/nickname?user_id=${userId}&nickname=${nickname}`
     );
     try {
-      if (response.data === true) {
+      const result = response.data;
+      if (result === true) {
         setIsUniqueNickname(true);
       } else {
         setIsUniqueNickname(false);
       }
+      console.log(response.data);
+      openGlobalDialog({
+        title: '중복 확인',
+        content: (
+          <DialogContentText id="alert-dialog-description">
+            {nickname} 은(는) 사용
+            <Typography
+              component="span"
+              style={{color: result ? 'inherit' : 'red'}}
+            >
+              {result ? ' 가능' : ' 불가능'}
+            </Typography>
+            합니다.
+          </DialogContentText>
+        ),
+        actions: (
+          <Button onClick={closeGlobalDialog} autoFocus>
+            닫기
+          </Button>
+        ),
+      });
       console.log(response);
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
@@ -187,27 +201,6 @@ export default function Signup() {
             <Button variant="text" onClick={handleDuplicatedNickname}>
               중복 확인
             </Button>
-            <Dialog
-              open={openDialog}
-              onClose={handleDialogClose}
-              aria-labelledby="alert-dialog-title"
-              aria-describedby="alert-dialog-description"
-            >
-              <DialogTitle id="alert-dialog-title">중복 확인</DialogTitle>
-              <DialogContent>
-                <DialogContentText id="alert-dialog-description">
-                  {nickname}
-                  {isUniqueNickname === true
-                    ? ' 은(는) 사용 가능합니다.'
-                    : ' 은(는) 사용 불가능합니다.'}
-                </DialogContentText>
-              </DialogContent>
-              <DialogActions>
-                <Button onClick={handleDialogClose} autoFocus>
-                  닫기
-                </Button>
-              </DialogActions>
-            </Dialog>
           </Grid>
 
           <Grid item xs={12}>
