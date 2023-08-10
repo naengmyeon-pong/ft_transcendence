@@ -1,4 +1,4 @@
-import {Logger, UseGuards} from '@nestjs/common';
+import {InternalServerErrorException, Logger, UseGuards} from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -129,7 +129,7 @@ export class GameGateway
     }
   }
 
-  createRoom = (userSocket: GameUser) => {
+  createRoom = async (userSocket: GameUser) => {
     const gameUserSockets: GameUser[] = [];
     const firstUser = waitUserList[userSocket.type_mode].shift();
     const secondUser = userSocket;
@@ -140,16 +140,18 @@ export class GameGateway
 
     firstUser.socket.join(roomName);
     secondUser.socket.join(roomName);
+    
+    const [left_user, right_user] = await this.findUserName(firstUser.user_id, secondUser.user_id);
     secondUser.socket
       .to(roomName)
-      .emit('notice', {notice: `${secondUser.user_id}이 입장했습니다.`});
+      .emit('notice', {notice: `${right_user}이 입장했습니다.`});
 
     const roomInfo: RoomInfo = gameRooms.get(roomName);
     const gameInfo: GameInfo = roomInfo.game_info;
     const roomUserInfo: RoomUserInfo = {
       room_name: roomName,
-      left_user: firstUser.user_id,
-      right_user: secondUser.user_id,
+      left_user,
+      right_user,
     };
     if (
       roomInfo.type_mode === NORMAL_HARD ||
@@ -160,6 +162,20 @@ export class GameGateway
 
     this.nsp.to(roomName).emit('room_name', roomUserInfo);
     this.nsp.to(roomName).emit('game_info', {game_info: gameInfo});
+  };
+
+  findUserName = async (leftUserID: string, rightUserID: string): Promise<[string, string]> => {
+    const left = await this.userRepository.findOneBy({user_id: leftUserID});
+    if (left === null) {
+      throw new InternalServerErrorException();
+    }
+    const leftUser = left.user_nickname;
+    const right = await this.userRepository.findOneBy({user_id: rightUserID});
+    if (left === null) {
+      throw new InternalServerErrorException();
+    }
+    const rightUser = right.user_nickname;
+    return [leftUser, rightUser];
   };
 
   isGameMatched = (
