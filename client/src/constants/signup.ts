@@ -4,5 +4,5 @@ export const ALLOWED_IMAGE_FILE_EXTENSIONS_STRING =
     .map(extension => {
       return extension.split('/')[1];
     })
-    .join(' ');
+    .join(', ');
 export const FILE_SIZE_MAX_LIMIT = 1 * 1024 * 1024; // 1MB

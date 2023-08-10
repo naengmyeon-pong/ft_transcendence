@@ -1,7 +1,9 @@
 'use client';
 
-import {useState, useRef} from 'react';
+import {useState} from 'react';
 import {useRouter} from 'next/router';
+
+import axios from 'axios';
 
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
@@ -20,16 +22,16 @@ import DialogTitle from '@mui/material/DialogTitle';
 
 import apiManager from '@/api/apiManager';
 import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
-import {
-  FILE_SIZE_MAX_LIMIT,
-  ALLOWED_IMAGE_FILE_EXTENSION,
-  ALLOWED_IMAGE_FILE_EXTENSIONS_STRING,
-} from '@/constants/signup';
+import {useProfileImage} from '@/hooks/useProfileImage';
+import ImageUpload from '@/components/signup/ImageUpload';
 
 const HTTP_STATUS = require('http-status');
 
 export default function Signup() {
   const router = useRouter();
+  const {
+    profileImageDataState: {userId, uploadFile},
+  } = useProfileImage();
   const {openAlertSnackbar} = useAlertSnackbar();
   const [password, setPassword] = useState('');
   const [nickname, setNickname] = useState('');
@@ -57,99 +59,12 @@ export default function Signup() {
     return regex.test(password);
   };
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const [uploadFile, setUploadFile] = useState<File>();
-  const [previewUploadImage, setPreviewUploadImage] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const [isUniqueNickname, setIsUniqueNickname] = useState(false);
   const [is2faEnabled, setIs2faEnabled] = useState(false);
 
   const handleDialogClose = () => {
     setOpenDialog(false);
-  };
-
-  const handleUploadImageRemoval = () => {
-    if (previewUploadImage === '') {
-      return;
-    }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''; // Reset the input value
-    }
-    setPreviewUploadImage('');
-  };
-
-  const extractFileExtension = (name: string): string => {
-    const lastCommaIndex = name.lastIndexOf('.');
-    if (lastCommaIndex === -1) {
-      return '';
-    }
-    return name.substring(lastCommaIndex + 1).toLowerCase();
-  };
-
-  const isAllowedImageExtension = (extension: string): boolean => {
-    if (
-      ALLOWED_IMAGE_FILE_EXTENSION.indexOf(extension) === -1 ||
-      extension === ''
-    ) {
-      return false;
-    }
-    return true;
-  };
-
-  const isFileSizeExceeded = (size: number): boolean => {
-    if (size > FILE_SIZE_MAX_LIMIT) {
-      return true;
-    }
-    return false;
-  };
-
-  const handleUploadFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const target = e.target;
-    const files = target.files;
-    console.log(target.files);
-    if (files === undefined) {
-      return;
-    }
-
-    const file = files?.[0];
-    if (file === undefined || file === null) {
-      return;
-    }
-
-    console.log(file);
-    const extension = extractFileExtension(file.name);
-    if (isAllowedImageExtension(extension) === false) {
-      target.value = '';
-      // TODO: snackbar 표시하기
-      console.log(
-        `확장자는 ${ALLOWED_IMAGE_FILE_EXTENSIONS_STRING}만 가능합니다.`
-      );
-      return;
-    }
-
-    if (isFileSizeExceeded(file.size) === true) {
-      target.value = '';
-      // TODO: snackbar 표시하기
-      console.log(
-        `파일 크기는 ${FILE_SIZE_MAX_LIMIT / 1024 / 1024}MB 이하로 제한됩니다.`
-      );
-      return;
-    }
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onloadend = () => {
-      if (typeof reader.result === 'string') {
-        const base64data = reader.result;
-        setPreviewUploadImage(base64data);
-      }
-    };
-    const filename = `${user_id}.${extension}`;
-    const modifiedFileNameByUserId = new File([file], filename, {
-      type: file.type,
-    });
-    console.log(modifiedFileNameByUserId);
-    setUploadFile(modifiedFileNameByUserId);
   };
 
   const handle2FA = () => {
@@ -178,7 +93,7 @@ export default function Signup() {
     }
     setOpenDialog(true);
     const response = await apiManager.get(
-      `/signup/nickname?user_id=${user_id}&nickname=${nickname}`
+      `/signup/nickname?user_id=${userId}&nickname=${nickname}`
     );
     try {
       if (response.data === true) {
@@ -188,8 +103,9 @@ export default function Signup() {
       }
       console.log(response);
     } catch (error: unknown) {
-      console.log(error);
-      setOpenErrorSnackbar(true);
+      if (axios.isAxiosError(error)) {
+        openAlertSnackbar({message: error.response?.data.message});
+      }
     }
   };
 
@@ -199,13 +115,11 @@ export default function Signup() {
 
     const formData = new FormData();
 
-    formData.append('user_id', user_id);
+    formData.append('user_id', userId);
     formData.append('user_pw', password);
     formData.append('user_nickname', nickname);
     formData.append('is_2fa_enabled', is2faEnabled.toString());
-    if (uploadFile === undefined) {
-      formData.append('user_image', '');
-    } else {
+    if (uploadFile !== null) {
       formData.append('user_image', uploadFile);
     }
 
@@ -219,16 +133,16 @@ export default function Signup() {
       });
       console.log(response);
       if (HTTP_STATUS.CREATED) {
-        navigate('/');
+        router.push('/user/login');
       }
     } catch (error) {
       console.log(error);
-      setOpenErrorSnackbar(true);
+      if (axios.isAxiosError(error)) {
+        openAlertSnackbar({message: error.response?.data.message});
+      }
     }
-    // TODO: 위치지정
-    // navigate('/');
-    //실패했을 경우 지정해줘야함
   };
+
   return (
     <>
       <Typography component="h1" variant="h5">
@@ -238,34 +152,7 @@ export default function Signup() {
       <Box component="form" onSubmit={handleSubmit} noValidate sx={{mt: 1}}>
         <Grid container spacing={2}>
           <Grid item xs={12}>
-            <Card variant="outlined">
-              <CardHeader
-                avatar={<Avatar src={previewUploadImage || logo.src} />}
-                title="프로필 사진"
-                subheader="기본 이미지는 냉면 이미지로 설정됩니다."
-              />
-              <Box display="flex" justifyContent="flex-end">
-                {previewUploadImage && (
-                  <Button
-                    onClick={handleUploadImageRemoval}
-                    sx={{color: 'grey'}}
-                  >
-                    제거
-                  </Button>
-                )}
-                <label htmlFor="file-upload-button">
-                  <input
-                    type="file"
-                    id="file-upload-button"
-                    accept={ALLOWED_IMAGE_FILE_EXTENSION}
-                    onChange={handleUploadFile}
-                    hidden
-                    ref={fileInputRef}
-                  />
-                  <Button component="span">업로드</Button>
-                </label>
-              </Box>
-            </Card>
+            <ImageUpload />
           </Grid>
 
           <Grid item xs={12}>
@@ -275,7 +162,7 @@ export default function Signup() {
               id="intraId"
               name="intraId"
               label="Intra ID"
-              defaultValue={user_id}
+              defaultValue={userId}
               variant="filled"
             />
           </Grid>

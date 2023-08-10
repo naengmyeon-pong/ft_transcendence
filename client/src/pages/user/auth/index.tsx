@@ -11,6 +11,7 @@ const HTTP_STATUS = require('http-status');
 
 import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
 import apiManager from '@/api/apiManager';
+import {useProfileImage} from '@/hooks/useProfileImage';
 
 export const getServerSideProps: GetServerSideProps = async ({query}) => {
   const {code} = query;
@@ -22,6 +23,7 @@ function AuthPage({
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const router = useRouter();
   const {openAlertSnackbar} = useAlertSnackbar();
+  const {setUserId} = useProfileImage();
 
   useEffect(() => {
     (async () => {
@@ -35,7 +37,7 @@ function AuthPage({
         const response = await apiManager.get(`/signup/auth?code=${code}`);
 
         if (response.status === HTTP_STATUS.OK) {
-          const {is_already_signup, signup_jwt} = response.data;
+          const {is_already_signup, signup_jwt, user_id} = response.data;
           if (is_already_signup) {
             openAlertSnackbar({
               severity: 'info',
@@ -44,6 +46,7 @@ function AuthPage({
             router.push('/user/login');
           } else {
             sessionStorage.setItem('accessToken', signup_jwt);
+            setUserId(user_id);
             router.push('/user/signup');
           }
         }
