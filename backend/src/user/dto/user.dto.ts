@@ -24,11 +24,11 @@ export class UserDto {
   })
   @IsNotEmpty()
   @IsString()
-  @MinLength(8)
-  @MaxLength(20)
-  @Matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^\d\sa-zA-Z])[\S]{8,}$/, {
-    message: 'password only accepts english and number',
-  })
+  // @MinLength(8)
+  // @MaxLength(20)
+  // @Matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^\d\sa-zA-Z])[\S]{8,}$/, {
+  //   message: 'password only accepts english and number',
+  // })
   user_pw: string;
 
   @ApiProperty({

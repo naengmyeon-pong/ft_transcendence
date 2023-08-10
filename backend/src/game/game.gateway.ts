@@ -12,10 +12,10 @@ import {
 import {Namespace, Socket, Server} from 'socket.io';
 import {User} from 'src/user/user.entitiy';
 import {GameInfo, RoomUserInfo, JoinGameInfo} from '@/types/game';
-import {GameUser} from './types/game_user.interface';
-import {KeyData} from './types/key_data.interface';
-import {RoomInfo} from './types/room_info.interface';
-import {EUserIndex} from './types/user_index.enum';
+import {GameUser} from './types/game-user.interface';
+import {KeyData} from './types/key-data.interface';
+import {RoomInfo} from './types/room-info.interface';
+import {EUserIndex} from './types/user-index.enum';
 import {UserRepository} from 'src/user/user.repository';
 import {RecordRepository} from 'src/record/record.repository';
 import {ModeRepository} from 'src/record/mode/mode.repository';

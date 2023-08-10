@@ -1,5 +1,5 @@
 import {Socket} from 'socket.io';
-import {KeyData} from './key_data.interface';
+import {KeyData} from './key-data.interface';
 
 export interface GameUser {
   user_id: string;
