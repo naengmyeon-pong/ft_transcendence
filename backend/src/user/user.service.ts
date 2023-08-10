@@ -53,13 +53,13 @@ export class UserService {
     if (user && userAuthDto.user_pw === user.user_pw) {
       // if (user && (await bcrypt.compare(userAuthDto.user_pw, user.user_pw))) {
       // user token create. (secret + Payload)
-      if (user.is_2fa_enabled === false) {
-        const payload: Payload = {user_id: userAuthDto.user_id};
-        const accessToken = this.generateAccessToken(payload);
-        return accessToken;
-      } else {
-        // 2fa가 설정된 경우
-      }
+      // if (user.is_2fa_enabled === false) {
+      const payload: Payload = {user_id: userAuthDto.user_id};
+      const accessToken = this.generateAccessToken(payload);
+      return accessToken;
+      // } else {
+      //   // 2fa가 설정된 경우
+      // }
     }
     throw new UnauthorizedException('login failed');
   }
