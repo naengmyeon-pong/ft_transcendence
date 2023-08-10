@@ -7,12 +7,12 @@ import {RecentRecord} from '@/types/record';
 import {SimpleRecordDto} from './dto/simple-record.dto';
 import {DetailRecordDto} from './dto/detail-record.dto';
 
-export interface PageID {
-  page: number;
-  id: number;
-}
+// export interface PageID {
+//   page: number;
+//   id: number;
+// }
 
-export const userPageID: Map<string, PageID> = new Map();
+// export const userPageID: Map<string, PageID> = new Map();
 
 @Injectable()
 export class RecordService {
