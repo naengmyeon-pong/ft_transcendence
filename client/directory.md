@@ -35,6 +35,6 @@
      │    alertSnackbar.ts
      │    (...).ts
      └─/util
-          //기타 상수나 유틸리티 관리
-          util.ts
+          // 기타 유틸리티 함수
+          (...).ts
 ```
