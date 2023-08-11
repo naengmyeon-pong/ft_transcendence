@@ -7,7 +7,7 @@ interface UserSocket {
 
 @Injectable()
 export class SocketArray {
-  private socketArray = new Map();
+  private socketArray = new Map<string, string>();
 
   getSocketArray() {
     return this.socketArray;

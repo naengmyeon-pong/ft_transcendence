@@ -98,21 +98,6 @@ export class ChatBan {
   user: User;
 }
 
-// @Entity('socketId')
-// export class SocketId {
-//   @PrimaryColumn()
-//   user_id: string;
-
-//   @Column()
-//   socket_id: string;
-
-//   @OneToOne(() => User, user => user.socket_id, {
-//     onDelete: 'CASCADE',
-//   })
-//   @JoinColumn({name: 'user_id'})
-//   user: User;
-// }
-
 @Entity('blockList')
 export class BlockList {
   @PrimaryColumn()

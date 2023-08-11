@@ -1,4 +1,4 @@
-import {ChatBan, ChatMember} from 'src/chat/chat.entity';
+import {BlockList, ChatBan, ChatMember, FriendList} from 'src/chat/chat.entity';
 import {
   Column,
   Entity,
@@ -33,4 +33,10 @@ export class User {
 
   @OneToMany(() => ChatBan, chatban => chatban.user)
   chatbans: ChatBan[];
+
+  @OneToMany(() => BlockList, blocklist => blocklist.blockUser)
+  blocklist: BlockList[];
+
+  @OneToMany(() => FriendList, friendlist => friendlist.FriendUser)
+  friend: FriendList[];
 }

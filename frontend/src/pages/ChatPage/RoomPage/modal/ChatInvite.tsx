@@ -46,7 +46,7 @@ function ChatInvite({inviteModal, handleInviteClose}: CreateModalProps) {
       return;
     }
     try {
-      const rep = await apiManager.get(`/chatroom/user/${nickName}`);
+      const rep = await apiManager.get(`/chatroom/user/${nickName}/${user_id}`);
       setList(rep.data);
       console.log(rep.data);
     } catch (error) {

@@ -250,7 +250,6 @@ export class ChatService {
     return false;
   }
 
-  // 현재 시간은 아님. UTC 시간. front랑 그대로 사용할지 바꿀지 합의필요.
   async muteMember(
     room_id: number,
     user_id: string,
@@ -335,56 +334,68 @@ export class ChatService {
     return room;
   }
 
-  //초대 검색할 때, 비슷한 닉네임 다 조회.
-  async getLoginUser(user_nickname: string) {
+  //초대 검색할 때, 채팅방에 있는 사람 제외하고, 차단 유저 제외하고 비슷한 닉네임 다 조회.
+  async getLoginUser(user_nickname: string, user_id: string) {
     if (!user_nickname) {
       throw new BadRequestException('empty user_nickname param.');
     }
-    const ret: UserInfo[] = [];
+
     const users = await this.userRepository
       .createQueryBuilder('users')
+      .select([
+        'users.user_id AS "id"',
+        'users.user_nickname AS "nickName"',
+        'users.user_image AS "image"',
+      ])
+      .leftJoin('users.chatmembers', 'chatmember')
+      .leftJoin('users.blocklist', 'block', 'block.userId=:user_id', {user_id})
       .where('users.user_nickname like :nickname', {
         nickname: `${user_nickname}%`,
       })
-      .getMany();
+      .andWhere('chatmember.userId is null and block.userId is null')
+      .orWhere('chatmember.userId is null and block.userId != :user_id', {
+        user_id,
+      })
+      .orderBy('user_nickname')
+      .getRawMany();
 
+    const ret = [];
     users.forEach(user => {
-      if (this.socketArray.getUserSocket(user.user_id)) {
-        ret.push({
-          id: user.user_id,
-          nickName: user.user_nickname,
-          image: user.user_image,
-        });
+      if (this.socketArray.getUserSocket(user.id)) {
+        ret.push(user);
       }
     });
     return ret;
   }
 
+  // 자기자신, 차단유저, 친구목록에 있는 유저 빼고.
   async searchUser(user_id: string, user_nickname: string) {
     if (!user_nickname) {
       throw new BadRequestException('empty user_nickname param.');
     }
-    const ret: UserInfo[] = [];
     const users = await this.userRepository
       .createQueryBuilder('users')
+      .select([
+        'users.user_id AS "id"',
+        'users.user_nickname AS "nickName"',
+        'users.user_image AS "image"',
+      ])
+      .leftJoin('users.friend', 'friend', 'friend.userId = :user_id', {user_id})
+      .leftJoin('users.blocklist', 'block', 'block.userId = :user_id', {
+        user_id,
+      })
       .where('users.user_nickname like :nickname', {
         nickname: `${user_nickname}%`,
       })
-      .getMany();
+      .andWhere('users.user_id != :user_id', {user_id})
+      .andWhere('block.userId is null')
+      .andWhere('friend.userId is null')
+      .orderBy('user_nickname')
+      .getRawMany();
 
-    users.forEach(user => {
-      if (user.user_id !== user_id) {
-        ret.push({
-          id: user.user_id,
-          nickName: user.user_nickname,
-          image: user.user_image,
-        });
-      }
-    });
-    return ret;
+    return users;
   }
 
-  // MEMO: 친구 목록에서 차단 유저를 필터링 하는 방식으로 변경하였습니다.
   async getFriendList(user_id: string) {
     const ret = await this.friendListRepository
       .createQueryBuilder('friendList')
@@ -432,17 +443,10 @@ export class ChatService {
     return users;
   }
 
-  // MEMO: tester3이 tester2를 차단했을때 tester2가 아닌 tester3을 반환하는 문제가 있었습니다
   async getBlockList(user_id: string) {
     if (!user_id) {
       throw new BadRequestException('empty user_id param.');
     }
-    //   const block_list = await this.blockRepository
-    //   .createQueryBuilder('block')
-    //   .select(['user_id', 'user_nickname', 'user_image'])
-    //   .innerJoin('block.user', 'users')
-    //   .where('block.userId = :user_id', {user_id})
-    //   .getRawMany();
 
     const block_list = await this.blockRepository
       .createQueryBuilder('block')
@@ -454,16 +458,6 @@ export class ChatService {
       .innerJoin('block.blockUser', 'users', 'block.blockId = users.user_id')
       .where('block.userId = :user_id', {user_id})
       .getRawMany();
-
-    // const ret: UserInfo[] = [];
-    // block_list.forEach(e => {
-    //   const temp: UserInfo = {
-    //     id: e.user_id,
-    //     nickName: e.user_nickname,
-    //     image: e.user_image,
-    //   };
-    //   ret.push(temp);
-    // });
 
     return block_list;
   }

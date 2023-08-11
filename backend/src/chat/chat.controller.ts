@@ -78,9 +78,12 @@ export class ChatController {
     return member;
   }
 
-  @Get('user/:user_nickname')
-  async getLoginUser(@Param('user_nickname') user_nickname: string) {
-    const member = await this.chatService.getLoginUser(user_nickname);
+  @Get('user/:user_nickname/:user_id')
+  async getLoginUser(
+    @Param('user_nickname') user_nickname: string,
+    @Param('user_id') user_id: string
+  ) {
+    const member = await this.chatService.getLoginUser(user_nickname, user_id);
     return member;
   }
 
