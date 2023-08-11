@@ -8,7 +8,7 @@ import * as fs from 'fs';
 export class MulterConfigService implements MulterOptionsFactory {
   dirPath: string;
   constructor() {
-    this.dirPath = path.join(__dirname, '..', '..', 'assets', 'users');
+    this.dirPath = path.join(__dirname, '..', '..', '..', 'assets', 'users');
     this.mkdir();
   }
 

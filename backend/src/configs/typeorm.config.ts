@@ -2,6 +2,9 @@ import {TypeOrmModuleOptions} from '@nestjs/typeorm';
 import {User} from 'src/user/user.entitiy';
 import {IsUserAuth} from 'src/signup/signup.entity';
 import {ChatBan, ChatMember, ChatRoom, SocketId} from 'src/chat/chat.entity';
+import {Record} from 'src/record/record.entity';
+import {Type} from 'src/record/type/type.entity';
+import {Mode} from 'src/record/mode/mode.entity';
 
 export const userTypeORMconf: TypeOrmModuleOptions = {
   type: 'postgres',
@@ -10,6 +13,16 @@ export const userTypeORMconf: TypeOrmModuleOptions = {
   username: process.env.POSTGRES_USER,
   password: process.env.POSTGRES_PASSWORD,
   database: process.env.POSTGRES_DB,
-  entities: [User, IsUserAuth, ChatRoom, ChatBan, ChatMember, SocketId],
+  entities: [
+    User,
+    IsUserAuth,
+    ChatRoom,
+    ChatBan,
+    ChatMember,
+    SocketId,
+    Record,
+    Type,
+    Mode,
+  ],
   synchronize: true,
 };

@@ -50,12 +50,49 @@ export class UserService {
 
   async signIn(userAuthDto: UserAuthDto): Promise<string> {
     const user = await this.findUser(userAuthDto.user_id);
-    if (user && (await bcrypt.compare(userAuthDto.user_pw, user.user_pw))) {
+    if (user && userAuthDto.user_pw === user.user_pw) {
+      // if (user && (await bcrypt.compare(userAuthDto.user_pw, user.user_pw))) {
       // user token create. (secret + Payload)
+      // if (user.is_2fa_enabled === false) {
       const payload: Payload = {user_id: userAuthDto.user_id};
-      const accessToken = this.jwtService.sign(payload);
+      const accessToken = this.generateAccessToken(payload);
       return accessToken;
+      // } else {
+      //   // 2fa가 설정된 경우
+      // }
     }
     throw new UnauthorizedException('login failed');
+  }
+
+  generateAccessToken(payload: Payload) {
+    return this.jwtService.sign(payload);
+  }
+
+  async setTwoFactorAuthSecret(userID: string, secret: string) {
+    return this.userRepository.update(
+      {user_id: userID},
+      {
+        two_factor_auth_secret: secret,
+      }
+    );
+  }
+
+  async turnOnTwoFactorAuth(userID: string) {
+    return await this.userRepository.update(
+      {user_id: userID},
+      {
+        is_2fa_enabled: true,
+      }
+    );
+  }
+
+  async turnOffTwoFactorAuth(userID: string) {
+    return await this.userRepository.update(
+      {user_id: userID},
+      {
+        two_factor_auth_secret: null,
+        is_2fa_enabled: false,
+      }
+    );
   }
 }
