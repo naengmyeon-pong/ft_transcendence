@@ -50,17 +50,17 @@ export class RecordService {
     const user = await this.userRepository.findOneBy({user_id: userID});
     const win: number = await this.recordRepository.count({
       where: {
-        winner_id: userID,
+        winner: userID,
       },
     });
     const lose: number = await this.recordRepository.count({
       where: {
-        loser_id: userID,
+        loser: userID,
       },
     });
     const forfeit: number = await this.recordRepository.count({
       where: {
-        loser_id: userID,
+        loser: userID,
         is_forfeit: true,
       },
     });
@@ -97,8 +97,8 @@ export class RecordService {
     };
 
     recentGames.forEach((record, idx) => {
-      const {winner_id} = record;
-      if (winner_id === userID) {
+      const {winner} = record;
+      if (winner === userID) {
         recentRecord[idx] = '승';
       } else {
         recentRecord[idx] = '패';
@@ -128,12 +128,33 @@ export class RecordService {
     //   },
     // });
     const skip = (pageNo - 1) * pageSize;
-    const [result, total] = await this.recordRepository.findAndCount({
-      where: [{winner_id: userID}, {loser_id: userID}],
+    // const record = await this.recordRepository.
+    const result = await this.recordRepository.find({
+      // relations: {
+      //   winner: true,
+      // },
+      where: [{winner: userID}, {loser: userID}],
       order: {id: 'DESC'},
       take: pageSize,
       skip: skip,
     });
+    // result.forEach((value) => {
+    //   await this.userRepository.findOneBy(value.winner)
+    // });
+
     return result;
   };
+
+  PostTest(winner: string, loser: string) {
+    const record = this.recordRepository.create({
+      winner,
+      loser,
+      winner_score: 5,
+      loser_score: 5,
+      is_forfeit: false,
+      game_mode: 1,
+      game_type: 1,
+    });
+    this.recordRepository.save(record);
+  }
 }

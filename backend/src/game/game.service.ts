@@ -207,30 +207,30 @@ export class GameService {
     isForfeit: boolean,
     socketID: string | null
   ) => {
-    const [winner_id, loser_id, loser_score] = this.findRecordData(
+    const [winner, loser, loser_score] = this.findRecordData(
       roomInfo,
       isForfeit,
       socketID
     );
     if (isForfeit === true) {
       // 몰수패인 경우
-      this.setRoomInfoScore(roomInfo, winner_id);
+      this.setRoomInfoScore(roomInfo, winner);
     }
     const [type, mode] = this.getTypeModeName(roomInfo.type_mode);
     const {game_type, game_mode} = await this.getTypeModeID(type, mode);
     const record = this.recordRepository.create({
       game_type,
       game_mode,
-      winner_id,
-      loser_id,
+      winner,
+      loser,
       winner_score: 5,
       loser_score,
       is_forfeit: isForfeit,
     });
     await this.recordRepository.save(record);
     if (type === 'rank') {
-      await this.saveRankScore(winner_id, true);
-      await this.saveRankScore(loser_id, false);
+      await this.saveRankScore(winner, true);
+      await this.saveRankScore(loser, false);
     }
   };
 
@@ -301,8 +301,8 @@ export class GameService {
     return [winnerID, loserID, loser_score];
   };
 
-  setRoomInfoScore = (roomInfo: RoomInfo, winner_id: string) => {
-    const winnerLeft = this.isWinnerLeft(roomInfo, winner_id);
+  setRoomInfoScore = (roomInfo: RoomInfo, winner: string) => {
+    const winnerLeft = this.isWinnerLeft(roomInfo, winner);
     if (winnerLeft === true) {
       roomInfo.game_info.leftScore = 5;
       roomInfo.game_info.rightScore = 0;
@@ -312,8 +312,8 @@ export class GameService {
     }
   };
 
-  isWinnerLeft = (roomInfo: RoomInfo, winner_id: string): boolean => {
-    if (winner_id === roomInfo.users[0].user_id) {
+  isWinnerLeft = (roomInfo: RoomInfo, winner: string): boolean => {
+    if (winner === roomInfo.users[0].user_id) {
       return true;
     }
     return false;

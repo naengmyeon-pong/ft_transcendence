@@ -17,7 +17,7 @@ export class RecordRepository extends Repository<Record> {
   }
   async getRecentGames(userID: string, limit: number): Promise<Record[]> {
     return this.createQueryBuilder('record')
-      .where('record.winner_id = :userID OR record.loser_id = :userID', {
+      .where('record.winner = :userID OR record.loser = :userID', {
         userID,
       })
       .orderBy('record.date', 'DESC')

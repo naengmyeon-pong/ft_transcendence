@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  Post,
   Query,
   ValidationPipe,
 } from '@nestjs/common';
@@ -35,7 +36,7 @@ export class RecordController {
     return await this.recordService.getSimpleRecord(userID);
   }
 
-  @Get('detail')
+  @Get('/detail')
   async getDetailRecord(
     @Query('id') userID: string,
     @Query('page') pageNo: number,
@@ -52,5 +53,14 @@ export class RecordController {
       pageNo,
       pageSize
     );
+  }
+
+  @Post('/test')
+  async PostTest(
+    @Query('winner') winner: string,
+    @Query('loser') loser: string
+  ) {
+    this.recordService.PostTest(winner, loser);
+    console.log('winner: ', winner, '\nloser: ', loser);
   }
 }

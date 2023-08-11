@@ -1,17 +1,26 @@
-import {Column, Entity, ManyToOne, PrimaryGeneratedColumn} from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import {Mode} from './mode/mode.entity';
 import {Type} from './type/type.entity';
+import {User} from 'src/user/user.entitiy';
 
 @Entity('game_record')
 export class Record {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  winner_id: string;
+  @ManyToOne(() => User, user_id => user_id.win_records)
+  @JoinColumn({name: 'winnerId'})
+  winner: string;
 
-  @Column()
-  loser_id: string;
+  @ManyToOne(() => User, user_id => user_id.lose_records)
+  @JoinColumn({name: 'loserId'})
+  loser: string;
 
   @Column({default: 0})
   winner_score: number;

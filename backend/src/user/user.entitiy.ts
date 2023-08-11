@@ -1,4 +1,5 @@
 import {BlockList, ChatBan, ChatMember, FriendList} from 'src/chat/chat.entity';
+import {Record} from 'src/record/record.entity';
 import {
   Column,
   Entity,
@@ -45,4 +46,10 @@ export class User {
 
   @Column({nullable: true})
   two_factor_auth_secret: string;
+
+  @OneToMany(() => Record, record => record.winner)
+  win_records: Record[];
+
+  @OneToMany(() => Record, record => record.loser)
+  lose_records: Record[];
 }
