@@ -1,10 +1,14 @@
 import {atom} from 'recoil';
-import {profileImage} from '@/types/ProfileImage';
+import {recoilPersist} from 'recoil-persist';
+import {ProfileImage} from '@/types/ProfileImage';
 
-export const profileImageState = atom<profileImage>({
+const {persistAtom} = recoilPersist();
+
+export const profileImageState = atom<ProfileImage>({
   key: 'profileImage',
   default: {
     uploadFile: null,
     userId: '',
   },
+  effects_UNSTABLE: [persistAtom],
 });
