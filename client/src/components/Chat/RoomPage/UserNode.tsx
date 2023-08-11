@@ -1,3 +1,4 @@
+'use client';
 import {Menu, MenuItem, Typography} from '@mui/material';
 import React, {useContext} from 'react';
 import ServiceModal from './modal/ServiceModal';

@@ -1,3 +1,4 @@
+'use client';
 import {Avatar, Box, Button, TextField, Typography} from '@mui/material';
 import React, {
   ChangeEvent,

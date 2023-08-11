@@ -16,7 +16,7 @@ export default function MyApp({Component, pageProps}: AppProps) {
   const isUserRoute = router.pathname.startsWith('/user');
 
   // Check if the current route starts with '/main'
-  const isMainRoute = router.pathname.startsWith('/main/game');
+  const isMainRoute = router.pathname.startsWith('/main');
 
   return (
     <RecoilRoot>

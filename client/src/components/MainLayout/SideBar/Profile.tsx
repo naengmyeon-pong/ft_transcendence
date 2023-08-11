@@ -9,7 +9,7 @@ export default function Profile() {
 
   const {user_nickname} = useContext(UserContext);
   const {user_image} = useContext(UserContext);
-
+  console.log('user_image: ', user_image);
   return (
     <Box
       sx={{
@@ -23,10 +23,7 @@ export default function Profile() {
     >
       <Box display="flex">
         {/* <Typography variant="h6" noWrap component="p"> */}
-        <Avatar
-          src={`${process.env.NEXT_PUBLIC_BACKEND_SERVER}/${user_image}`}
-          alt="프로필사진"
-        />
+        <Avatar src={`${user_image}`} alt="프로필사진" />
         {/* </Typography> */}
         <Box sx={{px: '10px'}}>
           <Typography variant="h6">{user_nickname}</Typography>

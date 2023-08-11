@@ -50,7 +50,7 @@ function CustomAppBar() {
   const [notificates, setNotificates] = useState<Notificate[]>([]);
   const [read_notificate, setReadNotificate] = useState<boolean>(false);
   const {socket, setConvertPage} = useContext(UserContext);
-  const navigate = useRouter();
+  const router = useRouter();
 
   const handleOpenOtherMenu = (event: MouseEvent<HTMLElement>) => {
     setAnchorElOther(event.currentTarget);
@@ -86,7 +86,7 @@ function CustomAppBar() {
   function handleSendRoom(row: Notificate, index: number) {
     notificates.splice(index, 1);
     setConvertPage(Number(row.room_id));
-    navigate.push('/menu/chat');
+    router.push('/menu/chat');
   }
 
   return (

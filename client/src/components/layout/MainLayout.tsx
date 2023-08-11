@@ -39,14 +39,14 @@ function MainLayout({children}: MainLayoutProps) {
         setUserId(response.data.user_id);
         setUserNickName(response.data.user_nickname);
         setUserImage(`${response.data.user_image}`);
-        // const socketIo = io(`${process.env.NEXT_PUBLIC_BACKEND_SERVER}/pong`, {
-        //   query: {
-        //     user_id: response.data.user_id,
-        //     nickname: response.data.user_nickname,
-        //     user_image: `${response.data.user_image}`,
-        //   },
-        // });
-        // setSocket(socketIo);
+        const socketIo = io(`${process.env.NEXT_PUBLIC_BACKEND_SERVER}/pong`, {
+          query: {
+            user_id: response.data.user_id,
+            nickname: response.data.user_nickname,
+            user_image: `${response.data.user_image}`,
+          },
+        });
+        setSocket(socketIo);
 
         const rep = await apiManager.get(
           `/chatroom/block_list/${response.data.user_id}`
@@ -58,11 +58,8 @@ function MainLayout({children}: MainLayoutProps) {
         router.push('/');
         console.log('MainLayout error: ', error);
       }
-      console.log('셋팅종료');
     })();
   }, []);
-  console.log('init: ', initMainLayout);
-  console.log('mainL: ', user_image);
   return (
     <>
       {initMainLayout && (
