@@ -176,7 +176,8 @@ export default function Signup() {
               id="intraId"
               name="intraId"
               label="Intra ID"
-              defaultValue={userId}
+              InputLabelProps={{shrink: true}}
+              value={userId}
               variant="filled"
             />
           </Grid>
