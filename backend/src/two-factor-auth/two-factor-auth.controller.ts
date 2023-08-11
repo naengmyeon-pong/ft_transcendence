@@ -4,6 +4,7 @@ import {
   Controller,
   InternalServerErrorException,
   Post,
+  Query,
   Request,
   Res,
   UnauthorizedException,
@@ -13,7 +14,7 @@ import {
 } from '@nestjs/common';
 import {TwoFactorAuthService} from './two-factor-auth.service';
 import {AuthGuard} from '@nestjs/passport';
-import {UserDto} from 'src/user/dto/user.dto';
+import {UserDto} from '@/user/dto/user.dto';
 import {Response} from 'express';
 import {TwoFactorAuthCodeDto} from './dto/two-factor-auth-code.dto';
 import {JwtService} from '@nestjs/jwt';
@@ -27,10 +28,19 @@ export class TwoFactorAuthController {
 
   @Post('generate')
   // @UseGuards(AuthGuard('signup'))
-  async register(@Res() res: Response, @Body(ValidationPipe) userDto: UserDto) {
-    const {otpAuthUrl} =
-      await this.twoFactorAuthService.generateTwoFactorAuthSecret(userDto);
-    return await this.twoFactorAuthService.pipeQRCodeStream(res, otpAuthUrl);
+  async register(
+    @Res() res: Response,
+    @Body() user_id: string
+    // @Body(ValidationPipe) userDto: Partial<UserDto>
+  ) {
+    try {
+      const {otpAuthUrl} =
+        await this.twoFactorAuthService.generateTwoFactorAuthSecret(user_id);
+      return await this.twoFactorAuthService.pipeQRCodeStream(res, otpAuthUrl);
+    } catch {
+      this.twoFactorAuthService.changeTwoFactorAuthAvailability(user_id, false);
+      throw new InternalServerErrorException();
+    }
   }
 
   @Post('turn-on')
