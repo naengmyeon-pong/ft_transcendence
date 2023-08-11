@@ -147,6 +147,10 @@ export default function Signup() {
       });
       console.log(response);
       if (HTTP_STATUS.CREATED) {
+        openAlertSnackbar({
+          message: '회원가입이 정상적으로 완료되었습니다.',
+          severity: 'success',
+        });
         router.push('/user/login');
       }
     } catch (error) {
