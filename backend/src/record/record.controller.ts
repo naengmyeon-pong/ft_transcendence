@@ -55,12 +55,12 @@ export class RecordController {
     );
   }
 
-  @Post('/test')
-  async PostTest(
+  @Get('/test')
+  async getTest(
     @Query('winner') winner: string,
     @Query('loser') loser: string
   ) {
-    this.recordService.PostTest(winner, loser);
+    this.recordService.getTest(winner, loser);
     console.log('winner: ', winner, '\nloser: ', loser);
   }
 }

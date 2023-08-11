@@ -48,19 +48,28 @@ export class RecordService {
 
   getSimpleRecord = async (userID: string): Promise<SimpleRecordDto> => {
     const user = await this.userRepository.findOneBy({user_id: userID});
-    const win: number = await this.recordRepository.count({
-      where: {
-        winner: userID,
-      },
-    });
-    const lose: number = await this.recordRepository.count({
-      where: {
-        loser: userID,
-      },
-    });
+    // const win: number = await this.recordRepository.count({
+    //   where: {
+    //     winner: userID,
+    //   },
+    // });
+    console.log('user: ', userID);
+    let win = 0,
+      lose = 0;
+    if (user.win_records) {
+      win = user.win_records.length;
+    }
+    if (user.lose_records) {
+      lose = user.lose_records.length;
+    }
+    // const lose: number = await this.recordRepository.count({
+    //   where: {
+    //     loser: userID,
+    //   },
+    // });
     const forfeit: number = await this.recordRepository.count({
       where: {
-        loser: userID,
+        loserId: userID,
         is_forfeit: true,
       },
     });
@@ -145,12 +154,12 @@ export class RecordService {
     return result;
   };
 
-  PostTest(winner: string, loser: string) {
+  getTest(winner: string, loser: string) {
     const record = this.recordRepository.create({
-      winner,
-      loser,
+      winnerId: winner,
+      loserId: loser,
       winner_score: 5,
-      loser_score: 5,
+      loser_score: 0,
       is_forfeit: false,
       game_mode: 1,
       game_type: 1,

@@ -14,6 +14,12 @@ export class Record {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column()
+  winnerId: string;
+
+  @Column()
+  loserId: string;
+
   @ManyToOne(() => User, user_id => user_id.win_records)
   @JoinColumn({name: 'winnerId'})
   winner: string;
