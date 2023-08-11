@@ -70,7 +70,7 @@ export class UserController {
   }
 
   @Get('/user-info')
-  // @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'))
   getUserInfo(@Request() req): Promise<string> {
     return req.user;
   }

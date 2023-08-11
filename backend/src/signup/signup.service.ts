@@ -139,12 +139,15 @@ export class SignUpService {
     }
 
     try {
+      // MEMO: 42이미지, 서버에서 저장하는 이미지가 따로 존재하므로 서버 주소를 붙여야 할듯 싶습니다
       const user = this.userRepository.create({
         user_id,
         user_pw: user_pw,
         // user_pw: hashedPassword,
         user_nickname,
-        user_image: file ? file.path.substr(11) : '/images/logo.jpeg',
+        user_image: file
+          ? file.path.substr(11)
+          : `${process.env.NEXT_PUBLIC_BACKEND_SERVER}/images/logo.jpeg`,
         is_2fa_enabled,
       });
       await this.userRepository.save(user);

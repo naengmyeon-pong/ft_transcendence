@@ -31,7 +31,7 @@ function LoginPage() {
       const response = await apiManager.post('/user/signin', data);
       console.log(response.data);
       sessionStorage.setItem('accessToken', response.data);
-      router.push('/game');
+      router.push('/main/game');
     } catch (error) {
       console.log(error);
     }

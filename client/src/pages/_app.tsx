@@ -7,6 +7,7 @@ import AlertSnackbar from '@/components/AlertSnackbar';
 import GlobalDialog from '@/components/GlobalDialog';
 import UserLayout from '@/components/layout/UserLayout';
 import MainLayout from '@/components/layout/MainLayout';
+import {UserProvider} from '@/components/MainLayout/Context';
 
 export default function MyApp({Component, pageProps}: AppProps) {
   const router = useRouter();
@@ -15,7 +16,7 @@ export default function MyApp({Component, pageProps}: AppProps) {
   const isUserRoute = router.pathname.startsWith('/user');
 
   // Check if the current route starts with '/main'
-  const isMainRoute = router.pathname.startsWith('/main');
+  const isMainRoute = router.pathname.startsWith('/main/game');
 
   return (
     <RecoilRoot>
@@ -25,9 +26,11 @@ export default function MyApp({Component, pageProps}: AppProps) {
         </UserLayout>
       )}
       {isMainRoute && (
-        <MainLayout>
-          <Component {...pageProps} />
-        </MainLayout>
+        <UserProvider>
+          <MainLayout>
+            <Component {...pageProps} />
+          </MainLayout>
+        </UserProvider>
       )}
       <GlobalDialog />
       <AlertSnackbar />

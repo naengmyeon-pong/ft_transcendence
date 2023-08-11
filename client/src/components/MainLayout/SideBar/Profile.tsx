@@ -1,32 +1,14 @@
 'use client';
-
-import {useState, useEffect} from 'react';
-
+import React, {useContext} from 'react';
 import {Avatar, Box, Typography} from '@mui/material';
-
-import apiManager from '@/api/apiManager';
+import {UserContext} from '../Context';
 
 // TODO: 닉네임, 랭크, 사진 변경필요합니다
 export default function Profile() {
   const rankNum = '랭크점수: 1000';
 
-  const [nickname, setNickname] = useState('');
-  const [userImage, setUserImage] = useState('');
-
-  useEffect(() => {
-    (async () => {
-      try {
-        console.log('hello');
-        const response = await apiManager.get('/user/user-info');
-        console.log(response);
-        const {user_nickname, user_image} = response.data;
-        setNickname(user_nickname);
-        setUserImage(`http://localhost:3001/${user_image}`);
-      } catch (error) {
-        console.log(error);
-      }
-    })();
-  }, []);
+  const {user_nickname} = useContext(UserContext);
+  const {user_image} = useContext(UserContext);
 
   return (
     <Box
@@ -41,10 +23,13 @@ export default function Profile() {
     >
       <Box display="flex">
         {/* <Typography variant="h6" noWrap component="p"> */}
-        <Avatar src={userImage} alt="프로필사진" />
+        <Avatar
+          src={`${process.env.NEXT_PUBLIC_BACKEND_SERVER}/${user_image}`}
+          alt="프로필사진"
+        />
         {/* </Typography> */}
         <Box sx={{px: '10px'}}>
-          <Typography variant="h6">{nickname}</Typography>
+          <Typography variant="h6">{user_nickname}</Typography>
           <Typography variant="h6" sx={{fontSize: '1em'}}>
             {rankNum}
           </Typography>
