@@ -18,7 +18,7 @@ export class ChatController {
     description: `정상적으로 채팅방 목록을 받아온 경우
     다른 status code는 없고, 없으면 빈 배열을 반환한다.`,
   })
-  @Get('room_list') // http://localhost:3001/chatroom/room_list
+  @Get('room_list')
   async getRoomList() {
     return await this.chatService.getRoomList();
   }
@@ -37,7 +37,7 @@ export class ChatController {
     description: `정상적으로 채팅방 유저 목록을 받아온 경우
     다른 status는 없고, 잘못된 방에 접근하면 빈 객체가 반환될 것이다.`,
   })
-  @Get('room_members') // http://localhost:3001/chatroom/room_members
+  @Get('room_members')
   async getRoomMembers(@Query('room_id') room_id: number) {
     return await this.chatService.getRoomMembers(room_id);
   }
@@ -62,12 +62,17 @@ export class ChatController {
     status: 409,
     description: '채팅방을 생성하는 유저가 이미 다른 채팅방의 owner인 경우',
   })
-  @Post('create_room') //http://localhost:3001/chatroom/create_room
+  @Post('create_room')
   async createRoom(@Body() roomDto: RoomDto) {
     return await this.chatService.createRoom(roomDto);
   }
 
-  @Get('join_room') //http://localhost:3001/chatroom/join_room?room_id=id
+  @ApiOperation({
+    summary: '채팅방 존재 여부 확인 API',
+    description: `채팅방에 입장하기 전에, 해당 채팅방이 존재하는지 확인한다.
+    채팅방 목록이 자동으로 새로고침 되는 것이 아니기 때문에 입장 전에 확인이 필요하다.`,
+  })
+  @Get('join_room')
   async getRoom(@Query('room_id') room_id: number) {
     return await this.chatService.getRoom(room_id);
   }
@@ -114,6 +119,14 @@ export class ChatController {
     @Body('password') password: number
   ): Promise<boolean> {
     return await this.chatService.checkChatRoomPw(room_id, password);
+  }
+
+  @Post('update_chatroom_pw')
+  async updateChatRoomPw(
+    @Body('room_id') room_id: number,
+    @Body('password') password?: number
+  ) {
+    return await this.chatService.updateChatRoomPw(room_id, password);
   }
 
   // http://localhost:3001/chatroom/search_user?user_id=tester1&user_nickname=nick =>이런식으로 사용

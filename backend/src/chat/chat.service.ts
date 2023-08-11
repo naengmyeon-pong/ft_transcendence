@@ -554,4 +554,14 @@ export class ChatService {
     }
     return false;
   }
+
+  async updateChatRoomPw(room_id: number, password?: number) {
+    const room = await this.getRoom(room_id);
+    if (password) {
+      room.password = password;
+    } else {
+      room.password = null;
+    }
+    await this.chatRoomRepository.save(room);
+  }
 }
