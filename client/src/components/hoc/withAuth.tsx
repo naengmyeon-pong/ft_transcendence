@@ -17,7 +17,7 @@ const withAuth = <P extends WithAuthProps>(
     useEffect(() => {
       const verifyToken = async () => {
         if (await isValidJwtToken()) {
-          router.push('/game');
+          router.push('/main/game');
         } else {
           sessionStorage.removeItem('accessToken');
           router.push('/user/login');
