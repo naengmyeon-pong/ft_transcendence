@@ -1,5 +1,5 @@
 export type GlobalDialogType = {
-  isOpen?: boolean;
+  isOpen: boolean;
   title: string;
   content: JSX.Element | null;
   contentText?: JSX.Element | string | null;

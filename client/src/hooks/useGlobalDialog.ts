@@ -13,7 +13,7 @@ export const useGlobalDialog = () => {
     });
   };
 
-  const openGlobalDialog = (globalDialogContent: GlobalDialogType) => {
+  const openGlobalDialog = (globalDialogContent: Partial<GlobalDialogType>) => {
     setGlobalDialogDataState(prev => {
       return {...prev, ...globalDialogContent, isOpen: true};
     });
