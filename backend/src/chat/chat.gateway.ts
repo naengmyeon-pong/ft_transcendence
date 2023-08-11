@@ -31,7 +31,7 @@ interface MutePayload {
 }
 
 @WebSocketGateway({
-  namespace: 'chat',
+  namespace: 'pong',
   cors: {
     origin: '*',
   },
@@ -66,7 +66,7 @@ export class ChatGateway
         console.log(e.message);
       }
     }
-    this.logger.log(`${socket.id} 소켓 연결`);
+    this.logger.log(`${socket.id} 채팅 소켓 연결`);
   }
 
   async handleDisconnect(@ConnectedSocket() socket: Socket) {
