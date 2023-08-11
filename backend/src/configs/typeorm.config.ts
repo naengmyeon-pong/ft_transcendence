@@ -9,6 +9,9 @@ import {
   DirectMessage,
   FriendList,
 } from 'src/chat/chat.entity';
+import {Record} from 'src/record/record.entity';
+import {Type} from 'src/record/type/type.entity';
+import {Mode} from 'src/record/mode/mode.entity';
 
 export const userTypeORMconf: TypeOrmModuleOptions = {
   type: 'postgres',
@@ -26,6 +29,9 @@ export const userTypeORMconf: TypeOrmModuleOptions = {
     BlockList,
     DirectMessage,
     FriendList,
+    Record,
+    Type,
+    Mode,
   ],
   synchronize: true,
   // logging: true,

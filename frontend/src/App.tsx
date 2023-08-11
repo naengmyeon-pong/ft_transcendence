@@ -14,6 +14,11 @@ import MainLayout from 'layout/MainLayout';
 import {UserProvider} from 'Context';
 import ChatPage from 'pages/ChatPage';
 
+import WaitingChannelRoom from './layout/Buffer/WaitingChannelRoom';
+import ChatList from './pages/ChatPage';
+
+import Game from './pages/GamePage';
+
 function App() {
   return (
     <>
@@ -31,6 +36,7 @@ function App() {
             <Route path="/menu/mainPage" element={<MainPage />} />
             <Route path="/menu/ranking" element={<Ranking />} />
             <Route path="/menu/chat" element={<ChatPage />} />
+            <Route path="/game" element={<Game />} />
           </Route>
           {/* 마이페이지 링크 추가 */}
           <Route path="*" element={<NotFoundPage />} />

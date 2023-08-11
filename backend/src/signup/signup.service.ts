@@ -31,16 +31,17 @@ export class SignUpService {
     const redirect_uri = process.env.INTRA_API_REDIRECT_URI;
 
     const tokenUrl = `${api_token_uri}?grant_type=${grant_type}&client_id=${client_uid}&client_secret=${client_secret}&code=${code}&redirect_uri=${redirect_uri}`;
-    const response = await axios({
-      method: 'post',
-      url: tokenUrl,
-    });
-    if (!response) {
+    try {
+      const response = await axios({
+        method: 'post',
+        url: tokenUrl,
+      });
+      return response.data.access_token;
+    } catch (error) {
       throw new BadRequestException(
-        'code is not validated! please check code!'
+        '유효하지 않은 로그인 정보입니다. 다시 시도해주세요.'
       );
     }
-    return response.data.access_token;
   }
 
   async getUserData(code: string): Promise<string> {
@@ -124,7 +125,7 @@ export class SignUpService {
       throw new BadRequestException('enter your ID');
     }
     const salt = await bcrypt.genSalt();
-    const hashedPassword = await bcrypt.hash(user_pw, salt);
+    // const hashedPassword = await bcrypt.hash(user_pw, salt);
     const userSignUpAuth = await this.userAuthRepository.findOneBy({user_id});
     if (!userSignUpAuth || userSignUpAuth.is_nickname_same === false) {
       if (!file) {
@@ -140,7 +141,8 @@ export class SignUpService {
     try {
       const user = this.userRepository.create({
         user_id,
-        user_pw,
+        user_pw: user_pw,
+        // user_pw: hashedPassword,
         user_nickname,
         user_image: file ? file.path.substr(11) : '/images/logo.jpeg',
         is_2fa_enabled,

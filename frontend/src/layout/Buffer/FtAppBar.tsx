@@ -202,7 +202,7 @@ function FtAppBar() {
             />
           </Typography>
           <Box sx={{flexGrow: 1, display: {xs: 'none', sm: 'flex'}}}>
-            <Link to="/menu/mainPage">
+            <Link to="/game">
               <Button>게임하기</Button>
             </Link>
             <Link to="/menu/ranking">

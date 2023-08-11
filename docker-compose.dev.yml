@@ -1,18 +1,18 @@
-version: '3'
+version: "3"
 
 services:
   frontend:
     container_name: frontend
     build:
-      context: ./frontend
-      dockerfile: Dockerfile.dev
-    image: frontend
+      context: ./client
+      dockerfile: ./Dockerfile.dev
+    image: client
     ports:
       - 3000:3000
     restart: on-failure:3
     volumes:
-      # - /app/node_modules
-      - ./frontend:/app
+      - ./client:/app
+      - ./types:/app/types
     env_file:
       - .env
     networks:
@@ -30,6 +30,8 @@ services:
       - .env
     networks:
       - naengmyeon_pong_network
+    environment:
+      TZ: "Asia/Seoul"
 
   pgadmin:
     container_name: pgadmin
@@ -48,7 +50,7 @@ services:
     container_name: backend
     build:
       context: ./backend
-      dockerfile: Dockerfile.dev
+      dockerfile: ./Dockerfile.dev
     image: backend
     ports:
       - 3001:3001
@@ -56,8 +58,8 @@ services:
     depends_on:
       - db
     volumes:
-      # - /app/node_modules
       - ./backend:/app
+      - ./types:/app/types
     env_file:
       - .env
     networks:
