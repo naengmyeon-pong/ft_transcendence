@@ -11,8 +11,8 @@ import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
 
 import apiManager from '@/api/apiManager';
-
 import logo from '@/public/logo.jpeg';
+import withAuth from '@/components/hoc/withAuth';
 import Svg42Logo from '@/components/Svg42Logo';
 
 function LoginPage() {
@@ -31,7 +31,7 @@ function LoginPage() {
       const response = await apiManager.post('/user/signin', data);
       console.log(response.data);
       sessionStorage.setItem('accessToken', response.data);
-      router.push('/main');
+      router.push('/game');
     } catch (error) {
       console.log(error);
     }
@@ -106,4 +106,4 @@ function LoginPage() {
   );
 }
 
-export default LoginPage;
+export default withAuth(LoginPage);
