@@ -72,17 +72,51 @@ export class ChatController {
     description: `채팅방에 입장하기 전에, 해당 채팅방이 존재하는지 확인한다.
     채팅방 목록이 자동으로 새로고침 되는 것이 아니기 때문에 입장 전에 확인이 필요하다.`,
   })
+  @ApiResponse({
+    status: 200,
+    description: '채팅방이 존재하는 경우',
+  })
+  @ApiResponse({
+    status: 404,
+    description: '채팅방이 존재하지 않는 경우',
+  })
   @Get('join_room')
   async getRoom(@Query('room_id') room_id: number) {
     return await this.chatService.getRoom(room_id);
   }
 
+  @ApiOperation({
+    summary: '접속중인 유저 목록 조회 API',
+    description: '현재 로그인 한 유저들의 목록을 가져옵니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '로그인 유저 목록을 잘 가져온 경우',
+  })
   @Get('users')
   getLoginUsers() {
     const member = this.chatService.getLoginUsers();
     return member;
   }
 
+  // 함수 이름 변경 필요함.
+  @ApiOperation({
+    summary: '채팅방 초대를 위한 유저 검색 API',
+    description: `채팅방에 유저를 초대하기 위해 검색합니다.
+    현재 접속중인 유저 중, 다른 채팅방에 접속중이지 않고 차단목록에 존재하지 않는 유저 목록을 가져옵니다.`,
+  })
+  @ApiResponse({
+    status: 200,
+    description: '주어진 닉네임과 비슷한 유저 목록을 잘 가져온 경우',
+  })
+  @ApiResponse({
+    status: 400,
+    description: '검색에 필요한 닉네임이 비어있는 경우',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'db 조회에 오류가 발생한 경우',
+  })
   @Get('user/:user_nickname/:user_id')
   async getLoginUser(
     @Param('user_nickname') user_nickname: string,
@@ -92,6 +126,18 @@ export class ChatController {
     return member;
   }
 
+  @ApiOperation({
+    summary: '저장되어있는 dm을 불러오는 API',
+    description: '특정 유저와의 dm데이터를 불러옵니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'dm데이터를 정상적으로 불러온 경우',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'db 조회에 오류가 발생한 경우',
+  })
   @Get('dm')
   async getDirectMessage(
     @Query('user_id') user_id: string,
@@ -101,11 +147,35 @@ export class ChatController {
     return dm;
   }
 
+  @ApiOperation({
+    summary: 'dm 목록을 불러오는 API',
+    description: '해당 유저가 dm을 보냈던 유저들의 목록을 불러옵니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'dm목록을 정상적으로 불러온 경우',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'db 조회에 오류가 발생한 경우',
+  })
   @Get('dm_list')
   async getDMList(@Query('user_id') user_id: string) {
     return await this.chatService.directMessageList(user_id);
   }
 
+  @ApiOperation({
+    summary: '차단 유저 목록을 불러오는 API',
+    description: '차단한 유저의 목록을 불러옵니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'dm데이터를 정상적으로 불러온 경우',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'db 조회에 오류가 발생한 경우',
+  })
   @Get('block_list/:user_id')
   async getBlockList(@Param('user_id') user_id: string) {
     return await this.chatService.getBlockList(user_id);
