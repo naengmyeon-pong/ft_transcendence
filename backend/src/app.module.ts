@@ -37,11 +37,11 @@ import {RecordModule} from './record/record.module';
     }),
     ServeStaticModule.forRoot(
       {
-        rootPath: join(__dirname, '..', 'assets'),
+        rootPath: join(__dirname, '../../', 'assets'),
         renderPath: '/images',
       },
       {
-        rootPath: join(__dirname, '..', 'assets'),
+        rootPath: join(__dirname, '../../', 'assets'),
         renderPath: '/users',
       }
     ),
@@ -57,4 +57,8 @@ import {RecordModule} from './record/record.module';
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule {
+  constructor() {
+    console.log('__dirname: ', __dirname);
+  }
+}

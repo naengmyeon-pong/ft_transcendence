@@ -9,7 +9,6 @@ export default function Profile() {
 
   const {user_nickname} = useContext(UserContext);
   const {user_image} = useContext(UserContext);
-  console.log('user_image: ', user_image);
   return (
     <Box
       sx={{
