@@ -104,7 +104,7 @@ export class RecordService {
     userID: string,
     pageNo: number,
     pageSize: number
-  ): Promise<Record[] | null> => {
+  ): Promise<Record[]> => {
     if (!userID || typeof userID !== 'string' || isNaN(pageNo)) {
       throw new BadRequestException('Invalid request format');
     }
