@@ -6,6 +6,7 @@ import {
   MinLength,
 } from 'class-validator';
 import {ApiProperty} from '@nestjs/swagger';
+import {Transform} from 'class-transformer';
 
 export class UserDto {
   @ApiProperty({
@@ -52,6 +53,9 @@ export class UserDto {
     example: 'false',
     description: '2차 인증 사용 여부',
     required: false,
+  })
+  @Transform(value => {
+    return value.value === 'true' ? true : false;
   })
   is_2fa_enabled: boolean;
 }

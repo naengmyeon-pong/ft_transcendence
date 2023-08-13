@@ -147,15 +147,22 @@ export default function Signup() {
       });
       console.log(response);
       if (HTTP_STATUS.CREATED) {
-        openAlertSnackbar({
-          message: '회원가입이 정상적으로 완료되었습니다.',
-          severity: 'success',
-        });
-        router.push('/user/login');
+        if (is2faEnabled) {
+          router.push('/user/2fa');
+        } else {
+          openAlertSnackbar({
+            message: '회원가입이 정상적으로 완료되었습니다.',
+            severity: 'success',
+          });
+          router.push('/user/login');
+        }
       }
     } catch (error) {
       console.log(error);
       if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          console.log('401');
+        }
         openAlertSnackbar({message: error.response?.data.message});
       }
     }
