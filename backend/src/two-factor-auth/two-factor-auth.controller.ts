@@ -1,3 +1,4 @@
+import {UserRepository} from './../user/user.repository';
 import {
   Body,
   ClassSerializerInterceptor,
@@ -18,21 +19,19 @@ import {UserDto} from '@/user/dto/user.dto';
 import {Response} from 'express';
 import {TwoFactorAuthCodeDto} from './dto/two-factor-auth-code.dto';
 import {JwtService} from '@nestjs/jwt';
+import * as bcrypt from 'bcryptjs';
 
 @Controller('2fa')
 @UseInterceptors(ClassSerializerInterceptor)
 export class TwoFactorAuthController {
   constructor(
-    private readonly twoFactorAuthService: TwoFactorAuthService // private jwtService: JwtService
+    private readonly twoFactorAuthService: TwoFactorAuthService, // private jwtService: JwtService
+    private userRepository: UserRepository
   ) {}
 
   @Post('generate')
   // @UseGuards(AuthGuard('signup'))
-  async register(
-    @Res() res: Response,
-    @Body() user_id: string
-    // @Body(ValidationPipe) userDto: Partial<UserDto>
-  ) {
+  async register(@Res() res: Response, @Body('user_id') user_id: string) {
     try {
       const {otpAuthUrl} =
         await this.twoFactorAuthService.generateTwoFactorAuthSecret(user_id);
@@ -86,15 +85,18 @@ export class TwoFactorAuthController {
   }
 
   @Post('authenticate')
-  @UseGuards(AuthGuard('jwt'))
   async authenticate(
     @Request() req: any,
     @Body() twoFactorAuthCodeDto: TwoFactorAuthCodeDto
   ): Promise<string> {
-    // console.log('req: ', req);
-    console.log('--------\nuser: ', req.user);
-    this.twoFactorAuthService.authenticate(req.user, twoFactorAuthCodeDto);
-
-    return req.user;
+    const user = await this.userRepository.findOneBy({
+      user_id: twoFactorAuthCodeDto.user_id,
+    });
+    if (user && twoFactorAuthCodeDto.user_pw === user.user_pw) {
+      // if (user && (await bcrypt.compare(twoFactorAuthCodeDto.user_pw, user.user_pw))) {
+      return this.twoFactorAuthService.authenticate(user, twoFactorAuthCodeDto);
+    } else {
+      throw new UnauthorizedException('Login failed');
+    }
   }
 }
