@@ -8,7 +8,6 @@ import {InjectRepository} from '@nestjs/typeorm';
 import {RecordRepository} from './record.repository';
 import {UserRepository} from 'src/user/user.repository';
 import {Record} from './record.entity';
-import {RecentRecord} from '@/types/record';
 import {SimpleRecordDto} from './dto/simple-record.dto';
 import {DetailRecordDto} from './dto/detail-record.dto';
 
@@ -43,14 +42,24 @@ export class RecordService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    let win = 0,
-      lose = 0;
-    if (user.win_records) {
-      win = user.win_records.length;
-    }
-    if (user.lose_records) {
-      lose = user.lose_records.length;
-    }
+    // let win = 0,
+    //   lose = 0;
+    // if (user.win_records) {
+    //   win = user.win_records.length;
+    // }
+    // if (user.lose_records) {
+    //   lose = user.lose_records.length;
+    // }
+    const win = await this.recordRepository.count({
+      where: {
+        winnerId: userID,
+      },
+    });
+    const lose = await this.recordRepository.count({
+      where: {
+        loserId: userID,
+      },
+    });
     const forfeit: number = await this.recordRepository.count({
       where: {
         loserId: userID,
@@ -68,32 +77,24 @@ export class RecordService {
       lose,
       rank_score,
       forfeit,
-      recent_record: await recentRecord,
+      recent_record: recentRecord,
     };
     return simpleRecordDto;
   };
 
-  getRecentGames = async (
-    userID: string,
-    limit: number
-  ): Promise<RecentRecord> => {
+  getRecentGames = async (userID: string, limit: number): Promise<string[]> => {
+    console.log('limit: ', limit);
     const recentGames: Record[] = await this.recordRepository.getRecentGames(
       userID,
       limit
     );
-    const recentRecord: RecentRecord = {
-      0: null,
-      1: null,
-      2: null,
-      3: null,
-      4: null,
-    };
-    recentGames.forEach((record, idx) => {
+    const recentRecord: string[] = [];
+    recentGames.forEach(record => {
       const {winnerId} = record;
       if (winnerId === userID) {
-        recentRecord[idx] = '승';
+        recentRecord.push('승');
       } else {
-        recentRecord[idx] = '패';
+        recentRecord.push('패');
       }
     });
     return recentRecord;
