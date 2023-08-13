@@ -2,15 +2,11 @@
 
 import {useEffect, useState} from 'react';
 import {useRouter} from 'next/router';
-
-import axios from 'axios';
+import Image from 'next/image';
 
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
-import {List, ListItem, ListItemIcon, ListItemText} from '@mui/material';
-import CheckIcon from '@mui/icons-material/Check';
-import Checkbox from '@mui/material/Checkbox';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
 import DialogContentText from '@mui/material/DialogContentText';
@@ -33,14 +29,17 @@ function TwoFactorAuth() {
 
   useEffect(() => {
     const generateQRCode = async () => {
-      const response = await apiManager.post('/2fa/generate', userId);
-      setQRCodeImage(response.data);
-      console.log(response);
+      const response = await apiManager.post('/2fa/generate', userId, {
+        responseType: 'arraybuffer',
+      });
+      const base64Image: string = Buffer.from(response.data, 'binary').toString(
+        'base64'
+      );
+      setQRCodeImage('data:image/png;base64,' + base64Image);
     };
 
     try {
-      const result = generateQRCode();
-      console.log(result);
+      generateQRCode();
     } catch (error) {
       console.log(error);
     }
@@ -55,7 +54,7 @@ function TwoFactorAuth() {
       <Box sx={{mt: 1}}>
         <Grid container spacing={2}>
           <Grid item xs={12}>
-            {/*  */}
+            <Image src={QRCodeImage} alt="QRCode" width={256} height={256} />
           </Grid>
 
           <Button fullWidth variant="contained" sx={{mt: 3, mb: 2}}>
