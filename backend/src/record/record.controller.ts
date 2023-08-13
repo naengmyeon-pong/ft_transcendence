@@ -21,31 +21,17 @@ export class RecordController {
     return await this.recordService.getEntireRecords();
   }
 
-  // @Get('/:user_id')
-  // async getOneRecords(@Param('user_id') user_id: string): Promise<string> {
-  //   console.log('/:user_id');
-  //   return await this.recordService.getOneRecords(user_id);
-  // }
-
-  @Get('/simple')
+  @Get('simple')
   async getSimpleRecord(@Query('id') userID: string): Promise<SimpleRecordDto> {
-    // Validate query parameters
-    if (!userID || typeof userID !== 'string') {
-      throw new BadRequestException('Invalid query parameters');
-    }
     return await this.recordService.getSimpleRecord(userID);
   }
 
-  @Get('/detail')
+  @Get('detail')
   async getDetailRecord(
     @Query('id') userID: string,
     @Query('page') pageNo: number,
     @Query('size') pageSize: number
   ): Promise<Record[]> {
-    // Validate query parameters
-    if (!userID || typeof userID !== 'string' || isNaN(pageNo)) {
-      throw new BadRequestException('Invalid query parameters');
-    }
     let clientID = 'user1';
     return await this.recordService.getDetailRecord(
       clientID,
@@ -55,12 +41,19 @@ export class RecordController {
     );
   }
 
-  @Get('/test')
-  async getTest(
+  // For Test
+  @Get('save')
+  async getSave(
     @Query('winner') winner: string,
     @Query('loser') loser: string
   ) {
-    this.recordService.getTest(winner, loser);
+    this.recordService.getSave(winner, loser);
     console.log('winner: ', winner, '\nloser: ', loser);
+  }
+
+  // For Test
+  @Get('join-test')
+  async getJoinTest(@Query('user') user: string) {
+    return await this.recordService.getJoinTest(user);
   }
 }

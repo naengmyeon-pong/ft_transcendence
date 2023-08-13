@@ -1,4 +1,8 @@
-import {Injectable, InternalServerErrorException} from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
 import {RecordRepository} from './record.repository';
 import {UserRepository} from 'src/user/user.repository';
@@ -31,29 +35,14 @@ export class RecordService {
     return JSON.stringify(records);
   }
 
-  // async getOneRecords(user_id: string): Promise<string> {
-  //   const win_records = await this.recordRepository.findOneBy({
-  //     winner_id: user_id,
-  //   });
-  //   const lose_records = await this.recordRepository.findOneBy({
-  //     loser_id: user_id,
-  //   });
-  //   if (!win_records && !lose_records) {
-  //     console.log('data not exists');
-  //     throw new InternalServerErrorException(); // data not exists
-  //   }
-  //   const mergedRecords = Object.assign(win_records, lose_records);
-  //   return JSON.stringify(mergedRecords);
-  // }
-
   getSimpleRecord = async (userID: string): Promise<SimpleRecordDto> => {
+    if (!userID || typeof userID !== 'string') {
+      throw new BadRequestException('Invalid request format');
+    }
     const user = await this.userRepository.findOneBy({user_id: userID});
-    // const win: number = await this.recordRepository.count({
-    //   where: {
-    //     winner: userID,
-    //   },
-    // });
-    console.log('user: ', userID);
+    if (!user) {
+      throw new BadRequestException();
+    }
     let win = 0,
       lose = 0;
     if (user.win_records) {
@@ -62,11 +51,6 @@ export class RecordService {
     if (user.lose_records) {
       lose = user.lose_records.length;
     }
-    // const lose: number = await this.recordRepository.count({
-    //   where: {
-    //     loser: userID,
-    //   },
-    // });
     const forfeit: number = await this.recordRepository.count({
       where: {
         loserId: userID,
@@ -104,10 +88,9 @@ export class RecordService {
       3: null,
       4: null,
     };
-
     recentGames.forEach((record, idx) => {
-      const {winner} = record;
-      if (winner === userID) {
+      const {winnerId} = record;
+      if (winnerId === userID) {
         recentRecord[idx] = '승';
       } else {
         recentRecord[idx] = '패';
@@ -122,39 +105,14 @@ export class RecordService {
     pageNo: number,
     pageSize: number
   ): Promise<Record[] | null> => {
-    // this.recordRepository.findAndCount({
-    //   relations: [''],
-    //   select: ['id', 'winner_id', 'winner_score']
-    // })
-    // const win: number = await this.recordRepository.count({
-    //   where: {
-    //     winner_id: userID,
-    //   },
-    // });
-    // const lose: number = await this.recordRepository.count({
-    //   where: {
-    //     loser_id: userID,
-    //   },
-    // });
+    if (!userID || typeof userID !== 'string' || isNaN(pageNo)) {
+      throw new BadRequestException('Invalid request format');
+    }
     const skip = (pageNo - 1) * pageSize;
-    // const record = await this.recordRepository.
-    const result = await this.recordRepository.find({
-      // relations: {
-      //   winner: true,
-      // },
-      where: [{winner: userID}, {loser: userID}],
-      order: {id: 'DESC'},
-      take: pageSize,
-      skip: skip,
-    });
-    // result.forEach((value) => {
-    //   await this.userRepository.findOneBy(value.winner)
-    // });
-
-    return result;
+    return await this.recordRepository.getDetailGames(userID, pageSize, skip);
   };
 
-  getTest(winner: string, loser: string) {
+  getSave(winner: string, loser: string) {
     const record = this.recordRepository.create({
       winnerId: winner,
       loserId: loser,
@@ -165,5 +123,12 @@ export class RecordService {
       game_type: 1,
     });
     this.recordRepository.save(record);
+  }
+  async getJoinTest(user: string) {
+    const record = await this.userRepository.findOneBy({
+      user_id: user,
+    });
+    console.log(record);
+    return record;
   }
 }
