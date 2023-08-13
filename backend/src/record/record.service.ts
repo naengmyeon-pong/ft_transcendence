@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
 import {RecordRepository} from './record.repository';
@@ -21,7 +22,6 @@ import {DetailRecordDto} from './dto/detail-record.dto';
 @Injectable()
 export class RecordService {
   constructor(
-    // @InjectRepository(RecordRepository)
     private recordRepository: RecordRepository,
     private userRepository: UserRepository
   ) {}
@@ -41,7 +41,7 @@ export class RecordService {
     }
     const user = await this.userRepository.findOneBy({user_id: userID});
     if (!user) {
-      throw new BadRequestException();
+      throw new NotFoundException('User not found');
     }
     let win = 0,
       lose = 0;
@@ -107,6 +107,10 @@ export class RecordService {
   ): Promise<Record[] | null> => {
     if (!userID || typeof userID !== 'string' || isNaN(pageNo)) {
       throw new BadRequestException('Invalid request format');
+    }
+    const user = await this.userRepository.findOneBy({user_id: userID});
+    if (!user) {
+      throw new NotFoundException('User not found');
     }
     const skip = (pageNo - 1) * pageSize;
     return await this.recordRepository.getDetailGames(userID, pageSize, skip);
