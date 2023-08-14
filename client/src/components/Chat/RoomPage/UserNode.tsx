@@ -9,6 +9,7 @@ import {AddBlock, DelBlock} from './service/Block';
 import {AddAdmin, DelAdmin} from './service/Admin';
 import {UserProps} from '@/types/UserContext';
 import {UserContext} from '@/components/MainLayout/Context';
+import Block from '@/components/Block';
 
 /*
  * @PARAM: 클릭당한 유저의 id, nickname, image를 가진 객체
@@ -148,8 +149,7 @@ function UserNode({user, permission, myPermission}: UserProps) {
             </MenuItem>
           </div>
         )}
-        {/* TODO: 차단한 유저가 있다면 차단해제 */}
-        {addBlock() && (
+        {/* {addBlock() && (
           <MenuItem onClick={() => handleMenuItemClick('AddBlock')}>
             <Typography>차단</Typography>
           </MenuItem>
@@ -158,7 +158,10 @@ function UserNode({user, permission, myPermission}: UserProps) {
           <MenuItem onClick={() => handleMenuItemClick('DelBlock')}>
             <Typography>차단해제</Typography>
           </MenuItem>
-        )}
+        )} */}
+        <MenuItem>
+          <Block block_user={user} />
+        </MenuItem>
       </Menu>
     );
   }

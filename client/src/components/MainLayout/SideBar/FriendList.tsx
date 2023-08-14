@@ -1,10 +1,11 @@
 'use client';
-import React, {useContext, useState} from 'react';
+import React, {useCallback, useContext, useEffect, useState} from 'react';
 
 import {
   Avatar,
   Badge,
-  List,
+  Box,
+  Button,
   ListItem,
   ListItemAvatar,
   ListItemText,
@@ -15,9 +16,8 @@ import {
 } from '@mui/material';
 import {UserType} from '@/types/UserContext';
 import {UserContext} from '../Context';
+import {useGlobalModal} from '@/hooks/useGlobalModal';
 import UserInfoPage from './UserPrintPage';
-// import {UserContext} from 'Context';
-// import UserInfoPage from 'pages/UserInfoPage/UserPrintPage';
 
 const StyledBadge = styled(Badge)(({theme}) => ({
   '& .MuiBadge-badge': {
@@ -27,12 +27,10 @@ const StyledBadge = styled(Badge)(({theme}) => ({
   },
 }));
 
-// TODO: 유저명, 이미지, 유저상태 변경 필요합니다
 function FriendList({friend}: {friend: UserType}) {
   const [anchorEl, setAnchorEl] = useState<HTMLLIElement | null>(null);
   const {socket, dm_list, setDmList, user_id} = useContext(UserContext);
   const open = Boolean(anchorEl);
-  const [userInfoPage, setUserInfoPage] = useState(false);
 
   function handleMenu(event: React.MouseEvent<HTMLLIElement>) {
     setAnchorEl(event.currentTarget);
@@ -61,7 +59,7 @@ function FriendList({friend}: {friend: UserType}) {
   }
 
   const OpenUserInfoPage = () => {
-    setUserInfoPage(true);
+    console.log('클릭: OpenUserInfoPage');
     setAnchorEl(null);
   };
 
@@ -110,10 +108,9 @@ function FriendList({friend}: {friend: UserType}) {
           <Typography>1:1 대화하기</Typography>
         </MenuItem>
         <MenuItem onClick={OpenUserInfoPage}>
-          <Typography>프로필 보기</Typography>
+          <UserInfoPage user_info={friend} />
         </MenuItem>
       </Menu>
-      {userInfoPage && <UserInfoPage user_info={friend} />}
     </>
   );
 }

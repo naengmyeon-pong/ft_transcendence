@@ -57,8 +57,4 @@ import {RecordModule} from './record/record.module';
   controllers: [],
   providers: [],
 })
-export class AppModule {
-  constructor() {
-    console.log('__dirname: ', __dirname);
-  }
-}
+export class AppModule {}
