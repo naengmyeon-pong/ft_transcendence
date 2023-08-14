@@ -1,5 +1,5 @@
 'use client';
-import CustomModal from '@/components/GlobalModal';
+
 import {useGlobalModal} from '@/hooks/useGlobalModal';
 import {UserType} from '@/types/UserContext';
 import {
@@ -9,11 +9,11 @@ import {
   ListItem,
   ListItemAvatar,
   ListItemText,
-  // Modal,
   Typography,
 } from '@mui/material';
 import React, {useCallback, useContext} from 'react';
 import {UserContext} from '../Context';
+import Block from '@/components/Block';
 
 export default function UserInfoPage({user_info}: {user_info: UserType}) {
   const {openGlobalModal, closeGlobalModal} = useGlobalModal();
@@ -43,7 +43,7 @@ export default function UserInfoPage({user_info}: {user_info: UserType}) {
     );
   }, [user_info.image, user_info.nickName]);
 
-  function handleAddDmList() {
+  const handleAddDmList = useCallback(() => {
     if (dm_list.some(node => node.user2 === user_info.id) || user_id === null) {
       return;
     }
@@ -56,7 +56,14 @@ export default function UserInfoPage({user_info}: {user_info: UserType}) {
       },
     ]);
     closeGlobalModal();
-  }
+  }, [
+    closeGlobalModal,
+    dm_list,
+    setDmList,
+    user_id,
+    user_info.id,
+    user_info.nickName,
+  ]);
 
   const action = useCallback(() => {
     return (
@@ -64,9 +71,10 @@ export default function UserInfoPage({user_info}: {user_info: UserType}) {
         <Button>전적보기</Button>
         <Button>1:1 게임하기</Button>
         <Button onClick={handleAddDmList}>1:1 대화하기</Button>
+        <Block block_user={user_info} component={Button} />
       </Box>
     );
-  }, []);
+  }, [handleAddDmList, user_info]);
 
   function handleClick() {
     openGlobalModal({

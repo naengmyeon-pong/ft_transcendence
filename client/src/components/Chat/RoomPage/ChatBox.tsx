@@ -86,18 +86,7 @@ function ChatBox() {
     }
     window.addEventListener('unload', handleUnload);
     window.addEventListener('beforeunload', handleBeforeUnload);
-    // TODO: 뒤로가기 이벤트 알림
-    // const handlePopState = (e: PopStateEvent) => {
-    // e.preventDefault();
-    //   console.log('TEST popstae');
-    // };
 
-    // window.addEventListener('popstate', handlePopState);
-    // window.addEventListener('popstate', (e: PopStateEvent) => {
-    // e.preventDefault();
-    //   console.log('TEST popstate2');
-    // });
-    console.log('socket_id: ', socket?.id);
     socket?.on('mute-member', handleMute);
     socket?.on('message', handleMessage);
 

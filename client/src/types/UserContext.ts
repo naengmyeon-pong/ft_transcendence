@@ -56,15 +56,22 @@ export interface RoomListProps {
 }
 
 export interface DmListData {
+  // 받는이
   user1: string;
+  // 보낸이
   user2: string;
+  // 보낸이 닉네임
   nickname: string;
 }
 
 export interface DmChat {
+  // 보낸이
   userId: string;
+  // 받는이
   someoneId: string;
   message: string;
+  // 보낸이
+  nickname: string;
 }
 
 export interface Notificate {

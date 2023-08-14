@@ -29,11 +29,11 @@ export default function MyApp({Component, pageProps}: AppProps) {
       {isMainRoute && (
         <UserProvider>
           <MainLayout>
+            <CustomModal />
             <Component {...pageProps} />
           </MainLayout>
         </UserProvider>
       )}
-      <CustomModal />
       <GlobalDialog />
       <AlertSnackbar />
     </RecoilRoot>

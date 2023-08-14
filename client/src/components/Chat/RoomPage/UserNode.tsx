@@ -92,20 +92,6 @@ function UserNode({user, permission, myPermission}: UserProps) {
     return false;
   }
 
-  function addBlock() {
-    if (block_users.has(user.id) === false) {
-      return true;
-    }
-    return false;
-  }
-
-  function delBlock() {
-    if (block_users.has(user.id) === true) {
-      return true;
-    }
-    return false;
-  }
-
   function MenuOpen() {
     return (
       <Menu
@@ -124,8 +110,6 @@ function UserNode({user, permission, myPermission}: UserProps) {
           marginLeft: '10px',
         }}
       >
-        {/* TODO: 유저의 권한별로 설정해줘야 합니다 */}
-
         {delAdminMenu() && (
           <MenuItem onClick={() => handleMenuItemClick('DelAdmin')}>
             <Typography>채팅 관리자에서 제거</Typography>
@@ -149,19 +133,12 @@ function UserNode({user, permission, myPermission}: UserProps) {
             </MenuItem>
           </div>
         )}
-        {/* {addBlock() && (
-          <MenuItem onClick={() => handleMenuItemClick('AddBlock')}>
-            <Typography>차단</Typography>
-          </MenuItem>
-        )}
-        {delBlock() && (
-          <MenuItem onClick={() => handleMenuItemClick('DelBlock')}>
-            <Typography>차단해제</Typography>
-          </MenuItem>
-        )} */}
-        <MenuItem>
-          <Block block_user={user} />
-        </MenuItem>
+        {/* 차단, 차단해제 */}
+        <Block
+          block_user={user}
+          component={MenuItem}
+          onClose={() => setAnchorEl(null)}
+        />
       </Menu>
     );
   }

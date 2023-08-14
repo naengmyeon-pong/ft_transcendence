@@ -70,8 +70,8 @@ export default function Dm() {
   const onChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     setMessage(e.target.value);
   }, []);
-  // 차단기록이 일어나면 랜더링되게 설정
   const [textFieldDisabled, setTextFieldDisabled] = useState(false);
+  const [notify, setNofify] = useState<Map<string, number>>(new Map());
 
   console.log('DmPage');
 
@@ -94,7 +94,7 @@ export default function Dm() {
       );
       setMessage('');
     },
-    [message, socket]
+    [message, socket, block_users]
   );
 
   async function changeUser(e: React.MouseEvent<unknown>, row: DmListData) {
@@ -111,6 +111,11 @@ export default function Dm() {
     dm_user_nickname.current = row.nickname;
     setChats(rep.data);
     setMessage('');
+    setNofify(prev => {
+      const new_notify = new Map(prev);
+      new_notify.set(row.user2, 0);
+      return new_notify;
+    });
     if (block_users.has(`${dm_user_id.current}`)) {
       setTextFieldDisabled(true);
       return;
@@ -135,6 +140,28 @@ export default function Dm() {
     if (chat.userId === dm_user_id.current && chat.someoneId === user_id) {
       setChats(prevChats => [...prevChats, chat]);
     }
+    setNofify(prev => {
+      const new_notify = new Map(prev);
+      const cnt = new_notify.get(chat.userId);
+      cnt !== undefined
+        ? new_notify.set(chat.userId, cnt + 1)
+        : new_notify.set(chat.userId, 1);
+      return new_notify;
+    });
+
+    setDmList(prev => {
+      if (prev.some(item => item.user2 === chat.userId)) {
+        return prev;
+      }
+      return [
+        ...prev,
+        {
+          user1: chat.someoneId,
+          user2: chat.userId,
+          nickname: chat.nickname,
+        },
+      ];
+    });
   }
 
   function handleBlock() {
@@ -143,6 +170,22 @@ export default function Dm() {
       return;
     }
     setTextFieldDisabled(false);
+  }
+
+  function notiBage(row: DmListData) {
+    const cnt = notify.get(row.user2);
+    if (cnt !== undefined && cnt > 0) {
+      return (
+        <>
+          <Box display={'flex'} justifyContent={'space-between'}>
+            <Typography>{`${row.nickname}`}</Typography>
+            <Typography sx={{color: 'red'}}>{`${cnt}`}</Typography>
+            {/* <CircleIcon sx={{color: 'red'}} /> */}
+          </Box>
+        </>
+      );
+    }
+    return <Typography>{`${row.nickname}`}</Typography>;
   }
 
   useEffect(() => {
@@ -154,7 +197,7 @@ export default function Dm() {
       socket?.off('block-list', handleBlock);
       socket?.off('dm-message', handleDmMessage);
     };
-  }, []);
+  }, [socket]);
 
   useEffect(() => {
     if (!chat_scroll.current) return;
@@ -250,7 +293,8 @@ export default function Dm() {
                 return (
                   <TableRow key={index} onClick={e => changeUser(e, row)}>
                     <TableCell>
-                      <Typography>{`${row.nickname}`}</Typography>
+                      {/* 알람 추가 */}
+                      {notiBage(row)}
                     </TableCell>
                   </TableRow>
                 );

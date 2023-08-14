@@ -1,6 +1,7 @@
 import {Box, Button, Modal} from '@mui/material';
 import React from 'react';
 import ModalPrint from './ModalPrint';
+import {UserType} from '@/types/UserContext';
 const style = {
   position: 'absolute',
   top: '40%',

@@ -1,19 +1,7 @@
 'use client';
 import React from 'react';
 import {Box, Button, Modal, Typography} from '@mui/material';
-
-const style = {
-  position: 'absolute',
-  top: '40%',
-  left: '48%',
-  transform: 'translate(-50%, -50%)',
-  width: 400,
-  bgcolor: 'background.paper',
-  border: '2px solid #FFF',
-  boxShadow: 24,
-  borderRadius: 2,
-  p: 4,
-};
+import {modalStyle} from '@/components/styled/modalStyle';
 
 type MuteModalProps = {
   muteModal: boolean;
@@ -36,7 +24,7 @@ export default function MuteModal({
   return (
     <>
       <Modal open={muteModal} onClose={handleMuteClose}>
-        <Box sx={style}>
+        <Box sx={modalStyle}>
           <Typography variant="h4">음소거</Typography>
           <Typography variant="body1">
             5분 동안 채팅을 하실 수 없습니다.

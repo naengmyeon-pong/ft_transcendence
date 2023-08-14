@@ -91,15 +91,19 @@ function ShowRoomList({roomList, refersh}: RoomListProps) {
 
   async function checkPassword(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const rep = await apiManager.post('/chatroom/chatroom_pw', {
-      room_id: room_id.current,
-      password: Number(password),
-    });
-    if (rep.data === false) {
-      setPasswordError(true);
-      return;
+    try {
+      const rep = await apiManager.post('/chatroom/chatroom_pw', {
+        room_id: room_id.current,
+        password: Number(password),
+      });
+      if (rep.data === false) {
+        setPasswordError(true);
+        return;
+      }
+      setConvertPage(room_id.current);
+    } catch (error) {
+      console.log(error);
     }
-    setConvertPage(room_id.current);
   }
 
   function handlePassword(e: ChangeEvent<HTMLInputElement>) {
