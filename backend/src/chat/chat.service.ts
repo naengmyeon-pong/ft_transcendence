@@ -41,7 +41,7 @@ export class ChatService {
 
   async getRoomList() {
     const room_list = [];
-    const chatrooms = await this.chatRoomRepository
+    const chatrooms = this.chatRoomRepository
       .createQueryBuilder('chatRoom')
       .select([
         'chatRoom.id',
