@@ -1,6 +1,13 @@
-import {Column, Entity, ManyToOne, PrimaryGeneratedColumn} from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import {Mode} from './mode/mode.entity';
 import {Type} from './type/type.entity';
+import {User} from 'src/user/user.entitiy';
 
 @Entity('game_record')
 export class Record {
@@ -8,10 +15,18 @@ export class Record {
   id: number;
 
   @Column()
-  winner_id: string;
+  winnerId: string;
 
   @Column()
-  loser_id: string;
+  loserId: string;
+
+  @ManyToOne(() => User, user_id => user_id.win_records)
+  @JoinColumn({name: 'winnerId'})
+  winner: string;
+
+  @ManyToOne(() => User, user_id => user_id.lose_records)
+  @JoinColumn({name: 'loserId'})
+  loser: string;
 
   @Column({default: 0})
   winner_score: number;

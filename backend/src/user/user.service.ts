@@ -1,5 +1,7 @@
 import {
   BadRequestException,
+  HttpCode,
+  HttpStatus,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -49,18 +51,19 @@ export class UserService {
   }
 
   // 로그인할 때 user pw 암호화 하지않게
-  async signIn(userAuthDto: UserAuthDto): Promise<string> {
+  async signIn(userAuthDto: UserAuthDto): Promise<string | number> {
     const user = await this.findUser(userAuthDto.user_id);
     if (user && userAuthDto.user_pw === user.user_pw) {
       // if (user && (await bcrypt.compare(userAuthDto.user_pw, user.user_pw))) {
       // user token create. (secret + Payload)
-      // if (user.is_2fa_enabled === false) {
-      const payload: Payload = {user_id: userAuthDto.user_id};
-      const accessToken = this.generateAccessToken(payload);
-      return accessToken;
-      // } else {
-      //   // 2fa가 설정된 경우
-      // }
+      if (user.is_2fa_enabled === false) {
+        const payload: Payload = {user_id: userAuthDto.user_id};
+        const accessToken = this.generateAccessToken(payload);
+        return accessToken;
+      } else {
+        // 2fa가 설정된 경우
+        return HttpStatus.ACCEPTED;
+      }
     }
     throw new UnauthorizedException('login failed');
   }

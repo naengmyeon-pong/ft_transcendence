@@ -9,7 +9,6 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import {UserDto} from 'src/user/dto/user.dto';
 import {TwoFactorAuthCodeDto} from './dto/two-factor-auth-code.dto';
 import {UserRepository} from 'src/user/user.repository';
 import {Payload} from 'src/user/payload';
@@ -28,19 +27,19 @@ export class TwoFactorAuthService {
   ) {}
 
   public async generateTwoFactorAuthSecret(
-    userDto: UserDto
+    userID: string
   ): Promise<twoFactorAuth> {
     const secret: string = authenticator.generateSecret();
 
     const otpAuthUrl: string = authenticator.keyuri(
-      userDto.user_id,
+      userID,
       process.env.TWO_FACTOR_AUTH_APP_NAME,
       secret
     );
 
     const twoFactorAuth: twoFactorAuth = {secret, otpAuthUrl};
 
-    await this.userService.setTwoFactorAuthSecret(userDto.user_id, secret);
+    await this.userService.setTwoFactorAuthSecret(userID, secret);
 
     return twoFactorAuth;
   }

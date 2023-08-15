@@ -8,7 +8,10 @@ import * as Joi from 'joi';
 import {ServeStaticModule} from '@nestjs/serve-static';
 import {join} from 'path';
 import {ChatModule} from './chat/chat.module';
+import {SocketArray} from './globalVariable/global.socket';
 import {GameModule} from './game/game.module';
+import {TwoFactorAuthController} from './two-factor-auth/two-factor-auth.controller';
+import {TwoFactorAuthService} from './two-factor-auth/two-factor-auth.service';
 import {TwoFactorAuthModule} from './two-factor-auth/two-factor-auth.module';
 import {RecordModule} from './record/record.module';
 
