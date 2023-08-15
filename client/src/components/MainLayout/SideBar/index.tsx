@@ -27,14 +27,17 @@ import FriendList from './FriendList';
 import BlockUserList from './BlockUserList';
 import {modalStyle} from '@/components/styled/modalStyle';
 import {drawerWidth} from '@/constants/sidebar';
+import Dm from './DM';
 
 function SideBar() {
   console.log('SideBar');
-  // lstState: true = 친구목록, flase = 접속 유저
+
   // lstState: 0 = 차단 목록, 1 = 친구 목록, 2 = DM
   const [lstState, setLstState] = useState(1);
   const {socket, block_users, user_id} = useContext(UserContext);
+
   const [block_users_size, setBlockUsersSize] = useState<number>(0);
+
   const [friend_list, setFriendList] = useState<UserType[]>([]);
   const [friend_modal, setFriendModal] = useState<boolean>(false);
   const [friend_name, setFriendName] = useState<string>('');
@@ -67,13 +70,8 @@ function SideBar() {
     setFriendModal(false);
   }
 
-  function handleAddFriend(e: React.MouseEvent<unknown>, row: UserType) {
-    socket?.emit('add-friend', row.id);
-  }
-
   async function handleFriendSearch(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-
     try {
       const rep = await apiManager.get('chatroom/search_user', {
         params: {
@@ -100,7 +98,7 @@ function SideBar() {
               <Typography>{row.nickName}</Typography>
               <Button
                 // disabled={friend_list.find() ? true : false}
-                onClick={e => handleAddFriend(e, row)}
+                onClick={() => socket?.emit('add-friend', row.id)}
               >
                 친구 추가
               </Button>
@@ -258,9 +256,7 @@ function SideBar() {
               })}
             </List>
           ) : (
-            <List>
-              <Typography>DMLIST</Typography>
-            </List>
+            <Dm />
           )}
           {/* TODO: 현재 DM 유저와 대화중인지 확인 후 DM 리스트 혹은 대화 인터페이스 넣기  */}
           <Divider />

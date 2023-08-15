@@ -18,13 +18,16 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import {UserContext} from '../Context';
 import {DmChat, DmListData} from '@/types/UserContext';
 import apiManager from '@/api/apiManager';
 
 const Message = ({
+  // 보낸이
   userId,
   message,
+  // 유저 아이디
   user_id,
 }: {
   userId: string;
@@ -73,6 +76,9 @@ export default function Dm() {
   const [textFieldDisabled, setTextFieldDisabled] = useState(false);
   const [notify, setNofify] = useState<Map<string, number>>(new Map());
 
+  // false: List, true: DM
+  const [convert_list_dm, setConvertListDM] = useState(false);
+
   console.log('DmPage');
 
   const onSendMessage = useCallback(
@@ -98,9 +104,6 @@ export default function Dm() {
   );
 
   async function changeUser(row: DmListData) {
-    if (dm_user_id.current === row.user2) {
-      return;
-    }
     const rep = await apiManager.get('chatroom/dm', {
       params: {
         user_id: row.user1,
@@ -111,6 +114,7 @@ export default function Dm() {
     dm_user_nickname.current = row.nickname;
     setChats(rep.data);
     setMessage('');
+    setConvertListDM(true);
     setNofify(prev => {
       const new_notify = new Map(prev);
       new_notify.set(row.user2, 0);
@@ -131,9 +135,9 @@ export default function Dm() {
         },
       });
       setDmList(rep.data);
-      if (rep.data.length > 0) {
-        changeUser(rep.data[0]);
-      }
+      // if (rep.data.length > 0) {
+      //   changeUser(rep.data[0]);
+      // }
     } catch (error) {
       console.log('Dm error: ', error);
     }
@@ -223,27 +227,30 @@ export default function Dm() {
     }
   }, [dm_list.length]);
 
-  useEffect(() => {
-    // 추가된 사용자(제일 마지막 노드로 변경)
-    console.log('변경 감지');
-    if (dm_list.length > 0) {
-      console.log('dm_list: ', dm_list);
-      console.log('마지막노드: ', dm_list[dm_list.length - 1]);
-      changeUser(dm_list[dm_list.length - 1]);
-    }
-  }, [dm_list]);
+  // useEffect(() => {
+  //   // 추가된 사용자(제일 마지막 노드로 변경)
+  //   console.log('변경 감지');
+  //   if (dm_list.length > 0) {
+  //     console.log('dm_list: ', dm_list);
+  //     console.log('마지막노드: ', dm_list[dm_list.length - 1]);
+  //     changeUser(dm_list[dm_list.length - 1]);
+  //   }
+  // }, [dm_list]);
 
   return (
     <>
-      <Box display={'flex'}>
-        {/*  Chat */}
+      {/* <Box display={'flex'}> */}
+      {convert_list_dm ? (
         <Box
           overflow={'auto'}
-          minWidth={'400px'}
+          width={'350'}
           height={'400px'}
           border={'1px solid black'}
         >
-          <Box border={'1px solid black'} height={'19%'}>
+          <Box border={'1px solid black'} height={'19%'} display={'flex'}>
+            <Button onClick={() => setConvertListDM(false)}>
+              <ArrowBackIosIcon />
+            </Button>
             <Typography maxHeight={'auto'} ml={'10px'}>
               {dm_user_nickname.current}
             </Typography>
@@ -278,6 +285,7 @@ export default function Dm() {
                   value={message}
                   onChange={onChange}
                   sx={{backgroundColor: 'white'}}
+                  autoComplete="off"
                 />
                 <Button
                   sx={{display: 'none'}}
@@ -292,13 +300,13 @@ export default function Dm() {
             </Box>
           </Box>
         </Box>
+      ) : (
         <Box
           overflow={'auto'}
           minWidth={'150px'}
           height={'400px'}
           border={'1px solid black'}
         >
-          {/* List */}
           <Table>
             <TableBody>
               {dm_list?.map((row, index) => {
@@ -314,7 +322,8 @@ export default function Dm() {
             </TableBody>
           </Table>
         </Box>
-      </Box>
+      )}
+      {/* </Box> */}
     </>
   );
 }

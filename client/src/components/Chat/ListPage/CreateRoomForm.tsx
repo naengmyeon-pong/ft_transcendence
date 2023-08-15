@@ -94,7 +94,7 @@ function CreateRoomForm({setCreateModal}: CreateModalProps) {
         max_nums: maxUser,
         is_public: !isHide,
         is_password: password.trim() === '' ? false : true,
-        password: password.trim() === '' ? null : password,
+        password: password.trim() === '' ? null : Number(password),
         user_id: user_id,
       });
       setConvertPage(rep?.data?.id);
