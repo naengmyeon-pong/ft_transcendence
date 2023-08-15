@@ -9,7 +9,6 @@ import {UserContext} from '../MainLayout/Context';
 import {useRouter} from 'next/router';
 import {UserType} from '@/types/UserContext';
 import apiManager from '@/api/apiManager';
-import Dm from '../Dm';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -81,9 +80,6 @@ function MainLayout({children}: MainLayoutProps) {
                 {/* </Grid> */}
               </Grid>
               {/* 개인 채팅창 위치 */}
-              <Grid item xs={3} alignItems={'flex-start'}>
-                <Dm />
-              </Grid>
             </Grid>
             {/* </Box> */}
           </Box>

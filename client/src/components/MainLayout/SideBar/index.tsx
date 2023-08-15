@@ -25,60 +25,40 @@ import {UserType} from '@/types/UserContext';
 import apiManager from '@/api/apiManager';
 import FriendList from './FriendList';
 import BlockUserList from './BlockUserList';
-
-const style = {
-  position: 'absolute',
-  top: '40%',
-  left: '48%',
-  transform: 'translate(-50%, -50%)',
-  width: 400,
-  bgcolor: 'background.paper',
-  border: '2px solid #FFF',
-  boxShadow: 24,
-  borderRadius: 2,
-  p: 4,
-};
+import {modalStyle} from '@/components/styled/modalStyle';
+import {drawerWidth} from '@/constants/sidebar';
 
 function SideBar() {
   console.log('SideBar');
   // lstState: true = 친구목록, flase = 접속 유저
-  const [lstState, setLstState] = useState(true);
+  // lstState: 0 = 차단 목록, 1 = 친구 목록, 2 = DM
+  const [lstState, setLstState] = useState(1);
   const {socket, block_users, user_id} = useContext(UserContext);
   const [block_users_size, setBlockUsersSize] = useState<number>(0);
-  const drawerWidth = 240;
   const [friend_list, setFriendList] = useState<UserType[]>([]);
   const [friend_modal, setFriendModal] = useState<boolean>(false);
   const [friend_name, setFriendName] = useState<string>('');
   const [friend_search_list, setFriendSearchList] = useState<UserType[]>([]);
 
-  function friendList() {
-    if (lstState === true) {
+  function friendListTap() {
+    if (lstState === 1) {
       return;
     }
-    setLstState(!lstState);
+    setLstState(1);
   }
 
-  function connectUserList() {
-    if (lstState === false) {
+  function blockUserListTap() {
+    if (lstState === 0) {
       return;
     }
-    setLstState(!lstState);
+    setLstState(0);
   }
 
-  function connectUserCount() {
-    return `${block_users_size}`;
-  }
-
-  // TODO: 온라인, 오프라인 나눠서 출력
-  function friendListCount() {
-    return `${friend_list.length}`;
-  }
-  function handleFriendName(e: ChangeEvent<HTMLInputElement>) {
-    setFriendName(e.target.value);
-  }
-
-  function handleFriendModalOpen() {
-    setFriendModal(true);
+  function directMessageUserListTap() {
+    if (lstState === 2) {
+      return;
+    }
+    setLstState(2);
   }
 
   function handleFriendModalClose() {
@@ -184,31 +164,44 @@ function SideBar() {
           >
             <ButtonGroup>
               <Button
-                variant={lstState ? 'contained' : 'outlined'}
-                onClick={friendList}
+                variant={lstState === 0 ? 'contained' : 'outlined'}
+                onClick={blockUserListTap}
                 sx={{
                   borderRadius: '13px',
                   borderColor: 'black',
-                  color: lstState ? 'white' : 'black',
-                }}
-              >
-                <Box display="flex" sx={{flexDirection: 'column'}}>
-                  <Typography>친구 목록</Typography>
-                  <Typography>{friendListCount()}</Typography>
-                </Box>
-              </Button>
-              <Button
-                variant={lstState ? 'outlined' : 'contained'}
-                onClick={connectUserList}
-                sx={{
-                  borderRadius: '13px',
-                  borderColor: 'black',
-                  color: lstState ? 'black' : 'white',
+                  color: lstState === 0 ? 'white' : 'black',
                 }}
               >
                 <Box display="flex" sx={{flexDirection: 'column'}}>
                   <Typography>차단 목록</Typography>
-                  <Typography>{connectUserCount()}</Typography>
+                  <Typography>{`${block_users_size}`}</Typography>
+                </Box>
+              </Button>
+              <Button
+                variant={lstState === 1 ? 'contained' : 'outlined'}
+                onClick={friendListTap}
+                sx={{
+                  borderRadius: '13px',
+                  borderColor: 'black',
+                  color: lstState === 1 ? 'white' : 'black',
+                }}
+              >
+                <Box display="flex" sx={{flexDirection: 'column'}}>
+                  <Typography>친구 목록</Typography>
+                  <Typography>{`${friend_list.length}`}</Typography>
+                </Box>
+              </Button>
+              <Button
+                variant={lstState === 2 ? 'contained' : 'outlined'}
+                onClick={directMessageUserListTap}
+                sx={{
+                  borderRadius: '13px',
+                  borderColor: 'black',
+                  color: lstState === 2 ? 'white' : 'black',
+                }}
+              >
+                <Box display="flex" sx={{flexDirection: 'column'}}>
+                  <Typography width={'60px'}>DM</Typography>
                 </Box>
               </Button>
             </ButtonGroup>
@@ -216,12 +209,12 @@ function SideBar() {
 
           <Box display="flex" sx={{justifyContent: 'center', p: '0.5em'}}>
             {/* 친구 찾기 */}
-            <IconButton onClick={handleFriendModalOpen}>
+            <IconButton onClick={() => setFriendModal(true)}>
               <PersonAddAlt1Icon sx={{color: 'black'}} />
             </IconButton>
           </Box>
           <Modal open={friend_modal} onClose={handleFriendModalClose}>
-            <Box sx={style}>
+            <Box sx={modalStyle}>
               <FormControl fullWidth>
                 <Typography variant="h4">친구 찾기</Typography>
                 <Typography variant="body1">
@@ -233,7 +226,7 @@ function SideBar() {
                     fullWidth
                     variant="outlined"
                     value={friend_name}
-                    onChange={handleFriendName}
+                    onChange={e => setFriendName(e.target.value)}
                     sx={{backgroundColor: 'white'}}
                     InputProps={{
                       startAdornment: (
@@ -252,20 +245,24 @@ function SideBar() {
             </Box>
           </Modal>
           {/* true: 친구 목록, flase: 차단 목록 */}
-          {lstState ? (
+          {lstState === 1 ? (
             <List>
               {friend_list.map((node, index) => {
                 return <FriendList key={index} friend={node} />;
               })}
             </List>
-          ) : (
+          ) : lstState === 0 ? (
             <List>
               {Array.from(block_users.values()).map((node, index) => {
                 return <BlockUserList key={index} block_user={node} />;
               })}
             </List>
+          ) : (
+            <List>
+              <Typography>DMLIST</Typography>
+            </List>
           )}
-          {/* 밑줄 */}
+          {/* TODO: 현재 DM 유저와 대화중인지 확인 후 DM 리스트 혹은 대화 인터페이스 넣기  */}
           <Divider />
         </Box>
       </Drawer>

@@ -18,7 +18,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {UserContext} from '../MainLayout/Context';
+import {UserContext} from '../Context';
 import {DmChat, DmListData} from '@/types/UserContext';
 import apiManager from '@/api/apiManager';
 
