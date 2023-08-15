@@ -97,7 +97,7 @@ export default function Dm() {
     [message, socket, block_users]
   );
 
-  async function changeUser(e: React.MouseEvent<unknown>, row: DmListData) {
+  async function changeUser(row: DmListData) {
     if (dm_user_id.current === row.user2) {
       return;
     }
@@ -131,8 +131,11 @@ export default function Dm() {
         },
       });
       setDmList(rep.data);
+      if (rep.data.length > 0) {
+        changeUser(rep.data[0]);
+      }
     } catch (error) {
-      console.log('List.tsx: ', error);
+      console.log('Dm error: ', error);
     }
   }
 
@@ -180,7 +183,6 @@ export default function Dm() {
           <Box display={'flex'} justifyContent={'space-between'}>
             <Typography>{`${row.nickname}`}</Typography>
             <Typography sx={{color: 'red'}}>{`${cnt}`}</Typography>
-            {/* <CircleIcon sx={{color: 'red'}} /> */}
           </Box>
         </>
       );
@@ -221,6 +223,16 @@ export default function Dm() {
     }
   }, [dm_list.length]);
 
+  useEffect(() => {
+    // 추가된 사용자(제일 마지막 노드로 변경)
+    console.log('변경 감지');
+    if (dm_list.length > 0) {
+      console.log('dm_list: ', dm_list);
+      console.log('마지막노드: ', dm_list[dm_list.length - 1]);
+      changeUser(dm_list[dm_list.length - 1]);
+    }
+  }, [dm_list]);
+
   return (
     <>
       <Box display={'flex'}>
@@ -231,12 +243,14 @@ export default function Dm() {
           height={'400px'}
           border={'1px solid black'}
         >
-          <Box border={'1px solid black'}>
-            <Typography ml={'10px'}>{dm_user_nickname.current}</Typography>
+          <Box border={'1px solid black'} height={'19%'}>
+            <Typography maxHeight={'auto'} ml={'10px'}>
+              {dm_user_nickname.current}
+            </Typography>
           </Box>
           <Box
             sx={{
-              height: '90%',
+              height: '80%',
               width: '100%',
               display: 'flex',
               flexDirection: 'column',
@@ -255,8 +269,6 @@ export default function Dm() {
             {/* 채팅 입력창 */}
             <Box>
               <form onSubmit={onSendMessage}>
-                {/* <Grid container sx={{ width: "100%" }}>
-            <Grid item sx={{ width: "100%" }}> */}
                 <TextField
                   disabled={textFieldDisabled}
                   fullWidth
@@ -291,7 +303,7 @@ export default function Dm() {
             <TableBody>
               {dm_list?.map((row, index) => {
                 return (
-                  <TableRow key={index} onClick={e => changeUser(e, row)}>
+                  <TableRow key={index} onClick={() => changeUser(row)}>
                     <TableCell>
                       {/* 알람 추가 */}
                       {notiBage(row)}

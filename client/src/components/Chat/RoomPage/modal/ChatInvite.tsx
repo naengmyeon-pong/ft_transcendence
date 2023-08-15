@@ -74,7 +74,7 @@ function ChatInvite({inviteModal, handleInviteClose}: CreateModalProps) {
     new_invite_list.add(row.id);
     setInviteList(new_invite_list);
   }
-  console.log('랜더링');
+
   function listInModal() {
     return (
       <>
@@ -120,7 +120,7 @@ function ChatInvite({inviteModal, handleInviteClose}: CreateModalProps) {
                 }}
               />
               <Button type="submit" sx={{display: 'none'}} />
-              {/* TODO: 검색 조회 결과를 작성할 공간 */}
+              {/* 초대하기 리스트를 출력하는 함수 */}
               {listInModal()}
               <Button onClick={() => handleInviteClose(false)}>닫기</Button>
             </Box>

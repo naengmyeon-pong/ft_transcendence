@@ -1,3 +1,4 @@
+import {UserType} from '@/types/UserContext';
 import {Typography} from '@mui/material';
 import React from 'react';
 

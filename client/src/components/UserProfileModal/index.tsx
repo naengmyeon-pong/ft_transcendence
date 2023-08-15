@@ -11,8 +11,8 @@ import {
   ListItemText,
   Typography,
 } from '@mui/material';
-import React, {useCallback, useContext} from 'react';
-import {UserContext} from '../Context';
+import React, {useCallback, useContext, useEffect} from 'react';
+import {UserContext} from '../MainLayout/Context';
 import Block from '@/components/Block';
 
 export default function UserInfoPage({user_info}: {user_info: UserType}) {
@@ -45,6 +45,7 @@ export default function UserInfoPage({user_info}: {user_info: UserType}) {
 
   const handleAddDmList = useCallback(() => {
     if (dm_list.some(node => node.user2 === user_info.id) || user_id === null) {
+      closeGlobalModal();
       return;
     }
     setDmList([

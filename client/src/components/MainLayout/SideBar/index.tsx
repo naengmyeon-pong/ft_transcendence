@@ -158,7 +158,7 @@ function SideBar() {
         sx={{
           width: drawerWidth,
           flexShrink: 0,
-          [`& .MuiDrawer-paper`]: {
+          ['& .MuiDrawer-paper']: {
             width: drawerWidth,
             // boxSizing: 'border-box',
           },

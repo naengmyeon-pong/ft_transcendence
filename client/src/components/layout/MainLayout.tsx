@@ -9,7 +9,7 @@ import {UserContext} from '../MainLayout/Context';
 import {useRouter} from 'next/router';
 import {UserType} from '@/types/UserContext';
 import apiManager from '@/api/apiManager';
-import Dm from '../Chat/Dm';
+import Dm from '../Dm';
 
 interface MainLayoutProps {
   children: React.ReactNode;

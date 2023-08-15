@@ -2,18 +2,7 @@ import {Box, Button, Modal} from '@mui/material';
 import React from 'react';
 import ModalPrint from './ModalPrint';
 import {UserType} from '@/types/UserContext';
-const style = {
-  position: 'absolute',
-  top: '40%',
-  left: '48%',
-  transform: 'translate(-50%, -50%)',
-  width: 400,
-  bgcolor: 'background.paper',
-  border: '2px solid #FFF',
-  boxShadow: 24,
-  borderRadius: 2,
-  p: 4,
-};
+import {modalStyle} from '@/components/styled/modalStyle';
 
 interface ServiceModalProps {
   modalState: boolean;
@@ -42,7 +31,7 @@ function ServiceModal({
   return (
     <>
       <Modal open={modalState} onClose={() => onRequestClose(false)}>
-        <Box sx={style}>
+        <Box sx={modalStyle}>
           <ModalPrint user={user} menuItem={menuItem} />
           <Box mt={'5px'} display="flex" justifyContent="flex-end">
             <Button onClick={handleYesClick}>예</Button>

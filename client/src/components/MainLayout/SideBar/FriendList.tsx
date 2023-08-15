@@ -16,8 +16,7 @@ import {
 } from '@mui/material';
 import {UserType} from '@/types/UserContext';
 import {UserContext} from '../Context';
-import {useGlobalModal} from '@/hooks/useGlobalModal';
-import UserInfoPage from './UserPrintPage';
+import UserInfoPage from '../../UserProfileModal';
 
 const StyledBadge = styled(Badge)(({theme}) => ({
   '& .MuiBadge-badge': {
@@ -100,6 +99,7 @@ function FriendList({friend}: {friend: UserType}) {
           vertical: 'top',
           horizontal: 'left',
         }}
+        className="test"
       >
         <MenuItem onClick={handleDeleteFriend}>
           <Typography>친구 삭제</Typography>
