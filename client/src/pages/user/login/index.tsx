@@ -3,6 +3,8 @@
 import {useRouter} from 'next/navigation';
 import React, {useState} from 'react';
 
+import {useRecoilState} from 'recoil';
+
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
@@ -15,15 +17,21 @@ import apiManager from '@/api/apiManager';
 import logo from '@/public/logo.jpeg';
 import withAuth from '@/components/hoc/withAuth';
 import Svg42Logo from '@/components/Svg42Logo';
+import {passwordResetState} from '@/states/passwordReset';
 
 import * as HTTP_STATUS from 'http-status';
 
 function LoginPage() {
   const router = useRouter();
+  const [_, setPasswordResetDataState] = useRecoilState(passwordResetState);
 
   const [intraId, setIntraId] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [is2faLogin, setIs2faLogin] = useState<boolean>(false);
+
+  const handleResetLinkClick = () => {
+    setPasswordResetDataState(true);
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -132,8 +140,12 @@ function LoginPage() {
 
           <Grid container>
             <Grid item xs>
-              <Link href="/password-reset" variant="body2">
-                비밀번호를 잊으셨나요?
+              <Link
+                variant="body2"
+                href={process.env.NEXT_PUBLIC_OAUTH_URL}
+                onClick={handleResetLinkClick}
+              >
+                비밀번호가 기억나지 않으신가요?
               </Link>
             </Grid>
           </Grid>

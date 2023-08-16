@@ -52,10 +52,11 @@ export class TwoFactorAuthService {
   }
 
   public async isTwoFactorAuthCodeValid(
-    twoFactorAuthCodeDto: TwoFactorAuthCodeDto
+    userID: string,
+    twoFactorAuthCodeDto: Partial<TwoFactorAuthCodeDto>
   ) {
     const user = await this.userRepository.findOneBy({
-      user_id: twoFactorAuthCodeDto.user_id,
+      user_id: userID,
     });
     if (!user.two_factor_auth_secret) {
       return false;
@@ -83,6 +84,7 @@ export class TwoFactorAuthService {
       throw new ForbiddenException('Two-Factor Authentication is not enabled');
     }
     const isCodeValidated = await this.isTwoFactorAuthCodeValid(
+      user.user_id,
       twoFactorAuthCodeDto
     );
     if (isCodeValidated === false) {

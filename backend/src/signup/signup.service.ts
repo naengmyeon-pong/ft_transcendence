@@ -119,8 +119,7 @@ export class SignUpService {
 
   // test를 위해 비밀번호 암호화하지 않음.
   async create(userDto: UserDto, file: Express.Multer.File): Promise<void> {
-    const {user_id, user_pw, user_nickname, user_image, is_2fa_enabled} =
-      userDto;
+    const {user_id, user_pw, user_nickname, user_image} = userDto;
     if (!user_id) {
       throw new BadRequestException('enter your ID');
     }
@@ -128,7 +127,7 @@ export class SignUpService {
     // const hashedPassword = await bcrypt.hash(user_pw, salt);
     const userSignUpAuth = await this.userAuthRepository.findOneBy({user_id});
     if (!userSignUpAuth || userSignUpAuth.is_nickname_same === false) {
-      if (!file) {
+      if (file) {
         fs.unlink(file.path, err => {
           if (err) throw new InternalServerErrorException();
         });
@@ -145,7 +144,6 @@ export class SignUpService {
         // user_pw: hashedPassword,
         user_nickname,
         user_image: file ? file.path.substr(11) : '/images/logo.jpeg',
-        is_2fa_enabled,
       });
       await this.userRepository.save(user);
       await this.userAuthRepository.delete({user_id: user.user_id});

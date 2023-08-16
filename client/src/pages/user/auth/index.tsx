@@ -5,13 +5,16 @@ import {useRouter} from 'next/router';
 import type {InferGetServerSidePropsType, GetServerSideProps} from 'next';
 
 import axios from 'axios';
+import {useRecoilState} from 'recoil';
+import * as HTTP_STATUS from 'http-status';
+
 import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
-const HTTP_STATUS = require('http-status');
 
 import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
 import apiManager from '@/api/apiManager';
 import {useProfileImage} from '@/hooks/useProfileImage';
+import {passwordResetState} from '@/states/passwordReset';
 
 export const getServerSideProps: GetServerSideProps = async ({query}) => {
   const {code} = query;
@@ -24,6 +27,7 @@ function AuthPage({
   const router = useRouter();
   const {openAlertSnackbar} = useAlertSnackbar();
   const {setUserId} = useProfileImage();
+  const [passwordResetDataState, _] = useRecoilState(passwordResetState);
 
   useEffect(() => {
     (async () => {
@@ -33,17 +37,22 @@ function AuthPage({
         return;
       }
 
+      console.log(passwordResetDataState);
       try {
         const response = await apiManager.get(`/signup/auth?code=${code}`);
 
         if (response.status === HTTP_STATUS.OK) {
           const {is_already_signup, signup_jwt, user_id} = response.data;
           if (is_already_signup) {
-            openAlertSnackbar({
-              severity: 'info',
-              message: '이미 회원가입이 되어있습니다.',
-            });
-            router.push('/user/login');
+            if (passwordResetDataState === false) {
+              openAlertSnackbar({
+                severity: 'info',
+                message: '이미 회원가입이 되어있습니다.',
+              });
+              router.push('/user/login');
+            } else {
+              router.push('/user/reset-password');
+            }
           } else {
             sessionStorage.setItem('accessToken', signup_jwt);
             setUserId(user_id);

@@ -4,43 +4,31 @@ import {useState} from 'react';
 import {useRouter} from 'next/router';
 
 import axios from 'axios';
-const HTTP_STATUS = require('http-status');
+import * as HTTP_STATUS from 'http-status';
 
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
-import {List, ListItem, ListItemIcon, ListItemText} from '@mui/material';
-import CheckIcon from '@mui/icons-material/Check';
+import Checkbox from '@mui/material/Checkbox';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
-import DialogContentText from '@mui/material/DialogContentText';
+import {List, ListItem, ListItemIcon, ListItemText} from '@mui/material';
+import CheckIcon from '@mui/icons-material/Check';
 
 import apiManager from '@/api/apiManager';
 import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
-import {useProfileImage} from '@/hooks/useProfileImage';
 import ImageUpload from '@/components/signup/ImageUpload';
-import {useGlobalDialog} from '@/hooks/useGlobalDialog';
 import {
   isValidNicknameLength,
   isValidPasswordLength,
   isValidPasswordRule,
 } from '@/utils/user';
 
-export default function Signup() {
+function PasswordReset() {
   const router = useRouter();
-  const {
-    profileImageDataState: {userId, uploadFile},
-  } = useProfileImage();
-  const {openGlobalDialog, closeGlobalDialog} = useGlobalDialog();
   const {openAlertSnackbar} = useAlertSnackbar();
   const [password, setPassword] = useState<string>('');
-  const [nickname, setNickname] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
-  const [isUniqueNickname, setIsUniqueNickname] = useState<boolean>(false);
-
-  const handleNicknameInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNickname(e.target.value);
-  };
 
   const handlePassword = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
@@ -50,65 +38,12 @@ export default function Signup() {
     setConfirmPassword(e.target.value);
   };
 
-  const handleDuplicatedNickname = async () => {
-    if (isValidNicknameLength(nickname) === false) {
-      openAlertSnackbar({
-        message: `닉네임의 길이를 확인해주세요. (현재 길이: ${nickname.length}자)`,
-      });
-      return;
-    }
-
-    const response = await apiManager.get(
-      `/signup/nickname?user_id=${userId}&nickname=${nickname}`
-    );
-    try {
-      const result = response.data;
-      if (result === true) {
-        setIsUniqueNickname(true);
-      } else {
-        setIsUniqueNickname(false);
-      }
-      console.log(response.data);
-      openGlobalDialog({
-        title: '중복 확인',
-        content: (
-          <DialogContentText id="alert-dialog-description">
-            {nickname} 은(는) 사용
-            <Typography
-              component="span"
-              style={{color: result ? 'inherit' : 'red'}}
-            >
-              {result ? ' 가능' : ' 불가능'}
-            </Typography>
-            합니다.
-          </DialogContentText>
-        ),
-        actions: (
-          <Button onClick={closeGlobalDialog} autoFocus>
-            닫기
-          </Button>
-        ),
-      });
-      console.log(response);
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        openAlertSnackbar({message: error.response?.data.message});
-      }
-    }
-  };
-
-  //성공했을경우만 버튼이 활성화가 됩니다
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const formData = new FormData();
 
-    formData.append('user_id', userId);
     formData.append('user_pw', password);
-    formData.append('user_nickname', nickname);
-    if (uploadFile !== null) {
-      formData.append('user_image', uploadFile);
-    }
 
     console.log(formData);
     try {
@@ -119,12 +54,12 @@ export default function Signup() {
         },
       });
       console.log(response);
-      if (HTTP_STATUS.CREATED) {
+      if (HTTP_STATUS.OK) {
         openAlertSnackbar({
-          message: '회원가입이 정상적으로 완료되었습니다.',
+          message: '비밀번호 수정이 완료되었습니다.',
           severity: 'success',
         });
-        router.push('/user/login');
+        router.back();
       }
     } catch (error) {
       console.log(error);
@@ -137,10 +72,14 @@ export default function Signup() {
     }
   };
 
+  const handleCancel = () => {
+    router.back();
+  };
+
   return (
     <>
       <Typography component="h1" variant="h5">
-        회원가입
+        회원정보 수정
       </Typography>
 
       <Box component="form" onSubmit={handleSubmit} noValidate sx={{mt: 1}}>
@@ -282,23 +221,35 @@ export default function Signup() {
               </ListItem>
             </List>
           </Grid>
+
+          <Grid item xs={10}>
+            <Typography variant="body1" component="div">
+              2차 인증 활성화
+            </Typography>
+            <Typography sx={{mb: 1.5}} color="text.secondary">
+              Google Authenticator 로 추가 인증합니다.
+            </Typography>
+          </Grid>
+          <Grid item xs={2} container>
+            <Checkbox onChange={handle2FA} checked={is2faEnabled} />
+          </Grid>
         </Grid>
 
         <Button
-          disabled={
-            password !== confirmPassword ||
-            isUniqueNickname === false ||
-            (isValidPasswordLength(password) === false &&
-              isValidPasswordRule(password) === false)
-          }
+          disabled={isUniqueNickname === false}
           fullWidth
           type="submit"
           variant="contained"
           sx={{mt: 3, mb: 2}}
         >
-          회원가입
+          회원정보 수정
         </Button>
       </Box>
+      <Button fullWidth variant="outlined" onClick={handleCancel}>
+        이전 페이지로 돌아가기
+      </Button>
     </>
   );
 }
+
+export default PasswordReset;

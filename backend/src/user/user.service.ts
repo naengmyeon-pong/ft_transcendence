@@ -8,12 +8,15 @@ import {
 } from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
 import {User} from './user.entitiy';
+import {UserDto} from './dto/user.dto';
 import {UserAuthDto} from './dto/userAuth.dto';
 import {JwtService} from '@nestjs/jwt';
 import {UserRepository} from './user.repository';
 import {IsUserAuthRepository} from 'src/signup/signup.repository';
 import * as bcrypt from 'bcryptjs';
 import {Payload} from './payload';
+import {UpdateUserDto} from './dto/update-user.dto';
+import * as fs from 'fs';
 
 @Injectable()
 export class UserService {
@@ -78,6 +81,44 @@ export class UserService {
   //   throw new UnauthorizedException('login failed');
   // }
 
+  async updateUser(
+    userDto: UpdateUserDto,
+    file: Express.Multer.File,
+    userID: string
+  ): Promise<void> {
+    const user = await this.findUser(userID);
+    console.log(user, '\n', userDto);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+    if (userDto.user_pw) {
+      await this.userRepository.update(
+        {user_id: userID},
+        {
+          user_pw: userDto.user_pw,
+        }
+      );
+    }
+    if (userDto.user_nickname) {
+      await this.userRepository.update(
+        {user_id: userID},
+        {
+          user_nickname: userDto.user_nickname,
+        }
+      );
+    }
+    if (file) {
+      if (user.user_image === '/images/logo.jpeg') {
+        await this.userRepository.update(
+          {user_id: userID},
+          {
+            user_image: file.path.substr(11),
+          }
+        );
+      }
+    }
+  }
+
   generateAccessToken(payload: Payload) {
     return this.jwtService.sign(payload);
   }
@@ -108,5 +149,16 @@ export class UserService {
         is_2fa_enabled: false,
       }
     );
+  }
+
+  async getUser(userID: string): Promise<Partial<User>> {
+    const user = await this.userRepository.findOneBy({user_id: userID});
+    const userData: Partial<User> = {
+      user_id: user.user_id,
+      user_nickname: user.user_nickname,
+      user_image: user.user_image,
+      is_2fa_enabled: user.is_2fa_enabled,
+    };
+    return userData;
   }
 }

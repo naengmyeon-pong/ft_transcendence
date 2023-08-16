@@ -1,42 +1,49 @@
 'use client';
 
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import {useRouter} from 'next/router';
 
 import axios from 'axios';
-const HTTP_STATUS = require('http-status');
+import {useRecoilState} from 'recoil';
 
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
-import {List, ListItem, ListItemIcon, ListItemText} from '@mui/material';
-import CheckIcon from '@mui/icons-material/Check';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
+import {List, ListItem, ListItemIcon, ListItemText} from '@mui/material';
+import CheckIcon from '@mui/icons-material/Check';
 import DialogContentText from '@mui/material/DialogContentText';
 
 import apiManager from '@/api/apiManager';
+import {profileState} from '@/states/profile';
 import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
 import {useProfileImage} from '@/hooks/useProfileImage';
-import ImageUpload from '@/components/signup/ImageUpload';
 import {useGlobalDialog} from '@/hooks/useGlobalDialog';
+import ImageUpload from '@/components/signup/ImageUpload';
 import {
   isValidNicknameLength,
   isValidPasswordLength,
   isValidPasswordRule,
 } from '@/utils/user';
 
-export default function Signup() {
+const HTTP_STATUS = require('http-status');
+
+function Setting() {
   const router = useRouter();
   const {
     profileImageDataState: {userId, uploadFile},
   } = useProfileImage();
+  const [profileDataState, setProfileDataState] = useRecoilState(profileState);
+
   const {openGlobalDialog, closeGlobalDialog} = useGlobalDialog();
   const {openAlertSnackbar} = useAlertSnackbar();
-  const [password, setPassword] = useState<string>('');
   const [nickname, setNickname] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [isUniqueNickname, setIsUniqueNickname] = useState<boolean>(false);
+
+  const {is_2fa_enabled} = profileDataState;
 
   const handleNicknameInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNickname(e.target.value);
@@ -97,14 +104,30 @@ export default function Signup() {
     }
   };
 
-  //성공했을경우만 버튼이 활성화가 됩니다
+  const handle2FAoff = async () => {
+    try {
+      const response = await apiManager.post('/2fa/turn-off');
+      console.log(response);
+      if (HTTP_STATUS.CREATED) {
+        openAlertSnackbar({
+          message: 'OTP 설정이 해제되었습니다.',
+          severity: 'success',
+        });
+        setProfileDataState({...profileDataState, is_2fa_enabled: false});
+      }
+    } catch (error) {
+      console.log(error);
+      if (axios.isAxiosError(error)) {
+        openAlertSnackbar({message: error.response?.data.message});
+      }
+    }
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const formData = new FormData();
 
-    formData.append('user_id', userId);
-    formData.append('user_pw', password);
     formData.append('user_nickname', nickname);
     if (uploadFile !== null) {
       formData.append('user_image', uploadFile);
@@ -112,7 +135,6 @@ export default function Signup() {
 
     console.log(formData);
     try {
-      // TODO: token 유효기간이 지나면 다시 회원가입 버튼 누르도록 리다이렉션 하기
       const response = await apiManager.post('/signup', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -120,6 +142,7 @@ export default function Signup() {
       });
       console.log(response);
       if (HTTP_STATUS.CREATED) {
+        router.push('/user/2fa');
         openAlertSnackbar({
           message: '회원가입이 정상적으로 완료되었습니다.',
           severity: 'success',
@@ -129,18 +152,33 @@ export default function Signup() {
     } catch (error) {
       console.log(error);
       if (axios.isAxiosError(error)) {
-        if (error.response?.status === 401) {
-          console.log('401');
-        }
         openAlertSnackbar({message: error.response?.data.message});
       }
     }
   };
 
+  const handleCancel = () => {
+    router.push('/main/game');
+  };
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await apiManager.get('/user');
+        setProfileDataState(response.data);
+      } catch (error) {
+        openAlertSnackbar({message: '에러가 발생했습니다. 다시 시도해주세요.'});
+        console.log(error);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
   return (
     <>
       <Typography component="h1" variant="h5">
-        회원가입
+        회원정보 수정
       </Typography>
 
       <Box component="form" onSubmit={handleSubmit} noValidate sx={{mt: 1}}>
@@ -282,23 +320,45 @@ export default function Signup() {
               </ListItem>
             </List>
           </Grid>
+
+          <Grid item xs={10}>
+            <Typography variant="body1" component="div">
+              2차 인증 활성화
+              <Typography
+                variant="span"
+                style={{color: is_2fa_enabled ? 'green' : 'grey'}}
+              >
+                ({is_2fa_enabled ? 'ON' : 'OFF'})
+              </Typography>
+            </Typography>
+            <Typography sx={{mb: 1.5}} color="text.secondary">
+              Google Authenticator 로 추가 인증합니다.
+            </Typography>
+          </Grid>
+          <Grid item xs={2} container>
+            {is_2fa_enabled ? (
+              <Button onClick={handle2FAoff}>제거</Button>
+            ) : (
+              <Button href="/user/2fa">설정</Button>
+            )}
+          </Grid>
         </Grid>
 
         <Button
-          disabled={
-            password !== confirmPassword ||
-            isUniqueNickname === false ||
-            (isValidPasswordLength(password) === false &&
-              isValidPasswordRule(password) === false)
-          }
+          disabled={isUniqueNickname === false}
           fullWidth
           type="submit"
           variant="contained"
           sx={{mt: 3, mb: 2}}
         >
-          회원가입
+          회원정보 수정
         </Button>
       </Box>
+      <Button fullWidth variant="outlined" onClick={handleCancel}>
+        이전 페이지로 돌아가기
+      </Button>
     </>
   );
 }
+
+export default Setting;

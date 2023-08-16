@@ -3,6 +3,7 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Get,
   InternalServerErrorException,
   Post,
   Query,
@@ -28,7 +29,8 @@ import {ApiOperation, ApiResponse, ApiTags} from '@nestjs/swagger';
 export class TwoFactorAuthController {
   constructor(
     private readonly twoFactorAuthService: TwoFactorAuthService, // private jwtService: JwtService
-    private userRepository: UserRepository
+    private userRepository: UserRepository,
+    private jwtService: JwtService
   ) {}
 
   @Post('generate')
@@ -45,14 +47,14 @@ export class TwoFactorAuthController {
     status: 500,
     description: 'QR 코드 생성 중 에러가 발생한 경우',
   })
-  // @UseGuards(AuthGuard('signup'))
-  async register(@Res() res: Response, @Body('user_id') user_id: string) {
+  @UseGuards(AuthGuard('jwt'))
+  async register(@Res() res: Response, @Request() req: any) {
+    const userID: string = req.user.user_id;
     try {
       const {otpAuthUrl} =
-        await this.twoFactorAuthService.generateTwoFactorAuthSecret(user_id);
+        await this.twoFactorAuthService.generateTwoFactorAuthSecret(userID);
       return await this.twoFactorAuthService.pipeQRCodeStream(res, otpAuthUrl);
     } catch {
-      this.twoFactorAuthService.changeTwoFactorAuthAvailability(user_id, false);
       throw new InternalServerErrorException();
     }
   }
@@ -71,19 +73,22 @@ export class TwoFactorAuthController {
     status: 401,
     description: 'OTP 코드가 유효하지 않은 경우',
   })
-  // @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'))
   async turnOnTwoFactorAuth(
-    @Body() twoFactorAuthCodeDto: TwoFactorAuthCodeDto
+    @Body() twoFactorAuthCodeDto: Partial<TwoFactorAuthCodeDto>,
+    @Request() req: any
   ) {
+    const userID = req.user.user_id;
     const isCodeValidated =
       await this.twoFactorAuthService.isTwoFactorAuthCodeValid(
+        userID,
         twoFactorAuthCodeDto
       );
     if (!isCodeValidated) {
       throw new UnauthorizedException('Invalid Auth Code');
     }
     await this.twoFactorAuthService.changeTwoFactorAuthAvailability(
-      twoFactorAuthCodeDto.user_id,
+      userID,
       true
     );
     return {
@@ -98,22 +103,17 @@ export class TwoFactorAuthController {
       '회원가입 시점 이후에 2fa를 미사용하려는 경우, User 테이블의 is_2fa_enabled 값을 false로 변경함',
   })
   @ApiResponse({
+    status: 201,
+    description: '정상적으로 비활성화된 경우',
+  })
+  @ApiResponse({
     status: 401,
     description: 'OTP 코드가 유효하지 않은 경우',
   })
-  // @UseGuards(AuthGuard('jwt'))
-  async turnOffTwoFactorAuth(
-    @Body() twoFactorAuthCodeDto: TwoFactorAuthCodeDto
-  ) {
-    const isCodeValidated =
-      await this.twoFactorAuthService.isTwoFactorAuthCodeValid(
-        twoFactorAuthCodeDto
-      );
-    if (!isCodeValidated) {
-      throw new UnauthorizedException('Invalid Auth Code');
-    }
+  @UseGuards(AuthGuard('jwt'))
+  async turnOffTwoFactorAuth(@Request() req: any) {
     await this.twoFactorAuthService.changeTwoFactorAuthAvailability(
-      twoFactorAuthCodeDto.user_id,
+      req.user.user_id,
       false
     );
     return {
@@ -141,8 +141,7 @@ export class TwoFactorAuthController {
     const user = await this.userRepository.findOneBy({
       user_id: twoFactorAuthCodeDto.user_id,
     });
-    if (user && twoFactorAuthCodeDto.user_pw === user.user_pw) {
-      // if (user && (await bcrypt.compare(twoFactorAuthCodeDto.user_pw, user.user_pw))) {
+    if (user) {
       return this.twoFactorAuthService.authenticate(user, twoFactorAuthCodeDto);
     } else {
       throw new UnauthorizedException('Login failed');
