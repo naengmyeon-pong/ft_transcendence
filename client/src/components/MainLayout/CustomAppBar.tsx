@@ -1,5 +1,5 @@
 'use client';
-import React, {useContext, useEffect} from 'react';
+import React, {useCallback, useContext, useEffect} from 'react';
 import {MouseEvent, useState} from 'react';
 import Link from 'next/link';
 import logo from '@/public/logo.jpeg';
@@ -90,6 +90,11 @@ function CustomAppBar() {
     setConvertPage(Number(row.room_id));
     router.push('/main/chat');
   }
+
+  const logOut = useCallback(() => {
+    sessionStorage.removeItem('accessToken');
+    router.push('/');
+  }, []);
 
   return (
     <ThemeProvider theme={customTheme}>
@@ -258,7 +263,7 @@ function CustomAppBar() {
               </Menu>
             )}
             <Button>마이페이지</Button>
-            <Button>로그아웃</Button>
+            <Button onClick={logOut}>로그아웃</Button>
           </Box>
         </Toolbar>
       </AppBar>

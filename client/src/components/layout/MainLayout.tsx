@@ -9,6 +9,8 @@ import {UserContext} from '../MainLayout/Context';
 import {useRouter} from 'next/router';
 import {UserType} from '@/types/UserContext';
 import apiManager from '@/api/apiManager';
+import {useRecoilState, useSetRecoilState} from 'recoil';
+import {dmList} from '@/states/dmUser';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -20,6 +22,7 @@ function MainLayout({children}: MainLayoutProps) {
   const {setUserNickName} = useContext(UserContext);
   const {user_image, setUserImage} = useContext(UserContext);
   const {block_users} = useContext(UserContext);
+  const setDmList = useSetRecoilState(dmList);
   const router = useRouter();
 
   const [initMainLayout, setInitMainLayout] = useState(false);
@@ -47,18 +50,27 @@ function MainLayout({children}: MainLayoutProps) {
         });
         setSocket(socketIo);
 
-        const rep = await apiManager.get(
+        const rep_block_list = await apiManager.get(
           `/chatroom/block_list/${response.data.user_id}`
         );
-        console.log('block list: ', rep.data);
-        init_setBlockUsers(rep.data);
+        console.log('rep_block_list: ', rep_block_list);
+
+        init_setBlockUsers(rep_block_list.data);
+        const rep = await apiManager.get('chatroom/dm_list', {
+          params: {
+            user_id: response.data.user_id,
+          },
+        });
+        setDmList(rep.data);
         setInitMainLayout(true);
+        console.log('dmList: ', rep);
       } catch (error) {
         router.push('/');
         console.log('MainLayout error: ', error);
       }
     })();
   }, []);
+
   return (
     <>
       {initMainLayout && (

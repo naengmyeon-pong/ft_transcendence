@@ -11,13 +11,27 @@ import {
   ListItemText,
   Typography,
 } from '@mui/material';
-import React, {useCallback, useContext, useEffect} from 'react';
+import React, {useCallback, useContext} from 'react';
 import {UserContext} from '../MainLayout/Context';
 import Block from '@/components/Block';
+import {useRecoilState} from 'recoil';
+import {dmList, dmUserInfo} from '@/states/dmUser';
+import {profileDMChoise} from '@/states/userContext';
 
-export default function UserInfoPage({user_info}: {user_info: UserType}) {
+interface UserInfoPageProps<T> {
+  user_info: UserType;
+  // dm 실행결과를 리턴
+  // dmCallback?: T;
+}
+
+export default function UserInfoPage<T>({
+  user_info, // dmCallback,
+}: UserInfoPageProps<T>) {
   const {openGlobalModal, closeGlobalModal} = useGlobalModal();
-  const {dm_list, setDmList, user_id} = useContext(UserContext);
+  const {user_id} = useContext(UserContext);
+  const [dm_list, setDmList] = useRecoilState(dmList);
+  const [, setDmUser] = useRecoilState(dmUserInfo);
+  const [, setDmChoise] = useRecoilState(profileDMChoise);
 
   const content = useCallback(() => {
     return (
@@ -44,26 +58,51 @@ export default function UserInfoPage({user_info}: {user_info: UserType}) {
   }, [user_info.image, user_info.nickName]);
 
   const handleAddDmList = useCallback(() => {
-    if (dm_list.some(node => node.user2 === user_info.id) || user_id === null) {
-      closeGlobalModal();
+    // dm 리스트에서 확인하는것이 아닌 dmuser를 찾아서 확인하는것으로 변경하여야 함
+    // if (dm_list.some(node => node.user2 === user_info.id) || user_id === null) {
+    //   closeGlobalModal();
+    //   return;
+    // }
+    console.log('클릭');
+    setDmChoise(true);
+    setDmUser(prev => {
+      if (prev?.id === user_info.id) {
+        return prev;
+      }
+      return {
+        nickName: user_info.nickName,
+        id: user_info.id,
+        image: user_info.nickName,
+      };
+    });
+    if (user_id === null) {
       return;
     }
-    setDmList([
-      ...dm_list,
-      {
-        user1: user_id,
-        user2: user_info.id,
-        nickname: user_info.nickName,
-      },
-    ]);
+    setDmList(prev => {
+      if (prev.some(item => item.user2 === user_info.id)) {
+        console.log('추가안됨');
+        return prev;
+      }
+      console.log('추가됨');
+      return [
+        ...prev,
+        {
+          user1: user_id,
+          user2: user_info.id,
+          nickname: user_info.nickName,
+        },
+      ];
+    });
+
     closeGlobalModal();
   }, [
-    closeGlobalModal,
-    dm_list,
-    setDmList,
-    user_id,
     user_info.id,
     user_info.nickName,
+    setDmUser,
+    closeGlobalModal,
+    setDmList,
+    user_id,
+    setDmChoise,
   ]);
 
   const action = useCallback(() => {

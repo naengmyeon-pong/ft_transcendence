@@ -35,3 +35,13 @@ export const dmListState = atom<DmListData[]>({
   key: 'dmListState',
   default: [],
 });
+
+export const profileDMChoise = atom<boolean>({
+  key: 'profileDMChoise',
+  default: false,
+});
+
+export const dmBadgeCnt = atom<number>({
+  key: 'dmBadgeCnt',
+  default: 0,
+});

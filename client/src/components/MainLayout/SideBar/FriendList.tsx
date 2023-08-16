@@ -18,17 +18,17 @@ import {UserType} from '@/types/UserContext';
 import {UserContext} from '../Context';
 import UserInfoPage from '../../UserProfileModal';
 
-const StyledBadge = styled(Badge)(({theme}) => ({
-  '& .MuiBadge-badge': {
-    backgroundColor: 'grey',
-    color: 'grey',
-    boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
-  },
-}));
+// const StyledBadge = styled(Badge)(({theme}) => ({
+//   '& .MuiBadge-badge': {
+//     backgroundColor: 'grey',
+//     color: 'grey',
+//     boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
+//   },
+// }));
 
 function FriendList({friend}: {friend: UserType}) {
   const [anchorEl, setAnchorEl] = useState<HTMLLIElement | null>(null);
-  const {socket, dm_list, setDmList, user_id} = useContext(UserContext);
+  const {socket} = useContext(UserContext);
   const open = Boolean(anchorEl);
 
   function handleMenu(event: React.MouseEvent<HTMLLIElement>) {
@@ -42,19 +42,6 @@ function FriendList({friend}: {friend: UserType}) {
   function handleDeleteFriend() {
     socket?.emit('del-friend', friend.id);
     setAnchorEl(null);
-  }
-  function handleAddDmList() {
-    if (dm_list.some(node => node.user2 === friend.id) || user_id === null) {
-      return;
-    }
-    setDmList([
-      ...dm_list,
-      {
-        user1: user_id,
-        user2: friend.id,
-        nickname: friend.nickName,
-      },
-    ]);
   }
 
   const OpenUserInfoPage = () => {
@@ -103,9 +90,6 @@ function FriendList({friend}: {friend: UserType}) {
       >
         <MenuItem onClick={handleDeleteFriend}>
           <Typography>친구 삭제</Typography>
-        </MenuItem>
-        <MenuItem onClick={handleAddDmList}>
-          <Typography>1:1 대화하기</Typography>
         </MenuItem>
         <MenuItem onClick={OpenUserInfoPage}>
           <UserInfoPage user_info={friend} />

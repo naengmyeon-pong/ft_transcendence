@@ -7,6 +7,7 @@ import {UserType} from '@/types/UserContext';
 import {UserContext} from '@/components/MainLayout/Context';
 import apiManager from '@/api/apiManager';
 import {useRouter} from 'next/router';
+import {useGlobalModal} from '@/hooks/useGlobalModal';
 
 const BoxBorder = styled('div')({
   border: '1px solid black',
@@ -42,6 +43,8 @@ export default function UserList() {
   const roomId = useContext(UserContext).convert_page;
 
   const router = useRouter();
+
+  const {openGlobalModal, closeGlobalModal} = useGlobalModal();
 
   async function roomUsers() {
     try {
@@ -98,6 +101,11 @@ export default function UserList() {
     setUsers(test?.members?.user);
   }
 
+  function ChangePassword() {
+    // openGlobalModal({
+    // })
+  }
+
   useEffect(() => {
     // 소켓 이벤트 등록해서 들어온 메세지 헨들링
     console.log('room-member on');
@@ -147,6 +155,7 @@ export default function UserList() {
         </ul>
       </BoxBorder>
       <Box display="flex" justifyContent="flex-end">
+        {myPermission === 'owner' && <Button> 방 정보 변경 </Button>}
         <Button onClick={handleInvite}>초대하기</Button>
         <Button onClick={exit}>나가기</Button>
       </Box>

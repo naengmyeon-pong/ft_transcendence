@@ -1,7 +1,15 @@
 'use client';
-import React, {ChangeEvent, FormEvent, useContext, useEffect} from 'react';
+import React, {
+  ChangeEvent,
+  FormEvent,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+} from 'react';
 import {
   Avatar,
+  Badge,
   Box,
   Button,
   ButtonGroup,
@@ -21,13 +29,16 @@ import SearchIcon from '@mui/icons-material/Search';
 import Profile from './Profile';
 import {useState} from 'react';
 import {UserContext} from '../Context';
-import {UserType} from '@/types/UserContext';
+import {DmChat, UserType} from '@/types/UserContext';
 import apiManager from '@/api/apiManager';
 import FriendList from './FriendList';
 import BlockUserList from './BlockUserList';
 import {modalStyle} from '@/components/styled/modalStyle';
 import {drawerWidth} from '@/constants/sidebar';
 import Dm from './DM';
+import {useRecoilState, useRecoilValue} from 'recoil';
+import {dmBadgeCnt, profileDMChoise} from '@/states/userContext';
+import {dmList, dmNotify, dmUserInfo} from '@/states/dmUser';
 
 function SideBar() {
   console.log('SideBar');
@@ -42,6 +53,15 @@ function SideBar() {
   const [friend_modal, setFriendModal] = useState<boolean>(false);
   const [friend_name, setFriendName] = useState<string>('');
   const [friend_search_list, setFriendSearchList] = useState<UserType[]>([]);
+  const [profile_dm_choise, setDmChoise] = useRecoilState(profileDMChoise);
+  const [dm_badge_value, setDMBadge] = useRecoilState(dmBadgeCnt);
+  const [notify, setNofify] = useRecoilState(dmNotify);
+
+  const dm_user = useRecoilValue(dmUserInfo);
+  const dm_user_id = useRef<string>('');
+
+  const lstState_ref = useRef<number>(lstState);
+  lstState_ref.current = lstState;
 
   function friendListTap() {
     if (lstState === 1) {
@@ -109,6 +129,40 @@ function SideBar() {
     );
   }
 
+  const handleDMCnt = useCallback(
+    (chat: DmChat) => {
+      console.log('lstState: ', lstState);
+      if (lstState_ref.current !== 2 || dm_user_id.current !== chat.userId) {
+        setDMBadge(prev => prev + 1);
+      }
+      setNofify(prev => {
+        if (dm_user_id.current === chat.userId) {
+          return prev;
+        }
+        const new_notify = new Map(prev);
+        const cnt = new_notify.get(chat.userId);
+        cnt !== undefined
+          ? new_notify.set(chat.userId, cnt + 1)
+          : new_notify.set(chat.userId, 1);
+        return new_notify;
+      });
+    },
+    [lstState, setDMBadge, setNofify]
+  );
+
+  useEffect(() => {
+    if (dm_user !== null) {
+      dm_user_id.current = dm_user?.id;
+    }
+  }, [dm_user]);
+
+  useEffect(() => {
+    socket?.on('dm-message', handleDMCnt);
+    return () => {
+      socket?.off('dm-message', handleDMCnt);
+    };
+  }, [handleDMCnt, socket]);
+
   useEffect(() => {
     function handleBlockList() {
       setBlockUsersSize(block_users.size);
@@ -116,9 +170,11 @@ function SideBar() {
     }
 
     function handleFriendList(res: UserType[]) {
+      console.log('res: ', res);
       setFriendList(res);
     }
     setBlockUsersSize(block_users.size);
+
     socket?.on('friend-list', handleFriendList);
     socket?.on('block-list', handleBlockList);
     socket?.emit('friend-list');
@@ -128,6 +184,13 @@ function SideBar() {
       socket?.off('block-list', handleBlockList);
     };
   }, []);
+
+  useEffect(() => {
+    if (profile_dm_choise === true) {
+      setDmChoise(false);
+      setLstState(2);
+    }
+  }, [profile_dm_choise, setDmChoise, handleDMCnt]);
 
   return (
     <>
@@ -199,7 +262,15 @@ function SideBar() {
                 }}
               >
                 <Box display="flex" sx={{flexDirection: 'column'}}>
-                  <Typography width={'60px'}>DM</Typography>
+                  <Badge
+                    overlap="circular"
+                    color="error"
+                    anchorOrigin={{vertical: 'top', horizontal: 'right'}}
+                    // variant="dot"
+                    badgeContent={dm_badge_value}
+                  >
+                    <Typography width={'60px'}>DM</Typography>
+                  </Badge>
                 </Box>
               </Button>
             </ButtonGroup>

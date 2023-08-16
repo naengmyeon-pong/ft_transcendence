@@ -17,9 +17,6 @@ export interface UserContextType {
 
   convert_page: number;
   setConvertPage: (convert_page: number) => void;
-
-  dm_list: DmListData[];
-  setDmList: (dm_list: DmListData[]) => void;
 }
 
 export enum PermissionType {

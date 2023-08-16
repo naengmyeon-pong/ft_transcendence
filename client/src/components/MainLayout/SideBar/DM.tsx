@@ -20,8 +20,11 @@ import React, {
 } from 'react';
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import {UserContext} from '../Context';
-import {DmChat, DmListData} from '@/types/UserContext';
+import {DmChat, DmListData, UserType} from '@/types/UserContext';
 import apiManager from '@/api/apiManager';
+import {useRecoilState, useRecoilValue, useSetRecoilState} from 'recoil';
+import {dmList, dmNotify, dmUserInfo} from '@/states/dmUser';
+import {dmBadgeCnt} from '@/states/userContext';
 
 const Message = ({
   // 보낸이
@@ -62,7 +65,8 @@ const Message = ({
 
 export default function Dm() {
   const {socket, user_id, block_users} = useContext(UserContext);
-  const {dm_list, setDmList} = useContext(UserContext);
+  const [dm_list, setDmList] = useRecoilState(dmList);
+  // 클로저 문제 때문에 사용함
   const dm_user_id = useRef<string>('');
   const dm_user_nickname = useRef<string>('');
   // 리스트에 사용자가 추가되어있는지 확인하는 변수
@@ -70,16 +74,23 @@ export default function Dm() {
   const [message, setMessage] = useState<string>('');
   const chat_scroll = useRef<HTMLDivElement>(null);
   const list_scroll = useRef<HTMLDivElement>(null);
-  const onChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    setMessage(e.target.value);
-  }, []);
+
   const [textFieldDisabled, setTextFieldDisabled] = useState(false);
-  const [notify, setNofify] = useState<Map<string, number>>(new Map());
+  // const [notify, setNofify] = useState<Map<string, number>>(new Map());
+  const [notify, setNofify] = useRecoilState(dmNotify);
 
   // false: List, true: DM
   const [convert_list_dm, setConvertListDM] = useState(false);
 
+  const [dm_user, setDmUser] = useRecoilState(dmUserInfo);
+
   console.log('DmPage');
+  console.log('변경 감지 setDmList: ', dm_list);
+
+  function closeDirectMessage() {
+    setConvertListDM(false);
+    setDmUser(null);
+  }
 
   const onSendMessage = useCallback(
     (e: FormEvent<HTMLFormElement>) => {
@@ -103,58 +114,48 @@ export default function Dm() {
     [message, socket, block_users]
   );
 
-  async function changeUser(row: DmListData) {
-    const rep = await apiManager.get('chatroom/dm', {
-      params: {
-        user_id: row.user1,
-        other_id: row.user2,
-      },
-    });
-    dm_user_id.current = row.user2;
-    dm_user_nickname.current = row.nickname;
-    setChats(rep.data);
-    setMessage('');
-    setConvertListDM(true);
-    setNofify(prev => {
-      const new_notify = new Map(prev);
-      new_notify.set(row.user2, 0);
-      return new_notify;
-    });
-    if (block_users.has(`${dm_user_id.current}`)) {
-      setTextFieldDisabled(true);
-      return;
-    }
-    setTextFieldDisabled(false);
-  }
-
-  async function init() {
-    try {
-      const rep = await apiManager.get('chatroom/dm_list', {
+  const changeUser = useCallback(
+    async (row: DmListData) => {
+      const rep = await apiManager.get('chatroom/dm', {
         params: {
-          user_id: user_id,
+          user_id: row.user1,
+          other_id: row.user2,
         },
       });
-      setDmList(rep.data);
-      // if (rep.data.length > 0) {
-      //   changeUser(rep.data[0]);
-      // }
-    } catch (error) {
-      console.log('Dm error: ', error);
-    }
-  }
+      setDmUser(prev => {
+        if (prev?.id === row.user2) {
+          return prev;
+        }
+        return {
+          nickName: row.nickname,
+          id: row.user2,
+          image: '',
+        };
+      });
+
+      dm_user_id.current = row.user2;
+      dm_user_nickname.current = row.nickname;
+      setNofify(prev => {
+        const new_notify = new Map<string, number>(prev);
+        new_notify.set(row.user2, 0);
+        return new_notify;
+      });
+      setChats(rep.data);
+      setMessage('');
+      setConvertListDM(true);
+      if (block_users.has(`${dm_user_id.current}`)) {
+        setTextFieldDisabled(true);
+        return;
+      }
+      setTextFieldDisabled(false);
+    },
+    [block_users, setDmUser, setNofify]
+  );
 
   function handleDmMessage(chat: DmChat) {
     if (chat.userId === dm_user_id.current && chat.someoneId === user_id) {
       setChats(prevChats => [...prevChats, chat]);
     }
-    setNofify(prev => {
-      const new_notify = new Map(prev);
-      const cnt = new_notify.get(chat.userId);
-      cnt !== undefined
-        ? new_notify.set(chat.userId, cnt + 1)
-        : new_notify.set(chat.userId, 1);
-      return new_notify;
-    });
 
     setDmList(prev => {
       if (prev.some(item => item.user2 === chat.userId)) {
@@ -169,6 +170,10 @@ export default function Dm() {
         },
       ];
     });
+  }
+
+  function onChange(e: ChangeEvent<HTMLInputElement>) {
+    setMessage(e.target.value);
   }
 
   function handleBlock() {
@@ -195,7 +200,6 @@ export default function Dm() {
   }
 
   useEffect(() => {
-    init();
     socket?.on('block-list', handleBlock);
     socket?.on('dm-message', handleDmMessage);
 
@@ -227,15 +231,16 @@ export default function Dm() {
     }
   }, [dm_list.length]);
 
-  // useEffect(() => {
-  //   // 추가된 사용자(제일 마지막 노드로 변경)
-  //   console.log('변경 감지');
-  //   if (dm_list.length > 0) {
-  //     console.log('dm_list: ', dm_list);
-  //     console.log('마지막노드: ', dm_list[dm_list.length - 1]);
-  //     changeUser(dm_list[dm_list.length - 1]);
-  //   }
-  // }, [dm_list]);
+  useEffect(() => {
+    console.log('dm 페이지 감지', dm_user);
+    if (dm_user !== null && user_id !== null) {
+      changeUser({
+        user1: user_id,
+        user2: dm_user.id,
+        nickname: dm_user.nickName,
+      });
+    }
+  }, [dm_user, changeUser, user_id]);
 
   return (
     <>
@@ -248,7 +253,7 @@ export default function Dm() {
           border={'1px solid black'}
         >
           <Box border={'1px solid black'} height={'19%'} display={'flex'}>
-            <Button onClick={() => setConvertListDM(false)}>
+            <Button onClick={closeDirectMessage}>
               <ArrowBackIosIcon />
             </Button>
             <Typography maxHeight={'auto'} ml={'10px'}>
