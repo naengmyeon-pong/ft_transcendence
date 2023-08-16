@@ -105,7 +105,7 @@ export class RecordService {
     userID: string,
     pageNo: number,
     pageSize: number
-  ): Promise<Record[]> => {
+  ): Promise<{records: Record[]; pageNo: number; totalPage: number}> => {
     if (!userID || typeof userID !== 'string' || isNaN(pageNo)) {
       throw new BadRequestException('Invalid request format');
     }
@@ -114,7 +114,10 @@ export class RecordService {
       throw new NotFoundException('User not found');
     }
     const skip = (pageNo - 1) * pageSize;
-    return await this.recordRepository.getDetailGames(userID, pageSize, skip);
+    const [records, count]: [Record[], number] =
+      await this.recordRepository.getDetailGames(userID, pageSize, skip);
+    const totalPage = Math.ceil(count / pageSize);
+    return {records, pageNo, totalPage};
   };
 
   getSave(winner: string, loser: string) {
