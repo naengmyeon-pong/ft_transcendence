@@ -28,7 +28,8 @@ import {ApiOperation, ApiResponse, ApiTags} from '@nestjs/swagger';
 export class TwoFactorAuthController {
   constructor(
     private readonly twoFactorAuthService: TwoFactorAuthService, // private jwtService: JwtService
-    private userRepository: UserRepository
+    private userRepository: UserRepository,
+    private jwtService: JwtService
   ) {}
 
   @Post('generate')
@@ -45,14 +46,16 @@ export class TwoFactorAuthController {
     status: 500,
     description: 'QR 코드 생성 중 에러가 발생한 경우',
   })
-  // @UseGuards(AuthGuard('signup'))
-  async register(@Res() res: Response, @Body('user_id') user_id: string) {
+  @UseGuards(AuthGuard('jwt'))
+  async register(@Res() res: Response, @Request() req: any) {
+    const userID: string = req.user.user_id;
+    console.log(userID);
     try {
       const {otpAuthUrl} =
-        await this.twoFactorAuthService.generateTwoFactorAuthSecret(user_id);
+        await this.twoFactorAuthService.generateTwoFactorAuthSecret(userID);
       return await this.twoFactorAuthService.pipeQRCodeStream(res, otpAuthUrl);
     } catch {
-      this.twoFactorAuthService.changeTwoFactorAuthAvailability(user_id, false);
+      this.twoFactorAuthService.changeTwoFactorAuthAvailability(userID, false);
       throw new InternalServerErrorException();
     }
   }
