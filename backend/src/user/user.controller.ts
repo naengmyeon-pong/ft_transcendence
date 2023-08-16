@@ -5,16 +5,20 @@ import {
   Delete,
   Param,
   Post,
+  Patch,
   Request,
   ValidationPipe,
   UseGuards,
+  UploadedFile,
   Query,
 } from '@nestjs/common';
-import {UserService} from './user.service';
-import {User} from './user.entitiy';
 import {AuthGuard} from '@nestjs/passport';
 import {ApiTags, ApiOperation, ApiQuery, ApiResponse} from '@nestjs/swagger';
+
+import {User} from './user.entitiy';
+import {UserDto} from './dto/user.dto';
 import {UserAuthDto} from './dto/userAuth.dto';
+import {UserService} from './user.service';
 
 @Controller('user')
 @ApiTags('User')
@@ -79,5 +83,26 @@ export class UserController {
   @UseGuards(AuthGuard('jwt'))
   validateJwtToken(): boolean {
     return true;
+  }
+
+  @Patch('/')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({
+    summary: '사용자 정보 업데이트 API',
+    description: '사용자 정보를 업데이트한다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '사용자 정보가 정상적으로 업데이트된 경우',
+  })
+  @ApiResponse({
+    status: 404,
+    description: '유저 정보가 존재하지 않는 경우',
+  })
+  updateUser(
+    @Body(ValidationPipe) user: Partial<UserDto>,
+    @UploadedFile() file?: Express.Multer.File
+  ): Promise<void> {
+    return this.userService.updateUser(user, file);
   }
 }

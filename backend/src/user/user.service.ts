@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
 import {User} from './user.entitiy';
+import {UserDto} from './dto/user.dto';
 import {UserAuthDto} from './dto/userAuth.dto';
 import {JwtService} from '@nestjs/jwt';
 import {UserRepository} from './user.repository';
@@ -77,6 +78,23 @@ export class UserService {
   //   }
   //   throw new UnauthorizedException('login failed');
   // }
+
+  async updateUser(userDto: UserDto): Promise<string | number> {
+    const user = await this.findUser(userDto.user_id);
+    if (user && userAuthDto.user_pw === user.user_pw) {
+      // if (user && (await bcrypt.compare(userAuthDto.user_pw, user.user_pw))) {
+      // user token create. (secret + Payload)
+      if (user.is_2fa_enabled === false) {
+        const payload: Payload = {user_id: userDto.user_id};
+        const accessToken = this.generateAccessToken(payload);
+        return accessToken;
+      } else {
+        // 2fa가 설정된 경우
+        return HttpStatus.ACCEPTED;
+      }
+    }
+    throw new UnauthorizedException('login failed');
+  }
 
   generateAccessToken(payload: Payload) {
     return this.jwtService.sign(payload);
