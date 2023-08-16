@@ -3,6 +3,7 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Get,
   InternalServerErrorException,
   Post,
   Query,
@@ -49,13 +50,11 @@ export class TwoFactorAuthController {
   @UseGuards(AuthGuard('jwt'))
   async register(@Res() res: Response, @Request() req: any) {
     const userID: string = req.user.user_id;
-    console.log(userID);
     try {
       const {otpAuthUrl} =
         await this.twoFactorAuthService.generateTwoFactorAuthSecret(userID);
       return await this.twoFactorAuthService.pipeQRCodeStream(res, otpAuthUrl);
     } catch {
-      this.twoFactorAuthService.changeTwoFactorAuthAvailability(userID, false);
       throw new InternalServerErrorException();
     }
   }
@@ -74,19 +73,22 @@ export class TwoFactorAuthController {
     status: 401,
     description: 'OTP 코드가 유효하지 않은 경우',
   })
-  // @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'))
   async turnOnTwoFactorAuth(
-    @Body() twoFactorAuthCodeDto: TwoFactorAuthCodeDto
+    @Body() twoFactorAuthCodeDto: Partial<TwoFactorAuthCodeDto>,
+    @Request() req: any
   ) {
+    const userID = req.user.user_id;
     const isCodeValidated =
       await this.twoFactorAuthService.isTwoFactorAuthCodeValid(
+        userID,
         twoFactorAuthCodeDto
       );
     if (!isCodeValidated) {
       throw new UnauthorizedException('Invalid Auth Code');
     }
     await this.twoFactorAuthService.changeTwoFactorAuthAvailability(
-      twoFactorAuthCodeDto.user_id,
+      userID,
       true
     );
     return {
@@ -104,19 +106,10 @@ export class TwoFactorAuthController {
     status: 401,
     description: 'OTP 코드가 유효하지 않은 경우',
   })
-  // @UseGuards(AuthGuard('jwt'))
-  async turnOffTwoFactorAuth(
-    @Body() twoFactorAuthCodeDto: TwoFactorAuthCodeDto
-  ) {
-    const isCodeValidated =
-      await this.twoFactorAuthService.isTwoFactorAuthCodeValid(
-        twoFactorAuthCodeDto
-      );
-    if (!isCodeValidated) {
-      throw new UnauthorizedException('Invalid Auth Code');
-    }
+  @UseGuards(AuthGuard('jwt'))
+  async turnOffTwoFactorAuth(@Request() req: any) {
     await this.twoFactorAuthService.changeTwoFactorAuthAvailability(
-      twoFactorAuthCodeDto.user_id,
+      req.user.user_id,
       false
     );
     return {
@@ -144,8 +137,7 @@ export class TwoFactorAuthController {
     const user = await this.userRepository.findOneBy({
       user_id: twoFactorAuthCodeDto.user_id,
     });
-    if (user && twoFactorAuthCodeDto.user_pw === user.user_pw) {
-      // if (user && (await bcrypt.compare(twoFactorAuthCodeDto.user_pw, user.user_pw))) {
+    if (user) {
       return this.twoFactorAuthService.authenticate(user, twoFactorAuthCodeDto);
     } else {
       throw new UnauthorizedException('Login failed');
