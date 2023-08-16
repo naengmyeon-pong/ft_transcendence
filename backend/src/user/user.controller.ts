@@ -26,6 +26,12 @@ import {UpdateUserDto} from './dto/update-user.dto';
 export class UserController {
   constructor(private userService: UserService) {}
 
+  @Get()
+  @UseGuards(AuthGuard('jwt'))
+  async getUser(@Request() req: any): Promise<Partial<User>> {
+    return this.userService.getUser(req.user.user_id);
+  }
+
   @Delete('/delete:user_id')
   @ApiQuery({
     name: 'user_id',
