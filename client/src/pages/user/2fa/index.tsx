@@ -3,32 +3,63 @@
 import {useEffect, useState} from 'react';
 import {useRouter} from 'next/router';
 import Image from 'next/image';
-import Link from 'next/link';
 
-import Typography from '@mui/material/Typography';
-import TextField from '@mui/material/TextField';
+import axios from 'axios';
+import {useRecoilState} from 'recoil';
+import * as HTTP_STATUS from 'http-status';
+
+import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 
 import apiManager from '@/api/apiManager';
+import {profileState} from '@/states/profile';
 import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
-import {useGlobalDialog} from '@/hooks/useGlobalDialog';
 import {useProfileImage} from '@/hooks/useProfileImage';
 
-const HTTP_STATUS = require('http-status');
-
 function TwoFactorAuth() {
+  const router = useRouter();
   const [QRCodeImage, setQRCodeImage] = useState<string>('');
-  const {
-    profileImageDataState: {userId},
-  } = useProfileImage();
-  const {openGlobalDialog, closeGlobalDialog} = useGlobalDialog();
+  const [profileDataState, setProfileDataState] = useRecoilState(profileState);
+
   const {openAlertSnackbar} = useAlertSnackbar();
+
+  const handleClick = () => {
+    router.back();
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const otpPassword = event.currentTarget.otpPassword.value;
+
+    try {
+      const response = await apiManager.post('/2fa/turn-on', {
+        code: otpPassword,
+      });
+      console.log(response);
+      if (HTTP_STATUS.CREATED) {
+        openAlertSnackbar({
+          message: 'OTP 설정이 완료되었습니다.',
+          severity: 'success',
+        });
+        setProfileDataState({...profileDataState, is_2fa_enabled: true});
+        router.push('/user/setting');
+      }
+    } catch (error) {
+      console.log(error);
+      if (axios.isAxiosError(error)) {
+        openAlertSnackbar({message: error.response?.data.message});
+      }
+    }
+  };
 
   useEffect(() => {
     const generateQRCode = async () => {
       const response = await apiManager.post(
         '/2fa/generate',
-        {user_id: userId},
+        {user_id: profileDataState.user_id},
         {
           responseType: 'arraybuffer',
         }
@@ -53,14 +84,22 @@ function TwoFactorAuth() {
       </Typography>
 
       <Image src={QRCodeImage} alt="QRCode" width={256} height={256} />
-      <Button
-        fullWidth
-        component={Link}
-        href={'/user/login'}
-        variant="contained"
-        sx={{mt: 3, mb: 2}}
-      >
-        로그인 화면으로 돌아가기
+
+      <Box component="form" onSubmit={handleSubmit} noValidate sx={{mt: 1}}>
+        <TextField
+          fullWidth
+          id="otpPassword"
+          name="otpPassword"
+          label="OTP 6자리"
+          InputLabelProps={{shrink: true}}
+        />
+        <Button fullWidth type="submit" variant="contained" sx={{mt: 3, mb: 2}}>
+          인증하기
+        </Button>
+      </Box>
+
+      <Button fullWidth variant="outlined" onClick={handleClick}>
+        이전 화면으로 돌아가기
       </Button>
     </>
   );

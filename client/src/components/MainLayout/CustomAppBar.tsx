@@ -180,7 +180,9 @@ function CustomAppBar() {
             <Button>
               <NotificationsIcon sx={{color: 'black'}} />
             </Button>
-            <Button>마이페이지</Button>
+            <Link href="/user/setting">
+              <Button>마이페이지</Button>
+            </Link>
             <Button>로그아웃</Button>
           </Box>
         </Toolbar>
