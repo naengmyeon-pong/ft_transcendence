@@ -150,4 +150,15 @@ export class UserService {
       }
     );
   }
+
+  async getUser(userID: string): Promise<Partial<User>> {
+    const user = await this.userRepository.findOneBy({user_id: userID});
+    const userData: Partial<User> = {
+      user_id: user.user_id,
+      user_nickname: user.user_nickname,
+      user_image: user.user_image,
+      is_2fa_enabled: user.is_2fa_enabled,
+    };
+    return userData;
+  }
 }
