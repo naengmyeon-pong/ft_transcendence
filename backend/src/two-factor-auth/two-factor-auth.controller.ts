@@ -103,6 +103,10 @@ export class TwoFactorAuthController {
       '회원가입 시점 이후에 2fa를 미사용하려는 경우, User 테이블의 is_2fa_enabled 값을 false로 변경함',
   })
   @ApiResponse({
+    status: 201,
+    description: '정상적으로 비활성화된 경우',
+  })
+  @ApiResponse({
     status: 401,
     description: 'OTP 코드가 유효하지 않은 경우',
   })
