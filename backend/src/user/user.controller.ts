@@ -19,6 +19,7 @@ import {User} from './user.entitiy';
 import {UserDto} from './dto/user.dto';
 import {UserAuthDto} from './dto/userAuth.dto';
 import {UserService} from './user.service';
+import {UpdateUserDto} from './dto/update-user.dto';
 
 @Controller('user')
 @ApiTags('User')
@@ -85,7 +86,7 @@ export class UserController {
     return true;
   }
 
-  @Patch('/')
+  @Patch('/update')
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({
     summary: '사용자 정보 업데이트 API',
@@ -100,9 +101,10 @@ export class UserController {
     description: '유저 정보가 존재하지 않는 경우',
   })
   updateUser(
-    @Body(ValidationPipe) user: Partial<UserDto>,
+    @Body() user: UpdateUserDto,
+    @Request() req: any,
     @UploadedFile() file?: Express.Multer.File
   ): Promise<void> {
-    return this.userService.updateUser(user, file);
+    return this.userService.updateUser(user, file, req.user.user_id);
   }
 }

@@ -21,5 +21,6 @@ import {JwtStrategy} from '@/user/jwt.strategy';
   ],
   providers: [UserRepository, TwoFactorAuthService, JwtStrategy],
   controllers: [TwoFactorAuthController],
+  exports: [TwoFactorAuthService],
 })
 export class TwoFactorAuthModule {}

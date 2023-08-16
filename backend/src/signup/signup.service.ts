@@ -127,7 +127,7 @@ export class SignUpService {
     // const hashedPassword = await bcrypt.hash(user_pw, salt);
     const userSignUpAuth = await this.userAuthRepository.findOneBy({user_id});
     if (!userSignUpAuth || userSignUpAuth.is_nickname_same === false) {
-      if (!file) {
+      if (file) {
         fs.unlink(file.path, err => {
           if (err) throw new InternalServerErrorException();
         });

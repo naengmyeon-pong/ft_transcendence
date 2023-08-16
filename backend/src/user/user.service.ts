@@ -15,6 +15,8 @@ import {UserRepository} from './user.repository';
 import {IsUserAuthRepository} from 'src/signup/signup.repository';
 import * as bcrypt from 'bcryptjs';
 import {Payload} from './payload';
+import {UpdateUserDto} from './dto/update-user.dto';
+import * as fs from 'fs';
 
 @Injectable()
 export class UserService {
@@ -79,21 +81,42 @@ export class UserService {
   //   throw new UnauthorizedException('login failed');
   // }
 
-  async updateUser(userDto: UserDto): Promise<string | number> {
-    const user = await this.findUser(userDto.user_id);
-    if (user && userAuthDto.user_pw === user.user_pw) {
-      // if (user && (await bcrypt.compare(userAuthDto.user_pw, user.user_pw))) {
-      // user token create. (secret + Payload)
-      if (user.is_2fa_enabled === false) {
-        const payload: Payload = {user_id: userDto.user_id};
-        const accessToken = this.generateAccessToken(payload);
-        return accessToken;
-      } else {
-        // 2fa가 설정된 경우
-        return HttpStatus.ACCEPTED;
+  async updateUser(
+    userDto: UpdateUserDto,
+    file: Express.Multer.File,
+    userID: string
+  ): Promise<void> {
+    const user = await this.findUser(userID);
+    console.log(user, '\n', userDto);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+    if (userDto.user_pw) {
+      await this.userRepository.update(
+        {user_id: userID},
+        {
+          user_pw: userDto.user_pw,
+        }
+      );
+    }
+    if (userDto.user_nickname) {
+      await this.userRepository.update(
+        {user_id: userID},
+        {
+          user_nickname: userDto.user_nickname,
+        }
+      );
+    }
+    if (file) {
+      if (user.user_image === '/images/logo.jpeg') {
+        await this.userRepository.update(
+          {user_id: userID},
+          {
+            user_image: file.path.substr(11),
+          }
+        );
       }
     }
-    throw new UnauthorizedException('login failed');
   }
 
   generateAccessToken(payload: Payload) {

@@ -3,6 +3,7 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Get,
   InternalServerErrorException,
   Post,
   Query,
@@ -32,6 +33,12 @@ export class TwoFactorAuthController {
     private jwtService: JwtService
   ) {}
 
+  // @Get('test')
+  // @UseGuards(AuthGuard('jwt'))
+  // test(@Request() req) {
+  //   return req.user;
+  // }
+
   @Post('generate')
   @ApiOperation({
     summary: 'QR 코드 생성 API',
@@ -49,13 +56,12 @@ export class TwoFactorAuthController {
   @UseGuards(AuthGuard('jwt'))
   async register(@Res() res: Response, @Request() req: any) {
     const userID: string = req.user.user_id;
-    console.log(userID);
     try {
       const {otpAuthUrl} =
         await this.twoFactorAuthService.generateTwoFactorAuthSecret(userID);
       return await this.twoFactorAuthService.pipeQRCodeStream(res, otpAuthUrl);
     } catch {
-      this.twoFactorAuthService.changeTwoFactorAuthAvailability(userID, false);
+      // this.twoFactorAuthService.changeTwoFactorAuthAvailability(userID, false);
       throw new InternalServerErrorException();
     }
   }
