@@ -4,13 +4,13 @@ import {useState} from 'react';
 import {useRouter} from 'next/router';
 
 import axios from 'axios';
+const HTTP_STATUS = require('http-status');
 
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import {List, ListItem, ListItemIcon, ListItemText} from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
-import Checkbox from '@mui/material/Checkbox';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
 import DialogContentText from '@mui/material/DialogContentText';
@@ -20,8 +20,11 @@ import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
 import {useProfileImage} from '@/hooks/useProfileImage';
 import ImageUpload from '@/components/signup/ImageUpload';
 import {useGlobalDialog} from '@/hooks/useGlobalDialog';
-
-const HTTP_STATUS = require('http-status');
+import {
+  isValidNicknameLength,
+  isValidPasswordLength,
+  isValidPasswordRule,
+} from '@/utils/user';
 
 export default function Signup() {
   const router = useRouter();
@@ -30,37 +33,13 @@ export default function Signup() {
   } = useProfileImage();
   const {openGlobalDialog, closeGlobalDialog} = useGlobalDialog();
   const {openAlertSnackbar} = useAlertSnackbar();
-  const [password, setPassword] = useState('');
-  const [nickname, setNickname] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-
-  // 8~20자 제한
-  const isValidPasswordLength = (password: string): boolean => {
-    if (8 <= password.length && password.length <= 20) {
-      return true;
-    }
-    return false;
-  };
-
-  // 2~8자 제한
-  const isValidNicknameLength = (nickname: string): boolean => {
-    if (2 <= nickname.length && nickname.length <= 8) {
-      return true;
-    }
-    return false;
-  };
-
-  const isValidPasswordRule = (password: string): boolean => {
-    // 대문자, 소문자, 특수문자 각각 하나 이상
-    const regex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^\d\sa-zA-Z])[\S]{8,}$/;
-    return regex.test(password);
-  };
-
-  const [isUniqueNickname, setIsUniqueNickname] = useState(false);
+  const [password, setPassword] = useState<string>('');
+  const [nickname, setNickname] = useState<string>('');
+  const [confirmPassword, setConfirmPassword] = useState<string>('');
+  const [isUniqueNickname, setIsUniqueNickname] = useState<boolean>(false);
 
   const handleNicknameInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNickname(e.target.value);
-    // setIsUniqueNickname(false);
   };
 
   const handlePassword = (e: React.ChangeEvent<HTMLInputElement>) => {
