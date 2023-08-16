@@ -48,14 +48,4 @@ export class UserDto {
     required: true,
   })
   user_image: string;
-
-  @ApiProperty({
-    example: 'false',
-    description: '2차 인증 사용 여부',
-    required: false,
-  })
-  @Transform(value => {
-    return value.value === 'true' ? true : false;
-  })
-  is_2fa_enabled: boolean;
 }
