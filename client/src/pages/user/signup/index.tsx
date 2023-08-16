@@ -132,7 +132,6 @@ export default function Signup() {
     formData.append('user_id', userId);
     formData.append('user_pw', password);
     formData.append('user_nickname', nickname);
-    formData.append('is_2fa_enabled', is2faEnabled.toString());
     if (uploadFile !== null) {
       formData.append('user_image', uploadFile);
     }
@@ -312,18 +311,6 @@ export default function Signup() {
                 />
               </ListItem>
             </List>
-          </Grid>
-
-          <Grid item xs={10}>
-            <Typography variant="body1" component="div">
-              2차 인증 활성화
-            </Typography>
-            <Typography sx={{mb: 1.5}} color="text.secondary">
-              Google Authenticator 로 추가 인증합니다.
-            </Typography>
-          </Grid>
-          <Grid item xs={2} container>
-            <Checkbox onChange={handle2FA} checked={is2faEnabled} />
           </Grid>
         </Grid>
 
