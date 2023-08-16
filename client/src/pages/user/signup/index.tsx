@@ -1,6 +1,6 @@
 'use client';
 
-import {useEffect, useState} from 'react';
+import {useState} from 'react';
 import {useRouter} from 'next/router';
 
 import axios from 'axios';
@@ -57,11 +57,6 @@ export default function Signup() {
   };
 
   const [isUniqueNickname, setIsUniqueNickname] = useState(false);
-  const [is2faEnabled, setIs2faEnabled] = useState(false);
-
-  const handle2FA = () => {
-    setIs2faEnabled(!is2faEnabled);
-  };
 
   const handleNicknameInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNickname(e.target.value);
@@ -132,7 +127,6 @@ export default function Signup() {
     formData.append('user_id', userId);
     formData.append('user_pw', password);
     formData.append('user_nickname', nickname);
-    formData.append('is_2fa_enabled', is2faEnabled.toString());
     if (uploadFile !== null) {
       formData.append('user_image', uploadFile);
     }
@@ -147,15 +141,11 @@ export default function Signup() {
       });
       console.log(response);
       if (HTTP_STATUS.CREATED) {
-        if (is2faEnabled) {
-          router.push('/user/2fa');
-        } else {
-          openAlertSnackbar({
-            message: '회원가입이 정상적으로 완료되었습니다.',
-            severity: 'success',
-          });
-          router.push('/user/login');
-        }
+        openAlertSnackbar({
+          message: '회원가입이 정상적으로 완료되었습니다.',
+          severity: 'success',
+        });
+        router.push('/user/login');
       }
     } catch (error) {
       console.log(error);
@@ -312,18 +302,6 @@ export default function Signup() {
                 />
               </ListItem>
             </List>
-          </Grid>
-
-          <Grid item xs={10}>
-            <Typography variant="body1" component="div">
-              2차 인증 활성화
-            </Typography>
-            <Typography sx={{mb: 1.5}} color="text.secondary">
-              Google Authenticator 로 추가 인증합니다.
-            </Typography>
-          </Grid>
-          <Grid item xs={2} container>
-            <Checkbox onChange={handle2FA} checked={is2faEnabled} />
           </Grid>
         </Grid>
 
