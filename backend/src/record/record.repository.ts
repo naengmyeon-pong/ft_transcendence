@@ -43,6 +43,6 @@ export class RecordRepository extends Repository<Record> {
       .orderBy('record.id', 'DESC')
       .take(pageSize)
       .skip(skip)
-      .getMany();
+      .getManyAndCount();
   }
 }
