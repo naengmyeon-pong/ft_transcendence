@@ -14,6 +14,8 @@ import {UserContext} from '@/components/MainLayout/Context';
 import apiManager from '@/api/apiManager';
 import {useRouter} from 'next/router';
 import {useGlobalModal} from '@/hooks/useGlobalModal';
+import {useRecoilState} from 'recoil';
+import {testInputState} from '@/states/globalModal';
 
 const BoxBorder = styled('div')({
   border: '1px solid black',
@@ -36,6 +38,61 @@ interface MemberType {
   members: Member;
 }
 
+const ModalContent = () => {
+  const [testInput, setTestInput] = useRecoilState(testInputState);
+
+  const changeRoomPasswordTest = (e: ChangeEvent<HTMLInputElement>) => {
+    const check = /^[0-9]+$/;
+    if (!check.test(e.target.value) && e.target.value !== '') {
+      alert('숫자만 입력해주세요.');
+      return;
+    }
+    setTestInput(e.target.value);
+  };
+
+  return (
+    <TextField
+      required
+      margin="normal"
+      fullWidth
+      variant="outlined"
+      label="비밀번호"
+      type="password"
+      value={testInput}
+      onChange={changeRoomPasswordTest}
+    />
+  );
+};
+
+const ModalAction = () => {
+  const roomId = useContext(UserContext).convert_page;
+
+  const [testInput, setTestInput] = useRecoilState(testInputState);
+
+  const {closeGlobalModal} = useGlobalModal();
+
+  const sendChangePassword = useCallback(async () => {
+    try {
+      await apiManager.post('/chatroom/update_chatroom_pw', {
+        room_id: roomId,
+        password: testInput.trim() === '' ? null : Number(testInput),
+      });
+      setTestInput('');
+      closeGlobalModal();
+    } catch (error) {
+      console.log('sendChangePassword: ', error);
+      alert('패스워드 변경 실패');
+    }
+  }, [closeGlobalModal, roomId, setTestInput, testInput]);
+
+  return (
+    <Box>
+      <Button onClick={sendChangePassword}>변경</Button>
+      <Button onClick={closeGlobalModal}>취소</Button>
+    </Box>
+  );
+};
+
 export default function UserList() {
   const [owner, setOwner] = useState<UserType>();
   const [adminUser, setAdminUser] = useState<UserType[]>([]);
@@ -50,9 +107,7 @@ export default function UserList() {
 
   const router = useRouter();
 
-  const {openGlobalModal, closeGlobalModal} = useGlobalModal();
-
-  const [room_password, setRoomPassword] = useState<string>('');
+  const {openGlobalModal} = useGlobalModal();
 
   async function roomUsers() {
     try {
@@ -109,62 +164,13 @@ export default function UserList() {
     setUsers(test?.members?.user);
   }
 
-  console.log('TEST: ', room_password);
-
-  const changeRoomPassword = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    const check = /^[0-9]+$/;
-    if (!check.test(e.target.value) && e.target.value !== '') {
-      alert('숫자만 입력해주세요.');
-      return;
-    }
-    setRoomPassword(e.target.value);
-  }, []);
-
-  const changeRoomContent = useCallback(() => {
-    return (
-      <TextField
-        required
-        margin="normal"
-        fullWidth
-        variant="outlined"
-        label="비밀번호"
-        type="password"
-        value={room_password}
-        onChange={changeRoomPassword}
-      />
-    );
-  }, [changeRoomPassword, room_password]);
-
-  const sendChangePassword = useCallback(async () => {
-    try {
-      await apiManager.post('/chatroom/update_chatroom_pw', {
-        room_id: roomId,
-        password: room_password.trim() === '' ? null : Number(room_password),
-      });
-      setRoomPassword('');
-      closeGlobalModal();
-    } catch (error) {
-      console.log('sendChangePassword: ', error);
-      alert('패스워드 변경 실패');
-    }
-  }, [closeGlobalModal, roomId, room_password]);
-
-  const changeRoomAction = useCallback(() => {
-    return (
-      <Box>
-        <Button onClick={sendChangePassword}>변경</Button>
-        <Button onClick={closeGlobalModal}>취소</Button>
-      </Box>
-    );
-  }, [sendChangePassword, closeGlobalModal]);
-
   const changeRoomInfo = useCallback(() => {
     openGlobalModal({
       title: '방 정보 변경',
-      content: changeRoomContent(),
-      action: changeRoomAction(),
+      content: <ModalContent />,
+      action: <ModalAction />,
     });
-  }, [changeRoomContent, changeRoomAction, openGlobalModal]);
+  }, [openGlobalModal]);
 
   useEffect(() => {
     // 소켓 이벤트 등록해서 들어온 메세지 헨들링

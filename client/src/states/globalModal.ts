@@ -10,3 +10,8 @@ export const globalModalState = atom<GlobalModalType>({
     action: undefined,
   },
 });
+
+export const testInputState = atom({
+  key: 'testInputState',
+  default: '',
+});
