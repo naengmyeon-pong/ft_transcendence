@@ -1,6 +1,12 @@
 'use client';
-import {Box, Button, Typography, styled} from '@mui/material';
-import React, {useContext, useEffect, useState} from 'react';
+import {Box, Button, TextField, Typography, styled} from '@mui/material';
+import React, {
+  ChangeEvent,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 import UserNode from './UserNode';
 import ChatInvite from './modal/ChatInvite';
 import {UserType} from '@/types/UserContext';
@@ -45,6 +51,8 @@ export default function UserList() {
   const router = useRouter();
 
   const {openGlobalModal, closeGlobalModal} = useGlobalModal();
+
+  const [room_password, setRoomPassword] = useState<string>('');
 
   async function roomUsers() {
     try {
@@ -101,10 +109,62 @@ export default function UserList() {
     setUsers(test?.members?.user);
   }
 
-  function ChangePassword() {
-    // openGlobalModal({
-    // })
-  }
+  console.log('TEST: ', room_password);
+
+  const changeRoomPassword = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    const check = /^[0-9]+$/;
+    if (!check.test(e.target.value) && e.target.value !== '') {
+      alert('숫자만 입력해주세요.');
+      return;
+    }
+    setRoomPassword(e.target.value);
+  }, []);
+
+  const changeRoomContent = useCallback(() => {
+    return (
+      <TextField
+        required
+        margin="normal"
+        fullWidth
+        variant="outlined"
+        label="비밀번호"
+        type="password"
+        value={room_password}
+        onChange={changeRoomPassword}
+      />
+    );
+  }, [changeRoomPassword, room_password]);
+
+  const sendChangePassword = useCallback(async () => {
+    try {
+      await apiManager.post('/chatroom/update_chatroom_pw', {
+        room_id: roomId,
+        password: room_password.trim() === '' ? null : Number(room_password),
+      });
+      setRoomPassword('');
+      closeGlobalModal();
+    } catch (error) {
+      console.log('sendChangePassword: ', error);
+      alert('패스워드 변경 실패');
+    }
+  }, [closeGlobalModal, roomId, room_password]);
+
+  const changeRoomAction = useCallback(() => {
+    return (
+      <Box>
+        <Button onClick={sendChangePassword}>변경</Button>
+        <Button onClick={closeGlobalModal}>취소</Button>
+      </Box>
+    );
+  }, [sendChangePassword, closeGlobalModal]);
+
+  const changeRoomInfo = useCallback(() => {
+    openGlobalModal({
+      title: '방 정보 변경',
+      content: changeRoomContent(),
+      action: changeRoomAction(),
+    });
+  }, [changeRoomContent, changeRoomAction, openGlobalModal]);
 
   useEffect(() => {
     // 소켓 이벤트 등록해서 들어온 메세지 헨들링
@@ -155,7 +215,9 @@ export default function UserList() {
         </ul>
       </BoxBorder>
       <Box display="flex" justifyContent="flex-end">
-        {myPermission === 'owner' && <Button> 방 정보 변경 </Button>}
+        {myPermission === 'owner' && (
+          <Button onClick={changeRoomInfo}> 방 정보 변경 </Button>
+        )}
         <Button onClick={handleInvite}>초대하기</Button>
         <Button onClick={exit}>나가기</Button>
       </Box>
