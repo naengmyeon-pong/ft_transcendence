@@ -14,8 +14,7 @@ import {CircularProgress} from '@mui/material';
 import Pong from '@/components/game/Pong';
 
 import {GameInfo, RoomUserInfo, JoinGameInfo} from '@/common/types/game';
-import {UserContext} from '@/components/MainLayout/Context';
-
+import {UserContext} from '@/components/layout/MainLayout/Context';
 
 function Game() {
   const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);

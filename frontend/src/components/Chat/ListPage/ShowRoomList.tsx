@@ -21,7 +21,7 @@ import {
   Typography,
 } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
-import {UserContext} from '@/components/MainLayout/Context';
+import {UserContext} from '@/components/layout/MainLayout/Context';
 import {ChatListData, RoomListProps} from '@/types/UserContext';
 import apiManager from '@/api/apiManager';
 

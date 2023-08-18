@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import React, {ChangeEvent, FormEvent, useContext, useState} from 'react';
 import SearchIcon from '@mui/icons-material/Search';
-import {UserContext} from '@/components/MainLayout/Context';
+import {UserContext} from '@/components/layout/MainLayout/Context';
 import {UserType} from '@/types/UserContext';
 import apiManager from '@/api/apiManager';
 import {modalStyle} from '@/components/styled/modalStyle';

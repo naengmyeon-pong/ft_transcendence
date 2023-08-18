@@ -8,7 +8,7 @@ import Ban from './service/Ban';
 import {AddBlock, DelBlock} from './service/Block';
 import {AddAdmin, DelAdmin} from './service/Admin';
 import {UserProps} from '@/types/UserContext';
-import {UserContext} from '@/components/MainLayout/Context';
+import {UserContext} from '@/components/layout/MainLayout/Context';
 import Block from '@/components/Block';
 
 /*

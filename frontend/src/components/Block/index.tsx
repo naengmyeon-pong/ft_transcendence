@@ -3,7 +3,7 @@
 import {UserType} from '@/types/UserContext';
 import {Box, Button, Typography} from '@mui/material';
 import React, {ReactNode, useCallback, useContext} from 'react';
-import {UserContext} from '../MainLayout/Context';
+import {UserContext} from '@/components/layout/MainLayout/Context';
 import {AddBlock, DelBlock} from '../Chat/RoomPage/service/Block';
 import {useGlobalModal} from '@/hooks/useGlobalModal';
 

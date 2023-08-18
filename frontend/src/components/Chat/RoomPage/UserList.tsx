@@ -10,7 +10,7 @@ import React, {
 import UserNode from './UserNode';
 import ChatInvite from './modal/ChatInvite';
 import {UserType} from '@/types/UserContext';
-import {UserContext} from '@/components/MainLayout/Context';
+import {UserContext} from '@/components/layout/MainLayout/Context';
 import apiManager from '@/api/apiManager';
 import {useRouter} from 'next/router';
 import {useGlobalModal} from '@/hooks/useGlobalModal';

@@ -10,7 +10,7 @@ import React, {
   useState,
 } from 'react';
 import MuteModal from './modal/MuteModal';
-import {UserContext} from '@/components/MainLayout/Context';
+import {UserContext} from '@/components/layout/MainLayout/Context';
 import {useRouter} from 'next/router';
 
 interface IChat {
