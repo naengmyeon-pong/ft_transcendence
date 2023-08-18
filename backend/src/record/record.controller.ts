@@ -91,13 +91,7 @@ export class RecordController {
     @Query('page') pageNo: number,
     @Query('size') pageSize: number
   ): Promise<{records: Record[]; pageNo: number; totalPage: number}> {
-    const clientID = 'user1';
-    return await this.recordService.getDetailRecord(
-      clientID,
-      userID,
-      pageNo,
-      pageSize
-    );
+    return await this.recordService.getDetailRecord(userID, pageNo, pageSize);
   }
 
   // For Test
