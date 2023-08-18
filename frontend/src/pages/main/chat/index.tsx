@@ -1,11 +1,12 @@
 'use client';
+import ChatList from '@/components/Chat/ListPage';
+import ChatRoom from '@/components/Chat/RoomPage';
+import {UserContext} from '@/components/MainLayout/Context';
+import React, {useContext} from 'react';
 
-function ChatPage() {
-  return (
-    <>
-      <p>this is chat page</p>
-    </>
-  );
+export default function ChatPage() {
+  const {convert_page} = useContext(UserContext);
+  console.log('ChatPage');
+
+  return <>{convert_page === 0 ? <ChatList /> : <ChatRoom />}</>;
 }
-
-export default ChatPage;
