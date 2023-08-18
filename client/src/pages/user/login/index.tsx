@@ -26,9 +26,9 @@ function LoginPage() {
   const [_, setPasswordResetDataState] = useRecoilState(passwordResetState);
 
   const [intraId, setIntraId] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
   const [is2faLogin, setIs2faLogin] = useState<boolean>(false);
 
+  // TODO: recoil persist 로 상태 관리하기
   const handleResetLinkClick = () => {
     setPasswordResetDataState(true);
   };
@@ -47,7 +47,6 @@ function LoginPage() {
       const response = await apiManager.post('/user/signin', data);
       if (response.data === HTTP_STATUS.ACCEPTED) {
         setIntraId(enteredIntraId);
-        setPassword(enteredPassword);
         setIs2faLogin(true);
       } else {
         sessionStorage.setItem('accessToken', response.data);
@@ -62,7 +61,6 @@ function LoginPage() {
     event.preventDefault();
     const data = {
       user_id: intraId,
-      user_pw: password,
       code: event.currentTarget.otpPassword.value,
     };
 
