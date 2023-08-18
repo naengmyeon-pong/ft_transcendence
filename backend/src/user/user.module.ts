@@ -9,21 +9,23 @@ import {JwtStrategy} from './jwt.strategy';
 import {UserRepository} from 'src/user/user.repository';
 import {IsUserAuth} from 'src/signup/signup.entity';
 import {IsUserAuthRepository} from 'src/signup/signup.repository';
+import {JwtcustomeModule} from '@/jwtcustome/jwtcustome.module';
 
 @Module({
   imports: [
-    PassportModule.register({defaultStrategy: 'jwt'}),
-    JwtModule.register({
-      secret: 'Secret1234',
-      signOptions: {
-        expiresIn: '4h',
-      },
-    }),
+    // PassportModule.register({defaultStrategy: 'jwt'}),
+    // JwtModule.register({
+    //   secret: 'Secret1234',
+    //   signOptions: {
+    //     expiresIn: '4h',
+    //   },
+    // }),
+    JwtcustomeModule,
     TypeOrmModule.forFeature([User]),
     TypeOrmModule.forFeature([IsUserAuth]),
   ],
   controllers: [UserController],
-  providers: [UserService, JwtStrategy, UserRepository, IsUserAuthRepository],
+  providers: [UserService, UserRepository, IsUserAuthRepository],
   exports: [UserService],
 })
 export class UserModule {}

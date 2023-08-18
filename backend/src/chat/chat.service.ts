@@ -214,6 +214,7 @@ export class ChatService {
   }
 
   async leaveRoom(room_id: number, user_id: string) {
+    // throw new InternalServerErrorException();
     if (!room_id || !user_id) {
       throw new BadRequestException('empty parameter.');
     }
@@ -227,29 +228,20 @@ export class ChatService {
       chatroomId: room_id,
       userId: user_id,
     });
-    const query_runner = this.dataSource.createQueryRunner();
-    await query_runner.connect();
-    await query_runner.startTransaction();
-    try {
-      if (!member) {
-        return;
-      } else if (member.permission === 2) {
-        //owner 일 때 방 전체가 터지게. // 여기에서 다 처리해야될듯 front한테 부르는게 아니라.
-        await this.chatRoomRepository.delete({id: room_id});
-        return member;
-      } else {
-        await this.chatMemberRepository.delete({
-          userId: member.userId,
-          chatroomId: room_id,
-        });
-        room.current_nums -= 1;
-        await this.chatRoomRepository.save(room);
-      }
+    if (!member) {
+      return;
+    } else if (member.permission === 2) {
+      //owner 일 때 방 전체가 터지게. // 여기에서 다 처리해야될듯 front한테 부르는게 아니라.
+      await this.chatRoomRepository.delete({id: room_id});
       return member;
-    } catch (e) {
-      query_runner.rollbackTransaction();
-    } finally {
-      query_runner.release();
+    } else {
+      await this.chatMemberRepository.delete({
+        userId: member.userId,
+        chatroomId: room_id,
+      });
+      room.current_nums -= 1;
+      await this.chatRoomRepository.save(room);
+      return member;
     }
   }
 
@@ -430,17 +422,31 @@ export class ChatService {
   }
 
   async getFriendList(user_id: string) {
-    const ret = await this.friendListRepository
-      .createQueryBuilder('friendList')
+    const ret = await this.userRepository
+      .createQueryBuilder('users')
       .select([
-        'user.user_id AS "id"',
-        'user.user_nickname AS "nickName"',
-        'user.user_image AS "image"',
+        'users.user_id AS "id"',
+        'users.user_nickname AS "nickName"',
+        'users.user_image AS "image"',
       ])
-      .innerJoin('friendList.FriendUser', 'user')
-      .leftJoin('blockList', 'bl', 'bl.userId = :user_id', {user_id})
-      .where('friendList.userId = :user_id', {user_id})
-      .andWhere('(bl.blockId is null or bl.blockId != friendList.friendId)')
+      .innerJoin(
+        'users.friend',
+        'friend',
+        `
+      CASE 
+        WHEN friend.friendId=users.user_id THEN friend.userId = :user_id END
+      `,
+        {user_id}
+      )
+      .leftJoin(
+        'users.blocklist',
+        'bl',
+        `
+      CASE
+        WHEN bl.blockId = users.user_id THEN bl.userId = :user_id END`,
+        {user_id}
+      )
+      .where('bl.blockId is null')
       .getRawMany();
 
     return ret;
@@ -594,6 +600,7 @@ export class ChatService {
       room.password = password;
     } else {
       room.password = null;
+      room.is_password = false;
     }
     await this.chatRoomRepository.save(room);
   }
