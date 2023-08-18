@@ -1,13 +1,9 @@
-import React, {
-  RefObject,
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-} from 'react';
+'use client';
+
+import {RefObject, useEffect, useState, useRef, useCallback} from 'react';
 import {Socket} from 'socket.io-client';
 
-import {Coordinate, Ball, GameInfo} from '@/types/game';
+import {Coordinate, Ball, GameInfo} from '@/common/types/game';
 
 const KEY_CODES = {
   S: 's',

@@ -1,16 +1,15 @@
 import axios, {AxiosInstance} from 'axios';
+import {getJwtToken} from '@/api/auth';
 
 const apiManager: AxiosInstance = axios.create({
-  baseURL: `${process.env.REACT_APP_BACKEND_SERVER}`,
+  baseURL: `${process.env.NEXT_PUBLIC_BACKEND_SERVER}`,
   timeout: 3000,
 });
 
 apiManager.interceptors.request.use(
   config => {
-    const sessionStorageToken = sessionStorage.getItem('accessToken');
-    const jwtToken =
-      sessionStorageToken === null ? '' : `Bearer ${sessionStorageToken}`;
-    config.headers['authorization'] = jwtToken;
+    const jwtToken = getJwtToken();
+    config.headers['authorization'] = `Bearer ${jwtToken}`;
     return config;
   },
   error => {
