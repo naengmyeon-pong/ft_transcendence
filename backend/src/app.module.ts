@@ -1,19 +1,19 @@
-import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { userTypeORMconf } from './configs/typeorm.config';
-import { UserModule } from './user/user.module';
-import { SignUpModule } from './signup/signup.module';
+import {Module} from '@nestjs/common';
+import {ConfigModule} from '@nestjs/config';
+import {TypeOrmModule} from '@nestjs/typeorm';
+import {userTypeORMconf} from './configs/typeorm.config';
+import {UserModule} from './user/user.module';
+import {SignUpModule} from './signup/signup.module';
 import * as Joi from 'joi';
-import { ServeStaticModule } from '@nestjs/serve-static';
-import { join } from 'path';
-import { ChatModule } from './chat/chat.module';
-import { SocketArray } from './globalVariable/global.socket';
-import { GameModule } from './game/game.module';
-import { TwoFactorAuthController } from './two-factor-auth/two-factor-auth.controller';
-import { TwoFactorAuthService } from './two-factor-auth/two-factor-auth.service';
-import { TwoFactorAuthModule } from './two-factor-auth/two-factor-auth.module';
-import { RecordModule } from './record/record.module';
+import {ServeStaticModule} from '@nestjs/serve-static';
+import {join} from 'path';
+import {ChatModule} from './chat/chat.module';
+import {SocketArray} from './globalVariable/global.socket';
+import {GameModule} from './game/game.module';
+import {TwoFactorAuthController} from './two-factor-auth/two-factor-auth.controller';
+import {TwoFactorAuthService} from './two-factor-auth/two-factor-auth.service';
+import {TwoFactorAuthModule} from './two-factor-auth/two-factor-auth.module';
+import {RecordModule} from './record/record.module';
 
 @Module({
   imports: [
@@ -34,17 +34,17 @@ import { RecordModule } from './record/record.module';
         INTRA_API_UID: Joi.string().required(),
         INTRA_API_SECRET: Joi.string().required(),
         INTRA_API_REDIRECT_URI: Joi.string().required(),
+        NEXT_PUBLIC_OAUTH_URL: Joi.string().required(),
+        NEXT_PUBLIC_BACKEND_SERVER: Joi.string().required(),
       }),
     }),
     ServeStaticModule.forRoot(
       {
         rootPath: join(__dirname, '../../', 'assets'),
-        serveStaticOptions: { index: false },
         renderPath: '/images',
       },
       {
         rootPath: join(__dirname, '../../', 'assets'),
-        serveStaticOptions: { index: false },
         renderPath: '/users',
       }
     ),
@@ -60,4 +60,4 @@ import { RecordModule } from './record/record.module';
   controllers: [],
   providers: [],
 })
-export class AppModule { }
+export class AppModule {}

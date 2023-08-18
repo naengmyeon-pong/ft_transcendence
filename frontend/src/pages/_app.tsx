@@ -8,6 +8,8 @@ import AlertSnackbar from '@/components/AlertSnackbar';
 import GlobalDialog from '@/components/GlobalDialog';
 import UserLayout from '@/components/layout/UserLayout';
 import MainLayout from '@/components/layout/MainLayout';
+import {UserProvider} from '@/components/MainLayout/Context';
+import CustomModal from '@/components/GlobalModal';
 
 export default function MyApp({Component, pageProps}: AppProps) {
   const router = useRouter();
@@ -21,19 +23,22 @@ export default function MyApp({Component, pageProps}: AppProps) {
 
   return (
     <RecoilRoot>
-      <QueryClientProvider client={queryClient}>
-        {(isUserRoute || router.pathname === '/') && (
-          <UserLayout>
-            <Component {...pageProps} />
-          </UserLayout>
-        )}
-        {isMainRoute && (
+<QueryClientProvider client={queryClient}>
+      {(isUserRoute || router.pathname === '/') && (
+        <UserLayout>
+          <Component {...pageProps} />
+        </UserLayout>
+      )}
+      {isMainRoute && (
+        <UserProvider>
           <MainLayout>
+            <CustomModal />
             <Component {...pageProps} />
           </MainLayout>
-        )}
-        <GlobalDialog />
-        <AlertSnackbar />
+        </UserProvider>
+      )}
+      <GlobalDialog />
+      <AlertSnackbar />
       </QueryClientProvider>
     </RecoilRoot>
   );
