@@ -14,13 +14,7 @@ import {CircularProgress} from '@mui/material';
 import Pong from '@/components/game/Pong';
 
 import {GameInfo, RoomUserInfo, JoinGameInfo} from '@/common/types/game';
-<<<<<<< HEAD
-
-const socket: Socket = io(`${process.env.NEXT_PUBLIC_BACKEND_SERVER}/game`);
-=======
-import {UserContext} from '@/components/MainLayout/Context';
->>>>>>> 9138b32e36408187b1b70201480e5d5d6f49aaff
-
+import {UserContext} from '@/components/layout/MainLayout/Context';
 
 function Game() {
   const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
