@@ -22,6 +22,7 @@ import {ModeRepository} from 'src/record/mode/mode.repository';
 import {TypeRepository} from 'src/record/type/type.repository';
 import {JwtService} from '@nestjs/jwt';
 import {GameService} from './game.service';
+import {SocketArray} from '@/globalVariable/global.socket';
 
 const NORMAL_EASY = 0;
 const NORMAL_HARD = 1;
@@ -48,7 +49,8 @@ export class GameGateway
     private recordRepository: RecordRepository,
     private modeRepository: ModeRepository,
     private typeRepository: TypeRepository,
-    private jwtService: JwtService
+    private jwtService: JwtService,
+    private socketArray: SocketArray
   ) {}
 
   @WebSocketServer() nsp: Namespace;
@@ -58,6 +60,12 @@ export class GameGateway
 
   handleConnection(@ConnectedSocket() socket: Socket) {
     this.logger.log(`${socket.id} 게임 소켓 연결`);
+    const userID = this.getUserID(socket);
+    // const user_id = socket.handshake.query.user_id as string;
+    this.socketArray.addGameSocketArray({
+      user_id: userID,
+      socket_id: socket.id,
+    });
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
@@ -106,6 +114,7 @@ export class GameGateway
     @MessageBody() joinGameInfo: JoinGameInfo
   ) {
     let user_id: string;
+    socket.handshake.auth;
     try {
       const decodedToken = this.jwtService.verify(joinGameInfo.jwt, {
         secret: process.env.SIGNIN_JWT_SECRET_KEY,
@@ -266,6 +275,14 @@ export class GameGateway
     this.nsp
       .to(roomInfo.room_name)
       .emit('game_info', {game_info: roomInfo.game_info});
+  };
+
+  getUserID = (socket: Socket): string => {
+    const jwt: string = socket.handshake.auth.token;
+    const decodedToken = this.jwtService.verify(jwt, {
+      secret: process.env.SIGNIN_JWT_SECRET_KEY,
+    });
+    return decodedToken.user_id;
   };
 }
 
