@@ -8,8 +8,8 @@ import AlertSnackbar from '@/components/AlertSnackbar';
 import GlobalDialog from '@/components/GlobalDialog';
 import UserLayout from '@/components/layout/UserLayout';
 import MainLayout from '@/components/layout/MainLayout';
-import {UserProvider} from '@/components/layout/MainLayout/Context';
 import CustomModal from '@/components/GlobalModal';
+import {UserProvider} from '@/components/layout/MainLayout/Context';
 
 export default function MyApp({Component, pageProps}: AppProps) {
   const router = useRouter();

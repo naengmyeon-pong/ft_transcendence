@@ -3,7 +3,7 @@
 import {useRouter} from 'next/router';
 import {useContext, useEffect, useState} from 'react';
 
-import {io} from 'socket.io-client';
+import {Manager, io} from 'socket.io-client';
 import {useRecoilState, useSetRecoilState} from 'recoil';
 
 import {Box, Grid, Toolbar} from '@mui/material';
@@ -23,13 +23,14 @@ interface MainLayoutProps {
 function MainLayout({children}: MainLayoutProps) {
   const {setUserId} = useContext(UserContext);
   const {setChatSocket} = useContext(UserContext);
-  const {setGameSocket} = useContext(UserContext);
   const {setUserNickName} = useContext(UserContext);
   const {user_image, setUserImage} = useContext(UserContext);
   const {block_users} = useContext(UserContext);
   const setDmList = useSetRecoilState(dmList);
   const router = useRouter();
   const [profileDataState, setProfileDataState] = useRecoilState(profileState);
+  const {manager, setManager} = useContext(UserContext);
+
   const [initMainLayout, setInitMainLayout] = useState(false);
 
   function init_setBlockUsers(data: UserType[]) {
@@ -54,22 +55,22 @@ function MainLayout({children}: MainLayoutProps) {
         setUserId(response.data.user_id);
         setUserNickName(response.data.user_nickname);
         setUserImage(`${response.data.user_image}`);
-        const socketIo = io(`${process.env.NEXT_PUBLIC_BACKEND_SERVER}/chat`, {
-          query: {
-            user_id: response.data.user_id,
-            nickname: response.data.user_nickname,
-            user_image: response.data.user_image,
-          },
-        });
-        const socket = io('http://localhost:3001/game', {
-          query: {
-            user_id: response.data.user_id,
-            nickname: response.data.user_nickname,
-            user_image: response.data.user_image,
-          },
-        });
-        setGameSocket(socket);
+
+        const manager = new Manager(
+          `${process.env.NEXT_PUBLIC_BACKEND_SERVER}`,
+          {
+            reconnectionDelayMax: 3000,
+            query: {
+              user_id: response.data.user_id,
+              nickname: response.data.user_nickname,
+              user_image: response.data.user_image,
+            },
+          }
+        );
+
+        const socketIo = manager.socket('/chat');
         setChatSocket(socketIo);
+        setManager(manager);
         const rep_block_list = await apiManager.get(
           `/chatroom/block_list/${response.data.user_id}`
         );

@@ -16,7 +16,20 @@ import Pong from '@/components/game/Pong';
 import {GameInfo, RoomUserInfo, JoinGameInfo} from '@/common/types/game';
 import {UserContext} from '@/components/layout/MainLayout/Context';
 
-function Game() {
+function GameManager() {
+  const {manager} = useContext(UserContext);
+
+  const socket = manager?.socket('/game');
+  useEffect(() => {
+    return () => {
+      socket?.disconnect();
+    };
+  });
+
+  return <Game socket={socket} />;
+}
+
+function Game({socket}: {socket: Socket | undefined}) {
   const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
   const [gameType, setGameType] = useState<string>('');
   const [gameMode, setGameMode] = useState<string>('');
@@ -25,7 +38,6 @@ function Game() {
   const [isWaitingGame, setIsWaitingGame] = useState<boolean>(false);
   const [isStartingGame, setIsStartingGame] = useState<boolean>(false);
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
-  const socket = useContext(UserContext).game_socket;
 
   const handleBeforeUnload = (e: BeforeUnloadEvent) => {
     e.preventDefault();
@@ -266,4 +278,4 @@ function Game() {
   );
 }
 
-export default Game;
+export default GameManager;
