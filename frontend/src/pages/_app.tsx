@@ -8,7 +8,7 @@ import AlertSnackbar from '@/components/AlertSnackbar';
 import GlobalDialog from '@/components/GlobalDialog';
 import UserLayout from '@/components/layout/UserLayout';
 import MainLayout from '@/components/layout/MainLayout';
-import {UserProvider} from '@/components/MainLayout/Context';
+import {UserProvider} from '@/components/layout/MainLayout/Context';
 import CustomModal from '@/components/GlobalModal';
 
 export default function MyApp({Component, pageProps}: AppProps) {

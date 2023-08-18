@@ -15,7 +15,6 @@ import {UserContext} from '@/components/layout/MainLayout/Context';
 import {UserType} from '@/types/UserContext';
 import {dmList} from '@/states/dmUser';
 import {profileState} from '@/states/profile';
-import {socketState} from '@/states/sockets';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -31,8 +30,6 @@ function MainLayout({children}: MainLayoutProps) {
   const setDmList = useSetRecoilState(dmList);
   const router = useRouter();
   const [profileDataState, setProfileDataState] = useRecoilState(profileState);
-  const [socketDataState, setSocketDataState] = useRecoilState(socketState);
-
   const [initMainLayout, setInitMainLayout] = useState(false);
 
   function init_setBlockUsers(data: UserType[]) {
