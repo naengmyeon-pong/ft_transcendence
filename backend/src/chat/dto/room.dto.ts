@@ -3,9 +3,8 @@ import {
   IsBoolean,
   IsNotEmpty,
   IsNumber,
+  IsOptional,
   IsString,
-  MaxLength,
-  MinLength,
 } from 'class-validator';
 
 export class RoomDto {
@@ -51,9 +50,8 @@ export class RoomDto {
     required: false,
   })
   @IsNumber()
-  @MinLength(4)
-  @MaxLength(20)
-  password?: number = null;
+  @IsOptional()
+  password?: number | null;
 
   @ApiProperty({
     example: 'user_id',
