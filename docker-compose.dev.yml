@@ -4,14 +4,14 @@ services:
   frontend:
     container_name: frontend
     build:
-      context: ./client
+      context: ./frontend
       dockerfile: ./Dockerfile.dev
-    image: client
+    image: frontend
     ports:
       - 3000:3000
     restart: on-failure:3
     volumes:
-      - ./client:/app
+      - ./frontend:/app
       - ./types:/app/types
     env_file:
       - .env

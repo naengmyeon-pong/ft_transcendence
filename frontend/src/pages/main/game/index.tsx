@@ -1,4 +1,6 @@
-import React, {useEffect, useState} from 'react';
+'use client';
+
+import {useEffect, useState} from 'react';
 import {io, Socket} from 'socket.io-client';
 import {Button, Grid} from '@mui/material';
 import {
@@ -9,9 +11,9 @@ import {
   FormLabel,
 } from '@mui/material';
 import {CircularProgress} from '@mui/material';
-import Pong from './Pong';
+import Pong from '@/components/game/Pong';
 
-import {GameInfo, RoomUserInfo, JoinGameInfo} from '@/types/game';
+import {GameInfo, RoomUserInfo, JoinGameInfo} from '@/common/types/game';
 
 const socket: Socket = io('http://localhost:3001/game');
 
