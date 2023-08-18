@@ -4,3 +4,4 @@ export * from "./game-info.interface";
 export * from "./velocity.interface";
 export * from "./room-user-info.interface";
 export * from "./join-game-info.interface";
+export * from "./invite-game-info.interface";
