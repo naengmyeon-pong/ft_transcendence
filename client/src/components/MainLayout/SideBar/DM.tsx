@@ -314,9 +314,9 @@ export default function Dm() {
         >
           <Table>
             <TableBody>
-              {dm_list?.map((row, index) => {
+              {dm_list?.map(row => {
                 return (
-                  <TableRow key={index} onClick={() => changeUser(row)}>
+                  <TableRow key={row.user2} onClick={() => changeUser(row)}>
                     <TableCell>
                       {/* 알람 추가 */}
                       {notiBage(row)}
