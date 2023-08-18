@@ -1,4 +1,4 @@
-import {Logger} from '@nestjs/common';
+import {BadRequestException, Logger} from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -28,6 +28,12 @@ interface MutePayload {
   room_id: number;
   target_id: string;
   mute_time: string;
+}
+
+interface InviteGameInfo {
+  inviter_id: string;
+  invitee_id: string;
+  mode: string;
 }
 
 @WebSocketGateway({
@@ -391,6 +397,33 @@ export class ChatGateway
       console.log(e.message);
       return false;
     }
+  }
+
+  @SubscribeMessage('invite_game')
+  handleInviteGame(
+    @ConnectedSocket() inviterSocket: Socket,
+    @MessageBody() inviteGameInfo: InviteGameInfo
+  ) {
+    console.log(inviteGameInfo);
+    // if (
+    //   inviterSocket.id !==
+    //   this.socketArray.getUserSocket(inviteGameInfo.inviter_id)
+    // ) {
+    //   // 유저의 ID와 소켓이 매칭되지 않는 경우
+    //   throw new BadRequestException();
+    // }
+    const inviteeSocket = this.socketArray.getUserSocket(
+      inviteGameInfo.invitee_id
+    );
+    if (!inviteeSocket) {
+      // 초대받은 유저가 로그인 상태가 아닌 경우
+      inviterSocket.emit('invite_error', '유저가 로그인 상태가 아님');
+      return;
+    }
+    console.log('invitee : ', inviteeSocket);
+    // inviterSocket.join(inviteGameInfo.inviter_id);
+    inviterSocket.to(inviteeSocket).emit('invite_game', inviteGameInfo);
+    inviterSocket.emit('test', 'hello');
   }
 
   // add, del 실행한 후에 friend-list 호출해서 친구목록 변화한거 바로바로 적용하도록 했음
