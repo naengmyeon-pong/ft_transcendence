@@ -1,16 +1,20 @@
 'use client';
 
-import CustomAppBar from '@/components/MainLayout/CustomAppBar';
-import {Box, Grid, Toolbar} from '@mui/material';
-import SideBar from '@/components/MainLayout/SideBar';
-import {io} from 'socket.io-client';
-import {useContext, useEffect, useState} from 'react';
-import {UserContext} from '../MainLayout/Context';
 import {useRouter} from 'next/router';
-import {UserType} from '@/types/UserContext';
-import apiManager from '@/api/apiManager';
+import {useContext, useEffect, useState} from 'react';
+
+import {io} from 'socket.io-client';
 import {useRecoilState, useSetRecoilState} from 'recoil';
+
+import {Box, Grid, Toolbar} from '@mui/material';
+
+import apiManager from '@/api/apiManager';
+import CustomAppBar from '@/components/layout/MainLayout/CustomAppBar';
+import SideBar from '@/components/layout/MainLayout/SideBar';
+import {UserContext} from '@/components/layout/MainLayout/Context';
+import {UserType} from '@/types/UserContext';
 import {dmList} from '@/states/dmUser';
+import {profileState} from '@/states/profile';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -19,12 +23,13 @@ interface MainLayoutProps {
 function MainLayout({children}: MainLayoutProps) {
   const {setUserId} = useContext(UserContext);
   const {setChatSocket} = useContext(UserContext);
+  const {setGameSocket} = useContext(UserContext);
   const {setUserNickName} = useContext(UserContext);
   const {user_image, setUserImage} = useContext(UserContext);
   const {block_users} = useContext(UserContext);
   const setDmList = useSetRecoilState(dmList);
   const router = useRouter();
-
+  const [profileDataState, setProfileDataState] = useRecoilState(profileState);
   const [initMainLayout, setInitMainLayout] = useState(false);
 
   function init_setBlockUsers(data: UserType[]) {
@@ -38,6 +43,14 @@ function MainLayout({children}: MainLayoutProps) {
       try {
         const response = await apiManager.get('/user/user-info');
         console.log('response: ', response);
+        const {user_id, user_image, user_nickname, is_2fa_enabled} =
+          response.data;
+        setProfileDataState({
+          user_id,
+          image: user_image,
+          nickname: user_nickname,
+          is_2fa_enabled,
+        });
         setUserId(response.data.user_id);
         setUserNickName(response.data.user_nickname);
         setUserImage(`${response.data.user_image}`);
@@ -45,9 +58,17 @@ function MainLayout({children}: MainLayoutProps) {
           query: {
             user_id: response.data.user_id,
             nickname: response.data.user_nickname,
-            user_image: `${response.data.user_image}`,
+            user_image: response.data.user_image,
           },
         });
+        const socket = io('http://localhost:3001/game', {
+          query: {
+            user_id: response.data.user_id,
+            nickname: response.data.user_nickname,
+            user_image: response.data.user_image,
+          },
+        });
+        setGameSocket(socket);
         setChatSocket(socketIo);
         const rep_block_list = await apiManager.get(
           `/chatroom/block_list/${response.data.user_id}`
