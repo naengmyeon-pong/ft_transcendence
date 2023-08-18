@@ -294,15 +294,15 @@ export class GameGateway
     // const inviteeSocket = this.socketArray.getUserSocket(
     //   inviteGameInfo.invitee_id
     // );
-    if (!inviteeSocket) {
-      // 초대받은 유저가 로그인 상태가 아닌 경우
-      inviterSocket.emit('invite_error', '유저가 로그인 상태가 아님');
-      return;
-    }
-    console.log('invitee : ', inviteeSocket);
+    // if (!inviteeSocket) {
+    // 초대받은 유저가 로그인 상태가 아닌 경우
+    // inviterSocket.emit('invite_error', '유저가 로그인 상태가 아님');
+    // return;
+    // }
+    // console.log('invitee : ', inviteeSocket);
     // inviterSocket.join(inviteGameInfo.inviter_id);
-    inviterSocket.to(inviteeSocket).emit('invite_game', inviteGameInfo);
-    inviterSocket.emit('test', 'hello');
+    // inviterSocket.to(inviteeSocket).emit('invite_game', inviteGameInfo);
+    // inviterSocket.emit('test', 'hello');
   }
 }
 
