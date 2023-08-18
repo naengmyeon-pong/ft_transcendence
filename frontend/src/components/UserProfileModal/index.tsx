@@ -13,8 +13,9 @@ import {
 } from '@mui/material';
 import React, {useCallback} from 'react';
 import Block from '@/components/Block';
-import {HandleAddDmList} from './DMButton';
-import {Test} from './Test';
+import SimpleRecord from '@/components/Record/SimpleRecord';
+import {HandleAddDmList} from '@/components/UserProfileModal/DMButton';
+import {Test} from '@/components/UserProfileModal/Test';
 import ProfileGame from './Game';
 
 export default function UserInfoPage({user_info}: {user_info: UserType}) {
@@ -51,6 +52,7 @@ export default function UserInfoPage({user_info}: {user_info: UserType}) {
         <ProfileGame />
         <HandleAddDmList user_info={user_info} />
         <Block block_user={user_info} component={Button} />
+        <SimpleRecord />
       </Box>
     );
   }, [user_info]);
