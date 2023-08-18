@@ -12,6 +12,7 @@ import {TypeRepository} from 'src/record/type/type.repository';
 import {JwtModule} from '@nestjs/jwt';
 import {JwtStrategy} from 'src/user/jwt.strategy';
 import {GameService} from './game.service';
+import {SocketArray} from '@/globalVariable/global.socket';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import {GameService} from './game.service';
     TypeRepository,
     JwtStrategy,
     GameService,
+    SocketArray,
   ],
 })
 export class GameModule {}
