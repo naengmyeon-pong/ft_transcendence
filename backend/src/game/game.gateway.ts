@@ -34,7 +34,7 @@ const waitUserList: GameUser[][] = [[], [], [], []];
 export const gameRooms: Map<string, RoomInfo> = new Map();
 
 @WebSocketGateway({
-  namespace: 'game',
+  namespace: 'pong',
   cors: {
     origin: '*',
   },
