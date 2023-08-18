@@ -1,6 +1,6 @@
 'use client';
 
-import {useEffect, useState} from 'react';
+import {useContext, useEffect, useState} from 'react';
 import {io, Socket} from 'socket.io-client';
 import {Button, Grid} from '@mui/material';
 import {
@@ -14,8 +14,8 @@ import {CircularProgress} from '@mui/material';
 import Pong from '@/components/game/Pong';
 
 import {GameInfo, RoomUserInfo, JoinGameInfo} from '@/common/types/game';
+import {UserContext} from '@/components/MainLayout/Context';
 
-const socket: Socket = io(`${process.env.NEXT_PUBLIC_BACKEND_SERVER}/game`);
 
 function Game() {
   const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
@@ -26,6 +26,7 @@ function Game() {
   const [isWaitingGame, setIsWaitingGame] = useState<boolean>(false);
   const [isStartingGame, setIsStartingGame] = useState<boolean>(false);
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
+  const socket = useContext(UserContext).game_socket;
 
   const handleBeforeUnload = (e: BeforeUnloadEvent) => {
     e.preventDefault();
@@ -44,7 +45,7 @@ function Game() {
         type: selectedGameType,
       };
       console.log('hey');
-      socket.emit('cancel_waiting', joinGameInfo);
+      socket?.emit('cancel_waiting', joinGameInfo);
     }
   };
 
@@ -81,7 +82,7 @@ function Game() {
       mode: gameMode,
       type: gameType,
     };
-    socket.emit('join_game', joinGameInfo);
+    socket?.emit('join_game', joinGameInfo);
     setIsWaitingGame(true);
     window.addEventListener('beforeunload', handleBeforeUnload);
   };
@@ -107,7 +108,7 @@ function Game() {
       mode: selectedGameMode,
       type: selectedGameType,
     };
-    socket.emit('cancel_waiting', joinGameInfo);
+    socket?.emit('cancel_waiting', joinGameInfo);
     setIsWaitingGame(false);
     setSelectedGameMode('');
     setSelectedGameType('');
@@ -131,7 +132,7 @@ function Game() {
     sessionStorage.setItem('right_user', right_user);
 
     if (socket) {
-      socket.emit('update_frame', room_name);
+      socket?.emit('update_frame', room_name);
       setIsStartingGame(true);
       setIsWaitingGame(false);
     }
@@ -148,15 +149,15 @@ function Game() {
   };
 
   useEffect(() => {
-    socket.on('notice', handleNotice);
-    socket.on('room_name', handleRoomname);
-    socket.on('game_info', handleGameInfo);
+    socket?.on('notice', handleNotice);
+    socket?.on('room_name', handleRoomname);
+    socket?.on('game_info', handleGameInfo);
     window.addEventListener('unload', handleUnload);
 
     return () => {
-      socket.off('notice', handleNotice);
-      socket.off('room_name', handleRoomname);
-      socket.off('game_info', handleGameInfo);
+      socket?.off('notice', handleNotice);
+      socket?.off('room_name', handleRoomname);
+      socket?.off('game_info', handleGameInfo);
       window.removeEventListener('unload', handleUnload);
     };
   }, [isWaitingGame]);

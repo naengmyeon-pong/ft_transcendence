@@ -1,19 +1,14 @@
 'use client';
 
 import {DmListData, UserType} from '@/types/UserContext';
-import React, {
-  createContext,
-  useState,
-  ReactNode,
-  useRef,
-  Dispatch,
-  SetStateAction,
-} from 'react';
+import React, {createContext, useState, ReactNode, useRef} from 'react';
 import {Socket} from 'socket.io-client';
 
 interface UserContextType {
   chat_socket: Socket | null;
   setChatSocket: (chat_socket: Socket) => void;
+  game_socket: Socket | null;
+  setGameSocket: (game_socket: Socket) => void;
 
   user_id: string | null;
   setUserId: (user_id: string) => void;
@@ -33,6 +28,8 @@ interface UserContextType {
 const initUserState: UserContextType = {
   chat_socket: null,
   setChatSocket: () => {},
+  game_socket: null,
+  setGameSocket: () => {},
 
   user_id: null,
   setUserId: () => {},
@@ -53,6 +50,7 @@ const UserContext = createContext(initUserState);
 
 const UserProvider: React.FC<{children: ReactNode}> = ({children}) => {
   const [chat_socket, setChatSocket] = useState<Socket | null>(null);
+  const [game_socket, setGameSocket] = useState<Socket | null>(null);
   const [user_id, setUserId] = useState<string | null>(null);
   const [user_image, setUserImage] = useState<string | null>(null);
   const [user_nickname, setUserNickName] = useState<string | null>(null);
@@ -64,6 +62,8 @@ const UserProvider: React.FC<{children: ReactNode}> = ({children}) => {
       value={{
         chat_socket,
         setChatSocket,
+        game_socket,
+        setGameSocket,
         user_id,
         setUserId,
         user_image,
