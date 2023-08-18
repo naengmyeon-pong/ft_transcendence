@@ -41,7 +41,7 @@ function MainLayout({children}: MainLayoutProps) {
         setUserId(response.data.user_id);
         setUserNickName(response.data.user_nickname);
         setUserImage(`${response.data.user_image}`);
-        const socketIo = io(`${process.env.NEXT_PUBLIC_BACKEND_SERVER}/pong`, {
+        const socketIo = io(`${process.env.NEXT_PUBLIC_BACKEND_SERVER}/chat`, {
           query: {
             user_id: response.data.user_id,
             nickname: response.data.user_nickname,
@@ -49,7 +49,6 @@ function MainLayout({children}: MainLayoutProps) {
           },
         });
         setChatSocket(socketIo);
-
         const rep_block_list = await apiManager.get(
           `/chatroom/block_list/${response.data.user_id}`
         );

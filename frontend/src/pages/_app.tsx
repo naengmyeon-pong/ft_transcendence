@@ -23,22 +23,22 @@ export default function MyApp({Component, pageProps}: AppProps) {
 
   return (
     <RecoilRoot>
-<QueryClientProvider client={queryClient}>
-      {(isUserRoute || router.pathname === '/') && (
-        <UserLayout>
-          <Component {...pageProps} />
-        </UserLayout>
-      )}
-      {isMainRoute && (
-        <UserProvider>
-          <MainLayout>
-            <CustomModal />
+      <QueryClientProvider client={queryClient}>
+        {(isUserRoute || router.pathname === '/') && (
+          <UserLayout>
             <Component {...pageProps} />
-          </MainLayout>
-        </UserProvider>
-      )}
-      <GlobalDialog />
-      <AlertSnackbar />
+          </UserLayout>
+        )}
+        {isMainRoute && (
+          <UserProvider>
+            <MainLayout>
+              <CustomModal />
+              <Component {...pageProps} />
+            </MainLayout>
+          </UserProvider>
+        )}
+        <GlobalDialog />
+        <AlertSnackbar />
       </QueryClientProvider>
     </RecoilRoot>
   );

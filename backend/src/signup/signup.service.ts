@@ -147,7 +147,6 @@ export class SignUpService {
         user_image: file
           ? file.path.substr(11)
           : `${process.env.NEXT_PUBLIC_BACKEND_SERVER}/images/logo.jpeg`,
-        is_2fa_enabled,
       });
       await this.userRepository.save(user);
       await this.userAuthRepository.delete({user_id: user.user_id});
