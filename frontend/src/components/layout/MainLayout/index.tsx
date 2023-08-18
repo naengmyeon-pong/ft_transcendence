@@ -24,6 +24,7 @@ interface MainLayoutProps {
 function MainLayout({children}: MainLayoutProps) {
   const {setUserId} = useContext(UserContext);
   const {setChatSocket} = useContext(UserContext);
+  const {setGameSocket} = useContext(UserContext);
   const {setUserNickName} = useContext(UserContext);
   const {user_image, setUserImage} = useContext(UserContext);
   const {block_users} = useContext(UserContext);
@@ -55,21 +56,23 @@ function MainLayout({children}: MainLayoutProps) {
         });
         setUserId(response.data.user_id);
         setUserNickName(response.data.user_nickname);
-        setUserImage(response.data.user_image);
-        console.log(response.data);
-        const chatSocket = io(
-          `${process.env.NEXT_PUBLIC_BACKEND_SERVER}/chat`,
-          {
-            query: {
-              user_id: response.data.user_id,
-              nickname: response.data.user_nickname,
-              user_image: response.data.user_image,
-            },
-          }
-        );
-        console.log(chatSocket);
-        setChatSocket(chatSocket);
-        setSocketDataState({...socketDataState, chat: chatSocket});
+        setUserImage(`${response.data.user_image}`);
+        const socketIo = io(`${process.env.NEXT_PUBLIC_BACKEND_SERVER}/chat`, {
+          query: {
+            user_id: response.data.user_id,
+            nickname: response.data.user_nickname,
+            user_image: response.data.user_image,
+          },
+        });
+        const socket = io('http://localhost:3001/game', {
+          query: {
+            user_id: response.data.user_id,
+            nickname: response.data.user_nickname,
+            user_image: response.data.user_image,
+          },
+        });
+        setGameSocket(socket);
+        setChatSocket(socketIo);
         const rep_block_list = await apiManager.get(
           `/chatroom/block_list/${response.data.user_id}`
         );
