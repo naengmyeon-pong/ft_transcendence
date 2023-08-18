@@ -223,6 +223,8 @@ export class GameService {
       game_mode,
       winner,
       loser,
+      winnerId: winner,
+      loserId: loser,
       winner_score: 5,
       loser_score,
       is_forfeit: isForfeit,
