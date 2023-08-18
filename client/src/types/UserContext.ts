@@ -1,8 +1,8 @@
 import {Socket} from 'socket.io-client';
 
 export interface UserContextType {
-  socket: Socket | null;
-  setSocket: (socket: Socket) => void;
+  chat_socket: Socket | null;
+  setChatSocket: (chat_socket: Socket) => void;
 
   user_id: string | null;
   setUserId: (user_id: string) => void;

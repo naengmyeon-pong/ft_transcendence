@@ -64,7 +64,7 @@ const Message = ({
 };
 
 export default function Dm() {
-  const {socket, user_id, block_users} = useContext(UserContext);
+  const {chat_socket, user_id, block_users} = useContext(UserContext);
   const [dm_list, setDmList] = useRecoilState(dmList);
   // 클로저 문제 때문에 사용함
   const dm_user_id = useRef<string>('');
@@ -95,14 +95,14 @@ export default function Dm() {
   const onSendMessage = useCallback(
     (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
-      if (!message || !socket || !dm_user_id.current) {
+      if (!message || !chat_socket || !dm_user_id.current) {
         return;
       }
       if (block_users.has(dm_user_id.current)) {
         alert('차단을 해제해주세요.');
         return;
       }
-      socket?.emit(
+      chat_socket?.emit(
         'dm-message',
         {target_id: dm_user_id.current, message},
         (chat: DmChat) => {
@@ -111,7 +111,7 @@ export default function Dm() {
       );
       setMessage('');
     },
-    [message, socket, block_users]
+    [message, chat_socket, block_users]
   );
 
   const changeUser = useCallback(
@@ -200,14 +200,14 @@ export default function Dm() {
   }
 
   useEffect(() => {
-    socket?.on('block-list', handleBlock);
-    socket?.on('dm-message', handleDmMessage);
+    chat_socket?.on('block-list', handleBlock);
+    chat_socket?.on('dm-message', handleDmMessage);
 
     return () => {
-      socket?.off('block-list', handleBlock);
-      socket?.off('dm-message', handleDmMessage);
+      chat_socket?.off('block-list', handleBlock);
+      chat_socket?.off('dm-message', handleDmMessage);
     };
-  }, [socket]);
+  }, [chat_socket]);
 
   useEffect(() => {
     if (!chat_scroll.current) return;

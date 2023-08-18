@@ -32,7 +32,7 @@ const Message = ({user_image, user_nickname, message}: IChat) => {
 };
 
 function ChatBox() {
-  const {socket} = useContext(UserContext);
+  const {chat_socket} = useContext(UserContext);
   const {setConvertPage} = useContext(UserContext);
 
   const [chats, setChats] = useState<IChat[]>([]);
@@ -60,7 +60,7 @@ function ChatBox() {
   }, [chats.length]);
 
   useEffect(() => {
-    socket?.emit('join-room', roomId, (res: boolean) => {
+    chat_socket?.emit('join-room', roomId, (res: boolean) => {
       if (res === false) {
         router.back();
         alert('에러가 발생하였습니다.');
@@ -81,23 +81,23 @@ function ChatBox() {
     };
 
     function handleUnload() {
-      socket?.emit('leave-room', {room_id: roomId});
+      chat_socket?.emit('leave-room', {room_id: roomId});
       setConvertPage(0);
     }
     window.addEventListener('unload', handleUnload);
     window.addEventListener('beforeunload', handleBeforeUnload);
 
-    socket?.on('mute-member', handleMute);
-    socket?.on('message', handleMessage);
+    chat_socket?.on('mute-member', handleMute);
+    chat_socket?.on('message', handleMessage);
 
     function leaveRoomHandler() {
       setConvertPage(0);
     }
 
-    socket?.once('leave-room', leaveRoomHandler);
+    chat_socket?.once('leave-room', leaveRoomHandler);
 
-    socket?.once('kick-member', () => {
-      socket?.emit('leave-room', {room_id: roomId}, () => {
+    chat_socket?.once('kick-member', () => {
+      chat_socket?.emit('leave-room', {room_id: roomId}, () => {
         setConvertPage(0);
       });
     });
@@ -105,9 +105,9 @@ function ChatBox() {
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       // window.removeEventListener('popstate', handlePopState);
-      socket?.emit('leave-room', {room_id: roomId});
-      socket?.off('message', handleMessage);
-      socket?.off('mute_time', handleMute);
+      chat_socket?.emit('leave-room', {room_id: roomId});
+      chat_socket?.off('message', handleMessage);
+      chat_socket?.off('mute_time', handleMute);
       setConvertPage(0);
     };
   }, []);
@@ -122,7 +122,7 @@ function ChatBox() {
       if (!message) {
         return alert('메시지를 입력해 주세요.');
       }
-      if (!socket) {
+      if (!chat_socket) {
         return alert('소켓가 발생했습니다.');
       }
       if (muteTimer !== 0) {
@@ -136,12 +136,12 @@ function ChatBox() {
       setMuteModal(false);
       setMuteTimer(0);
 
-      socket.emit('message', {room_id: roomId, message}, (chat: IChat) => {
+      chat_socket.emit('message', {room_id: roomId, message}, (chat: IChat) => {
         setChats(prevChats => [...prevChats, chat]);
         setMessage('');
       });
     },
-    [message, socket]
+    [message, chat_socket]
   );
 
   function handleMuteClose() {

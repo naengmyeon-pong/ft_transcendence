@@ -23,7 +23,7 @@ export default function Block({
   component: Component,
   onClose,
 }: BlockType) {
-  const {socket, block_users} = useContext(UserContext);
+  const {chat_socket, block_users} = useContext(UserContext);
   const {openGlobalModal, closeGlobalModal} = useGlobalModal();
   const is_block = !block_users.has(`${block_user.id}`);
 
@@ -38,15 +38,22 @@ export default function Block({
 
   const handleBlock = useCallback(() => {
     if (is_block) {
-      AddBlock(block_user, socket, block_users);
+      AddBlock(block_user, chat_socket, block_users);
     } else {
-      DelBlock(block_user, socket, block_users);
+      DelBlock(block_user, chat_socket, block_users);
     }
     if (onClose !== undefined) {
       onClose();
     }
     closeGlobalModal();
-  }, [block_user, block_users, closeGlobalModal, is_block, onClose, socket]);
+  }, [
+    block_user,
+    block_users,
+    closeGlobalModal,
+    is_block,
+    onClose,
+    chat_socket,
+  ]);
 
   const action = useCallback(() => {
     return (

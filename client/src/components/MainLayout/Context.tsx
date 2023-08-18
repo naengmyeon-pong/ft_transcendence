@@ -12,8 +12,8 @@ import React, {
 import {Socket} from 'socket.io-client';
 
 interface UserContextType {
-  socket: Socket | null;
-  setSocket: (socket: Socket) => void;
+  chat_socket: Socket | null;
+  setChatSocket: (chat_socket: Socket) => void;
 
   user_id: string | null;
   setUserId: (user_id: string) => void;
@@ -31,8 +31,8 @@ interface UserContextType {
 }
 
 const initUserState: UserContextType = {
-  socket: null,
-  setSocket: () => {},
+  chat_socket: null,
+  setChatSocket: () => {},
 
   user_id: null,
   setUserId: () => {},
@@ -52,7 +52,7 @@ const initUserState: UserContextType = {
 const UserContext = createContext(initUserState);
 
 const UserProvider: React.FC<{children: ReactNode}> = ({children}) => {
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const [chat_socket, setChatSocket] = useState<Socket | null>(null);
   const [user_id, setUserId] = useState<string | null>(null);
   const [user_image, setUserImage] = useState<string | null>(null);
   const [user_nickname, setUserNickName] = useState<string | null>(null);
@@ -62,8 +62,8 @@ const UserProvider: React.FC<{children: ReactNode}> = ({children}) => {
   return (
     <UserContext.Provider
       value={{
-        socket,
-        setSocket,
+        chat_socket,
+        setChatSocket,
         user_id,
         setUserId,
         user_image,

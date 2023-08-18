@@ -99,7 +99,7 @@ export default function UserList() {
   const [users, setUsers] = useState<UserType[]>([]);
   const [inviteModal, setInviteModal] = useState<boolean>(false);
 
-  const {socket} = useContext(UserContext);
+  const {chat_socket} = useContext(UserContext);
   const {user_id} = useContext(UserContext);
   const {setConvertPage} = useContext(UserContext);
 
@@ -154,7 +154,7 @@ export default function UserList() {
   }
 
   function exit() {
-    socket?.emit('leave-room', {room_id: roomId}, () => {
+    chat_socket?.emit('leave-room', {room_id: roomId}, () => {
       setConvertPage(0);
     });
   }
@@ -175,7 +175,7 @@ export default function UserList() {
   useEffect(() => {
     // 소켓 이벤트 등록해서 들어온 메세지 헨들링
     console.log('room-member on');
-    socket?.on('room-member', handleUserList);
+    chat_socket?.on('room-member', handleUserList);
     roomUsers();
   }, []);
 

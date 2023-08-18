@@ -24,7 +24,7 @@ type CreateModalProps = {
 function ChatInvite({inviteModal, handleInviteClose}: CreateModalProps) {
   const [nickName, setNickName] = useState('');
   const [list, setList] = useState<UserType[]>([]);
-  const {user_id, socket, convert_page} = useContext(UserContext);
+  const {user_id, chat_socket, convert_page} = useContext(UserContext);
   const [invite_list, setInviteList] = useState<Set<string>>(new Set());
 
   function handleNickName(e: ChangeEvent<HTMLInputElement>) {
@@ -51,7 +51,7 @@ function ChatInvite({inviteModal, handleInviteClose}: CreateModalProps) {
     if (invite_list.has(row.id)) {
       return;
     }
-    socket?.emit(
+    chat_socket?.emit(
       'chatroom-notification',
       {room_id: convert_page, target_id: row.id},
       (rep: boolean) => {

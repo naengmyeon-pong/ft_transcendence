@@ -18,7 +18,7 @@ interface MainLayoutProps {
 
 function MainLayout({children}: MainLayoutProps) {
   const {setUserId} = useContext(UserContext);
-  const {setSocket} = useContext(UserContext);
+  const {setChatSocket} = useContext(UserContext);
   const {setUserNickName} = useContext(UserContext);
   const {user_image, setUserImage} = useContext(UserContext);
   const {block_users} = useContext(UserContext);
@@ -48,7 +48,7 @@ function MainLayout({children}: MainLayoutProps) {
             user_image: `${response.data.user_image}`,
           },
         });
-        setSocket(socketIo);
+        setChatSocket(socketIo);
 
         const rep_block_list = await apiManager.get(
           `/chatroom/block_list/${response.data.user_id}`

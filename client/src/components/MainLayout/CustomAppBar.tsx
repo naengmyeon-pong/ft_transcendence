@@ -51,7 +51,7 @@ function CustomAppBar() {
   const [notificates, setNotificates] = useState<Notificate[]>([]);
   const [read_notificate, setReadNotificate] = useState<boolean>(false);
 
-  const {socket, setConvertPage} = useContext(UserContext);
+  const {chat_socket, setConvertPage} = useContext(UserContext);
   const router = useRouter();
 
   const handleOpenOtherMenu = (event: MouseEvent<HTMLElement>) => {
@@ -74,7 +74,7 @@ function CustomAppBar() {
       setNotificates(preNotis => [...preNotis, rep]);
       setReadNotificate(true);
     }
-    socket?.on('chatroom-notification', handleChatNotification);
+    chat_socket?.on('chatroom-notification', handleChatNotification);
   }, []);
 
   function handleNotificate(event: MouseEvent<HTMLElement>) {

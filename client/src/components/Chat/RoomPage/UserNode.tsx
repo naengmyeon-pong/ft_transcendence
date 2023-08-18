@@ -20,7 +20,7 @@ function UserNode({user, permission, myPermission}: UserProps) {
   const [anchorEl, setAnchorEl] = React.useState<HTMLLIElement | null>(null);
   const [modalState, setModalState] = React.useState(false);
   const [menuItem, setMenuItem] = React.useState<string | null>(null);
-  const {socket} = React.useContext(UserContext);
+  const {chat_socket} = React.useContext(UserContext);
   const {block_users} = useContext(UserContext);
   const roomId = useContext(UserContext).convert_page.toString();
   const {user_id} = useContext(UserContext);
@@ -40,25 +40,25 @@ function UserNode({user, permission, myPermission}: UserProps) {
     if (confirmed && menuItem) {
       switch (menuItem) {
         case 'AddAdmin':
-          AddAdmin(user, socket, roomId);
+          AddAdmin(user, chat_socket, roomId);
           break;
         case 'DelAdmin':
-          DelAdmin(user, socket, roomId);
+          DelAdmin(user, chat_socket, roomId);
           break;
         case 'Kick':
-          Kick(user, socket, roomId);
+          Kick(user, chat_socket, roomId);
           break;
         case 'Mute':
-          Mute(user, socket, roomId);
+          Mute(user, chat_socket, roomId);
           break;
         case 'AddBlock':
-          AddBlock(user, socket, block_users);
+          AddBlock(user, chat_socket, block_users);
           break;
         case 'DelBlock':
-          DelBlock(user, socket, block_users);
+          DelBlock(user, chat_socket, block_users);
           break;
         case 'Ban':
-          Ban(user, socket, roomId);
+          Ban(user, chat_socket, roomId);
           break;
         default:
           break;

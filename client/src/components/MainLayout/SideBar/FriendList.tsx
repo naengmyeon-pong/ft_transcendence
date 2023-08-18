@@ -28,7 +28,7 @@ import UserInfoPage from '../../UserProfileModal';
 
 function FriendList({friend}: {friend: UserType}) {
   const [anchorEl, setAnchorEl] = useState<HTMLLIElement | null>(null);
-  const {socket} = useContext(UserContext);
+  const {chat_socket} = useContext(UserContext);
   const open = Boolean(anchorEl);
 
   function handleMenu(event: React.MouseEvent<HTMLLIElement>) {
@@ -40,7 +40,7 @@ function FriendList({friend}: {friend: UserType}) {
   }
 
   function handleDeleteFriend() {
-    socket?.emit('del-friend', friend.id);
+    chat_socket?.emit('del-friend', friend.id);
     setAnchorEl(null);
   }
 

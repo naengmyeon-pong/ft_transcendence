@@ -45,7 +45,7 @@ function SideBar() {
 
   // lstState: 0 = 차단 목록, 1 = 친구 목록, 2 = DM
   const [lstState, setLstState] = useState(1);
-  const {socket, block_users, user_id} = useContext(UserContext);
+  const {chat_socket, block_users, user_id} = useContext(UserContext);
 
   const [block_users_size, setBlockUsersSize] = useState<number>(0);
 
@@ -118,7 +118,7 @@ function SideBar() {
               <Typography>{row.nickName}</Typography>
               <Button
                 // disabled={friend_list.find() ? true : false}
-                onClick={() => socket?.emit('add-friend', row.id)}
+                onClick={() => chat_socket?.emit('add-friend', row.id)}
               >
                 친구 추가
               </Button>
@@ -157,16 +157,16 @@ function SideBar() {
   }, [dm_user]);
 
   useEffect(() => {
-    socket?.on('dm-message', handleDMCnt);
+    chat_socket?.on('dm-message', handleDMCnt);
     return () => {
-      socket?.off('dm-message', handleDMCnt);
+      chat_socket?.off('dm-message', handleDMCnt);
     };
-  }, [handleDMCnt, socket]);
+  }, [handleDMCnt, chat_socket]);
 
   useEffect(() => {
     function handleBlockList() {
       setBlockUsersSize(block_users.size);
-      socket?.emit('friend-list');
+      chat_socket?.emit('friend-list');
     }
 
     function handleFriendList(res: UserType[]) {
@@ -175,13 +175,13 @@ function SideBar() {
     }
     setBlockUsersSize(block_users.size);
 
-    socket?.on('friend-list', handleFriendList);
-    socket?.on('block-list', handleBlockList);
-    socket?.emit('friend-list');
+    chat_socket?.on('friend-list', handleFriendList);
+    chat_socket?.on('block-list', handleBlockList);
+    chat_socket?.emit('friend-list');
 
     return () => {
-      socket?.off('friend-list', handleFriendList);
-      socket?.off('block-list', handleBlockList);
+      chat_socket?.off('friend-list', handleFriendList);
+      chat_socket?.off('block-list', handleBlockList);
     };
   }, []);
 

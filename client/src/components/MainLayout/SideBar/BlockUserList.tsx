@@ -15,7 +15,7 @@ import {DelBlock} from '@/components/Chat/RoomPage/service/Block';
 
 export default function BlockUserList({block_user}: {block_user: UserType}) {
   const [anchorEl, setAnchorEl] = useState<HTMLLIElement | null>(null);
-  const {socket, block_users} = useContext(UserContext);
+  const {chat_socket, block_users} = useContext(UserContext);
   const open = Boolean(anchorEl);
 
   function handleMenuClose() {
@@ -27,7 +27,7 @@ export default function BlockUserList({block_user}: {block_user: UserType}) {
   }
 
   function handleDeleteBlock() {
-    DelBlock(block_user, socket, block_users);
+    DelBlock(block_user, chat_socket, block_users);
     handleMenuClose();
   }
 
