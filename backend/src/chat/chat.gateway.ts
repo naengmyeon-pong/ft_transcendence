@@ -72,7 +72,7 @@ export class ChatGateway
         console.log(e.message);
       }
     }
-    this.logger.log(`${socket.id} 소켓 연결`);
+    this.logger.log(`${socket.id} 채팅 소켓 연결`);
   }
 
   async handleDisconnect(@ConnectedSocket() socket: Socket) {
@@ -313,6 +313,8 @@ export class ChatGateway
     @MessageBody() {target_id, message}: {target_id: string; message: string}
   ) {
     const user_id = socket.handshake.query.user_id as string;
+    const nickname = socket.handshake.query.nickname as string;
+
     try {
       const ban_members = this.block.getBlockUsers(user_id);
       if (ban_members && ban_members.has(target_id)) {
@@ -325,15 +327,18 @@ export class ChatGateway
         );
       } else {
         const target_socket_id = this.socketArray.getUserSocket(target_id);
-        socket
-          .to(`${target_socket_id}`)
-          .emit('dm-message', {message, userId: user_id, someoneId: target_id});
+        socket.to(`${target_socket_id}`).emit('dm-message', {
+          message,
+          userId: user_id,
+          someoneId: target_id,
+          nickname,
+        });
         this.chatService.saveDirectMessage(user_id, target_id, message);
       }
     } catch (e) {
       console.log(e.message);
     }
-    return {message, userId: user_id, someoneId: target_id};
+    return {message, userId: user_id, someoneId: target_id, nickname};
   }
 
   @SubscribeMessage('chatroom-notification')

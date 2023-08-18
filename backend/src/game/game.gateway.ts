@@ -140,8 +140,11 @@ export class GameGateway
 
     firstUser.socket.join(roomName);
     secondUser.socket.join(roomName);
-    
-    const [left_user, right_user] = await this.findUserName(firstUser.user_id, secondUser.user_id);
+
+    const [left_user, right_user] = await this.findUserName(
+      firstUser.user_id,
+      secondUser.user_id
+    );
     secondUser.socket
       .to(roomName)
       .emit('notice', {notice: `${right_user}이 입장했습니다.`});
@@ -164,7 +167,10 @@ export class GameGateway
     this.nsp.to(roomName).emit('game_info', {game_info: gameInfo});
   };
 
-  findUserName = async (leftUserID: string, rightUserID: string): Promise<[string, string]> => {
+  findUserName = async (
+    leftUserID: string,
+    rightUserID: string
+  ): Promise<[string, string]> => {
     const left = await this.userRepository.findOneBy({user_id: leftUserID});
     if (left === null) {
       throw new InternalServerErrorException();
