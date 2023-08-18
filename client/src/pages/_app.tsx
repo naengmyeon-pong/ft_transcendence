@@ -2,6 +2,7 @@ import type {AppProps} from 'next/app';
 import {useRouter} from 'next/router';
 
 import {RecoilRoot} from 'recoil';
+import {QueryClient, QueryClientProvider} from 'react-query';
 
 import AlertSnackbar from '@/components/AlertSnackbar';
 import GlobalDialog from '@/components/GlobalDialog';
@@ -12,6 +13,7 @@ import CustomModal from '@/components/GlobalModal';
 
 export default function MyApp({Component, pageProps}: AppProps) {
   const router = useRouter();
+  const queryClient = new QueryClient();
 
   // Check if the current route starts with '/user'
   const isUserRoute = router.pathname.startsWith('/user');

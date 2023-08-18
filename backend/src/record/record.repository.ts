@@ -27,12 +27,22 @@ export class RecordRepository extends Repository<Record> {
 
   async getDetailGames(userID: string, pageSize: number, skip: number) {
     return this.createQueryBuilder('record')
-      .leftJoinAndSelect('record.winner', 'winner') // Left join with winner
-      .leftJoinAndSelect('record.loser', 'loser') // Left join with loser
+      .addSelect([
+        'winner.user_id',
+        'winner.user_nickname',
+        // 'winner.user_image',
+      ])
+      .addSelect([
+        'loser.user_id',
+        'loser.user_nickname',
+        // 'loser.user_image'
+      ])
+      .leftJoin('record.winner', 'winner')
+      .leftJoin('record.loser', 'loser')
       .where('record.winnerId = :userID OR record.loserId = :userID', {userID})
       .orderBy('record.id', 'DESC')
       .take(pageSize)
       .skip(skip)
-      .getMany();
+      .getManyAndCount();
   }
 }

@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import {
@@ -17,7 +18,8 @@ import {UserRepository} from 'src/user/user.repository';
 import {RoomDto} from './dto/room.dto';
 import {SocketArray} from 'src/globalVariable/global.socket';
 import {Block} from 'src/globalVariable/global.block';
-import {IsNull, Not} from 'typeorm';
+import {DataSource, IsNull, Not} from 'typeorm';
+import {ChatMember, ChatRoom} from './chat.entity';
 
 export interface UserInfo {
   id: string;
@@ -36,12 +38,13 @@ export class ChatService {
     private dmRepository: DMRepository,
     private friendListRepository: FriendListRepository,
     private socketArray: SocketArray,
-    private block: Block
+    private block: Block,
+    private dataSource: DataSource
   ) {}
 
   async getRoomList() {
     const room_list = [];
-    const chatrooms = await this.chatRoomRepository
+    const chatrooms = this.chatRoomRepository
       .createQueryBuilder('chatRoom')
       .select([
         'chatRoom.id',
@@ -126,24 +129,35 @@ export class ChatService {
       );
     }
 
-    // transaction적용해야할수도
-    const room = this.chatRoomRepository.create({
-      name: roomDto.room_name,
-      current_nums: 1,
-      max_nums: roomDto.max_nums,
-      is_public: roomDto.is_public,
-      is_password: roomDto.is_password,
-      password: roomDto.password,
-    });
-    await this.chatRoomRepository.save(room);
-    const room_member = this.chatMemberRepository.create({
-      permission: 2,
-      mute: null,
-      chatroom: room,
-      user: user,
-    });
-    await this.chatMemberRepository.save(room_member);
-    return room;
+    const query_runner = this.dataSource.createQueryRunner();
+    await query_runner.connect();
+    await query_runner.startTransaction();
+
+    try {
+      const room = this.chatRoomRepository.create({
+        name: roomDto.room_name,
+        current_nums: 1,
+        max_nums: roomDto.max_nums,
+        is_public: roomDto.is_public,
+        is_password: roomDto.is_password,
+        password: roomDto.password,
+      });
+      await query_runner.manager.getRepository(ChatRoom).save(room);
+      const room_member = this.chatMemberRepository.create({
+        permission: 2,
+        mute: null,
+        chatroom: room,
+        user: user,
+      });
+      await query_runner.manager.getRepository(ChatMember).save(room_member);
+      await query_runner.commitTransaction();
+      return room;
+    } catch (e) {
+      await query_runner.rollbackTransaction();
+      throw new InternalServerErrorException();
+    } finally {
+      await query_runner.release();
+    }
   }
 
   async joinRoom(room_id: number, user_id: string) {
@@ -177,15 +191,26 @@ export class ChatService {
       throw new ConflictException('sorry, room is full!');
     }
     room.current_nums += 1;
-    await this.chatRoomRepository.save(room);
-    const new_member = this.chatMemberRepository.create({
-      permission: 0,
-      mute: null,
-      chatroom: room,
-      userId: user_id,
-    });
-    await this.chatMemberRepository.save(new_member);
-    return true;
+    const query_runner = this.dataSource.createQueryRunner();
+    await query_runner.connect();
+    await query_runner.startTransaction();
+    try {
+      await query_runner.manager.getRepository(ChatRoom).save(room);
+      const new_member = this.chatMemberRepository.create({
+        permission: 0,
+        mute: null,
+        chatroom: room,
+        userId: user_id,
+      });
+      await query_runner.manager.getRepository(ChatMember).save(new_member);
+      await query_runner.commitTransaction();
+      return true;
+    } catch (e) {
+      await query_runner.rollbackTransaction();
+      throw new InternalServerErrorException();
+    } finally {
+      await query_runner.release();
+    }
   }
 
   async leaveRoom(room_id: number, user_id: string) {
@@ -202,22 +227,30 @@ export class ChatService {
       chatroomId: room_id,
       userId: user_id,
     });
-    if (!member) {
-      return;
-    } else if (member.permission === 2) {
-      //owner 일 때 방 전체가 터지게.
-      const check_del = await this.chatRoomRepository.delete({id: room_id});
-      console.log('check_del :', check_del.affected);
+    const query_runner = this.dataSource.createQueryRunner();
+    await query_runner.connect();
+    await query_runner.startTransaction();
+    try {
+      if (!member) {
+        return;
+      } else if (member.permission === 2) {
+        //owner 일 때 방 전체가 터지게. // 여기에서 다 처리해야될듯 front한테 부르는게 아니라.
+        await this.chatRoomRepository.delete({id: room_id});
+        return member;
+      } else {
+        await this.chatMemberRepository.delete({
+          userId: member.userId,
+          chatroomId: room_id,
+        });
+        room.current_nums -= 1;
+        await this.chatRoomRepository.save(room);
+      }
       return member;
-    } else {
-      await this.chatMemberRepository.delete({
-        userId: member.userId,
-        chatroomId: room_id,
-      });
-      room.current_nums -= 1;
-      await this.chatRoomRepository.save(room);
+    } catch (e) {
+      query_runner.rollbackTransaction();
+    } finally {
+      query_runner.release();
     }
-    return member;
   }
 
   async addToAdmin(room_id: number, user_id: string, target_id: string) {
