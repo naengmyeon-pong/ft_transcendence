@@ -15,7 +15,7 @@ import Pong from '@/components/game/Pong';
 
 import {GameInfo, RoomUserInfo, JoinGameInfo} from '@/common/types/game';
 
-const socket: Socket = io('http://localhost:3001/game');
+const socket: Socket = io(`${process.env.NEXT_PUBLIC_BACKEND_SERVER}/game`);
 
 function Game() {
   const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
