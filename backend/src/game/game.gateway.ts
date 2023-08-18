@@ -11,7 +11,12 @@ import {
 } from '@nestjs/websockets';
 import {Namespace, Socket, Server} from 'socket.io';
 import {User} from 'src/user/user.entitiy';
-import {GameInfo, RoomUserInfo, JoinGameInfo} from '@/types/game';
+import {
+  GameInfo,
+  RoomUserInfo,
+  JoinGameInfo,
+  InviteGameInfo,
+} from '@/types/game';
 import {GameUser} from './types/game-user.interface';
 import {KeyData} from './types/key-data.interface';
 import {RoomInfo} from './types/room-info.interface';
@@ -31,6 +36,11 @@ const RANK_HARD = 3;
 const waitUserList: GameUser[][] = [[], [], [], []];
 
 export const gameRooms: Map<string, RoomInfo> = new Map();
+
+interface GameSocketInfo {
+  socket: Socket;
+  is_gaming: boolean;
+}
 
 @WebSocketGateway({
   namespace: 'game',
@@ -267,6 +277,33 @@ export class GameGateway
       .to(roomInfo.room_name)
       .emit('game_info', {game_info: roomInfo.game_info});
   };
+
+  @SubscribeMessage('invite_game')
+  handleInviteGame(
+    @ConnectedSocket() inviterSocket: Socket,
+    @MessageBody() inviteGameInfo: InviteGameInfo
+  ) {
+    console.log(inviteGameInfo);
+    // if (
+    //   inviterSocket.id !==
+    //   this.socketArray.getUserSocket(inviteGameInfo.inviter_id)
+    // ) {
+    //   // 유저의 ID와 소켓이 매칭되지 않는 경우
+    //   throw new BadRequestException();
+    // }
+    // const inviteeSocket = this.socketArray.getUserSocket(
+    //   inviteGameInfo.invitee_id
+    // );
+    if (!inviteeSocket) {
+      // 초대받은 유저가 로그인 상태가 아닌 경우
+      inviterSocket.emit('invite_error', '유저가 로그인 상태가 아님');
+      return;
+    }
+    console.log('invitee : ', inviteeSocket);
+    // inviterSocket.join(inviteGameInfo.inviter_id);
+    inviterSocket.to(inviteeSocket).emit('invite_game', inviteGameInfo);
+    inviterSocket.emit('test', 'hello');
+  }
 }
 
 const findTypeMode = (joinGameInfo: JoinGameInfo): number => {
