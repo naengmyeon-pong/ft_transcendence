@@ -5,7 +5,7 @@ import React, {useContext, useEffect, useState} from 'react';
 import ChatBox from './ChatBox';
 import UserList from './UserList';
 import {useRouter} from 'next/router';
-import {UserContext} from '@/components/MainLayout/Context';
+import {UserContext} from '@/components/layout/MainLayout/Context';
 import apiManager from '@/api/apiManager';
 
 const BoxBorder = styled('div')({

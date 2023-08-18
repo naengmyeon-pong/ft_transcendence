@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import {UserType} from '@/types/UserContext';
 import {UserContext} from '../Context';
-import UserInfoPage from '../../UserProfileModal';
+import UserInfoPage from '../../../UserProfileModal';
 
 // const StyledBadge = styled(Badge)(({theme}) => ({
 //   '& .MuiBadge-badge': {

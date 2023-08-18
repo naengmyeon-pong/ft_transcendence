@@ -3,7 +3,7 @@ import {dmList, dmUserInfo} from '@/states/dmUser';
 import {profileDMChoise} from '@/states/userContext';
 import {useContext} from 'react';
 import {useRecoilState} from 'recoil';
-import {UserContext} from '../MainLayout/Context';
+import {UserContext} from '../layout/MainLayout/Context';
 import {UserType} from '@/types/UserContext';
 import {Button} from '@mui/material';
 

@@ -15,7 +15,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import {UserContext} from '@/components/MainLayout/Context';
+import {UserContext} from '@/components/layout/MainLayout/Context';
 import apiManager from '@/api/apiManager';
 
 const style = {
