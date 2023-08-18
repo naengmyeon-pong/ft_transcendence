@@ -11,6 +11,7 @@ import {
   ListItemText,
   Typography,
 } from '@mui/material';
+import Divider from '@mui/material/Divider';
 import React, {useCallback} from 'react';
 import Block from '@/components/Block';
 import SimpleRecord from '@/components/Record/SimpleRecord';
@@ -47,13 +48,18 @@ export default function UserInfoPage({user_info}: {user_info: UserType}) {
 
   const action = useCallback(() => {
     return (
-      <Box display={'flex'} justifyContent={'space-between'}>
-        <Test user_info={user_info} />
-        <ProfileGame />
-        <HandleAddDmList user_info={user_info} />
-        <Block block_user={user_info} component={Button} />
-        <SimpleRecord />
-      </Box>
+      <>
+        <Box display="flex" justifyContent="space-between">
+          <Test user_info={user_info} />
+          <ProfileGame />
+          <HandleAddDmList user_info={user_info} />
+          <Block block_user={user_info} component={Button} />
+        </Box>
+        <Divider sx={{mt: 2, mb: 2}} />
+        <Box display="flex" flexDirection="column">
+          <SimpleRecord />
+        </Box>
+      </>
     );
   }, [user_info]);
 
