@@ -15,6 +15,7 @@ import React, {useCallback} from 'react';
 import Block from '@/components/Block';
 import {HandleAddDmList} from './DMButton';
 import {Test} from './Test';
+import ProfileGame from './Game';
 
 export default function UserInfoPage({user_info}: {user_info: UserType}) {
   const {openGlobalModal} = useGlobalModal();
@@ -47,7 +48,7 @@ export default function UserInfoPage({user_info}: {user_info: UserType}) {
     return (
       <Box display={'flex'} justifyContent={'space-between'}>
         <Test user_info={user_info} />
-        <Button>1:1 게임하기</Button>
+        <ProfileGame />
         <HandleAddDmList user_info={user_info} />
         <Block block_user={user_info} component={Button} />
       </Box>
