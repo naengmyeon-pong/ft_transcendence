@@ -15,6 +15,7 @@ function SimpleRecord() {
     const getUserRecord = async () => {
       try {
         const response = await apiManager.get('/record/simple?id=user1');
+        console.log(response);
         setRecentRecord(response.data.recent_record);
       } catch (error) {
         console.log(error);
@@ -22,7 +23,8 @@ function SimpleRecord() {
     };
 
     getUserRecord();
-  });
+    // MEMO: 무한으로 요청하는 버그 수정
+  }, []);
 
   return (
     <>
