@@ -1,7 +1,7 @@
 'use client';
 import ChatList from '@/components/Chat/ListPage';
 import ChatRoom from '@/components/Chat/RoomPage';
-import {UserContext} from '@/components/MainLayout/Context';
+import {UserContext} from '@/components/layout/MainLayout/Context';
 import React, {useContext} from 'react';
 
 export default function ChatPage() {
