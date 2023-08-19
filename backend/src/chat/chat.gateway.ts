@@ -11,8 +11,8 @@ import {
 } from '@nestjs/websockets';
 import {Socket, Namespace} from 'socket.io';
 import {ChatService} from './chat.service';
-import {SocketArray} from 'src/globalVariable/global.socket';
-import {Block} from 'src/globalVariable/global.block';
+import {SocketArray} from '@/global-variable/global.socket';
+import {Block} from '@/global-variable/global.block';
 import {AuthGuard} from '@nestjs/passport';
 import {JwtService} from '@nestjs/jwt';
 
@@ -38,9 +38,7 @@ interface MutePayload {
     origin: '*',
   },
 })
-export class ChatGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+export class ChatGateway implements OnGatewayConnection {
   constructor(
     private chatService: ChatService,
     private socketArray: SocketArray,
@@ -51,10 +49,10 @@ export class ChatGateway
 
   private logger = new Logger('ChatGateway');
 
-  afterInit() {
-    this.block.setBlock();
-    this.logger.log('웹소켓 서버 초기화 ✅');
-  }
+  // afterInit() {
+  //   this.block.setBlock();
+  //   this.logger.log('웹소켓 서버 초기화 ✅');
+  // }
 
   async handleConnection(@ConnectedSocket() socket: Socket) {
     try {
@@ -85,11 +83,11 @@ export class ChatGateway
     const block_members: Set<string> = this.block.getBlockUsers(user_id);
     const except_member: string[] = [];
 
-    if (block_members) {
-      block_members.forEach(e => {
-        except_member.push(this.socketArray.getUserSocket(e));
-      });
-    }
+    // if (block_members) {
+    //   block_members.forEach(e => {
+    //     except_member.push(this.socketArray.getUserSocket(e));
+    //   });
+    // }
     socket
       .except(except_member)
       .to(`${room_id}`)

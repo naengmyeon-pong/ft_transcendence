@@ -1,4 +1,4 @@
-import {SocketArray} from '@/globalVariable/global.socket';
+import {SocketArray} from '@/global-variable/global.socket';
 import {Logger} from '@nestjs/common';
 import {JwtService} from '@nestjs/jwt';
 import {
@@ -33,7 +33,7 @@ export class UserGateway
   }
 
   handleConnection(@ConnectedSocket() socket: Socket) {
-    this.logger.log(`${socket.id} 소켓 연결`);
+    this.logger.log(`${socket.id} 유저 소켓 연결`);
     const userID = this.getUserID(socket);
     this.socketArray.addSocketArray({
       user_id: userID,
@@ -44,7 +44,7 @@ export class UserGateway
   handleDisconnect(@ConnectedSocket() socket: Socket) {
     const userID = this.getUserID(socket);
     this.socketArray.removeSocketArray(userID);
-    console.log('user disconnect');
+    console.log('소켓 연결 해제');
   }
 
   getUserID = (socket: Socket): string => {

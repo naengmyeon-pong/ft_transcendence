@@ -16,8 +16,8 @@ import {
 } from './chat.repository';
 import {UserRepository} from 'src/user/user.repository';
 import {RoomDto} from './dto/room.dto';
-import {SocketArray} from 'src/globalVariable/global.socket';
-import {Block} from 'src/globalVariable/global.block';
+import {SocketArray} from '@/global-variable/global.socket';
+import {Block} from '@/global-variable/global.block';
 import {DataSource, IsNull, Not} from 'typeorm';
 import {ChatMember, ChatRoom} from './chat.entity';
 

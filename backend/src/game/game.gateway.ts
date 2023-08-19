@@ -27,7 +27,7 @@ import {ModeRepository} from 'src/record/mode/mode.repository';
 import {TypeRepository} from 'src/record/type/type.repository';
 import {JwtService} from '@nestjs/jwt';
 import {GameService} from './game.service';
-import {SocketArray} from '@/globalVariable/global.socket';
+import {SocketArray} from '@/global-variable/global.socket';
 
 const NORMAL_EASY = 0;
 const NORMAL_HARD = 1;
@@ -49,7 +49,7 @@ interface GameSocketInfo {
     origin: '*',
   },
 })
-export class GameGateway implements OnGatewayInit, OnGatewayDisconnect {
+export class GameGateway implements OnGatewayDisconnect {
   private logger = new Logger('Gateway');
   constructor(
     private gameService: GameService,
@@ -62,8 +62,12 @@ export class GameGateway implements OnGatewayInit, OnGatewayDisconnect {
   ) {}
 
   @WebSocketServer() nsp: Namespace;
-  afterInit() {
-    this.logger.log('게임 서버 초기화');
+  // afterInit() {
+  //   this.logger.log('게임 서버 초기화');
+  // }
+
+  handleConnection(@ConnectedSocket() socket: Socket) {
+    this.logger.log(`${socket.id} 게임 소켓 연결`);
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
