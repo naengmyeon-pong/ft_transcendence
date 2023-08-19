@@ -9,14 +9,12 @@ import {JwtStrategy} from './jwt.strategy';
 import {UserRepository} from 'src/user/user.repository';
 import {IsUserAuth} from 'src/signup/signup.entity';
 import {IsUserAuthRepository} from 'src/signup/signup.repository';
-import {UserGateway} from './user.gateway';
-import {SocketArray} from '@/globalVariable/global.socket';
 
 @Module({
   imports: [
     PassportModule.register({defaultStrategy: 'jwt'}),
     JwtModule.register({
-      secret: process.env.SIGNIN_JWT_SECRET_KEY,
+      secret: 'Secret1234',
       signOptions: {
         expiresIn: '4h',
       },
@@ -25,14 +23,7 @@ import {SocketArray} from '@/globalVariable/global.socket';
     TypeOrmModule.forFeature([IsUserAuth]),
   ],
   controllers: [UserController],
-  providers: [
-    UserService,
-    JwtStrategy,
-    UserRepository,
-    IsUserAuthRepository,
-    UserGateway,
-    SocketArray,
-  ],
+  providers: [UserService, JwtStrategy, UserRepository, IsUserAuthRepository],
   exports: [UserService],
 })
 export class UserModule {}

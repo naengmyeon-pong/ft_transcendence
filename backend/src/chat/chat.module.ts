@@ -23,6 +23,7 @@ import {User} from 'src/user/user.entitiy';
 import {UserRepository} from 'src/user/user.repository';
 import {SocketArray} from 'src/globalVariable/global.socket';
 import {Block} from 'src/globalVariable/global.block';
+import {JwtcustomeModule} from '@/jwtcustome/jwtcustome.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import {Block} from 'src/globalVariable/global.block';
     TypeOrmModule.forFeature([BlockList]),
     TypeOrmModule.forFeature([DirectMessage]),
     TypeOrmModule.forFeature([FriendList]),
+    JwtcustomeModule,
   ],
   providers: [
     ChatGateway,

@@ -1,4 +1,4 @@
-import {BadRequestException, Logger} from '@nestjs/common';
+import {Logger, UseGuards} from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -13,6 +13,8 @@ import {Socket, Namespace} from 'socket.io';
 import {ChatService} from './chat.service';
 import {SocketArray} from 'src/globalVariable/global.socket';
 import {Block} from 'src/globalVariable/global.block';
+import {AuthGuard} from '@nestjs/passport';
+import {JwtService} from '@nestjs/jwt';
 
 interface MessagePayload {
   room_id: number;
@@ -42,7 +44,8 @@ export class ChatGateway
   constructor(
     private chatService: ChatService,
     private socketArray: SocketArray,
-    private block: Block
+    private block: Block,
+    private jwtService: JwtService
   ) {}
   @WebSocketServer() nsp: Namespace;
 
@@ -54,19 +57,15 @@ export class ChatGateway
   }
 
   async handleConnection(@ConnectedSocket() socket: Socket) {
-    const user_id = socket.handshake.query.user_id as string;
-    this.socketArray.addSocketArray({user_id, socket_id: socket.id});
     try {
-      const member = await this.chatService.isChatMember(user_id);
-      if (member.mute !== null) {
-        socket.emit('mute-member', member.mute);
-      }
+      const token = this.jwtService.verify(socket.handshake.auth.token);
+      const user_id = token.user_id;
+      this.socketArray.addSocketArray({user_id, socket_id: socket.id});
+      this.logger.log(`${socket.id} 채팅 소켓 연결`);
     } catch (e) {
-      if (e.status !== 404) {
-        console.log(e.message);
-      }
+      // 연결했을 때 토큰이 이상하거나 없으면 그대로 끊어버림.
+      socket.disconnect();
     }
-    this.logger.log(`${socket.id} 채팅 소켓 연결`);
   }
 
   @SubscribeMessage('message')
@@ -74,6 +73,12 @@ export class ChatGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody() {room_id, message}: MessagePayload
   ) {
+    try {
+      this.jwtService.verify(socket.handshake.auth.token);
+    } catch (e) {
+      // front한테 socket 이벤트 줄거임. 그러면 토큰 삭제하고 로그인페이지로 이동시키기.
+      return;
+    }
     const user_id = socket.handshake.query.user_id as string;
     const user_nickname = socket.handshake.query.nickname as string;
     const user_image = socket.handshake.query.user_image as string;
@@ -88,8 +93,7 @@ export class ChatGateway
     socket
       .except(except_member)
       .to(`${room_id}`)
-      .emit('message', {message, user_id, user_nickname, user_image}); //front로 메세지 전송
-
+      .emit('message', {message, user_id, user_nickname, user_image});
     this.logger.log(`들어온 메세지: ${message}.`);
     return {message, user_id, user_nickname, user_image};
   }
@@ -125,12 +129,8 @@ export class ChatGateway
   @SubscribeMessage('leave-room')
   async handleLeaveRoom(
     @ConnectedSocket() socket: Socket,
-    @MessageBody('room_id') room_id: number,
-    @MessageBody('reload') reload: boolean
+    @MessageBody('room_id') room_id: number
   ) {
-    if (reload) {
-      return true;
-    }
     const user_id = socket.handshake.query.user_id as string;
     try {
       const leave = await this.chatService.leaveRoom(room_id, user_id);
@@ -306,7 +306,6 @@ export class ChatGateway
     try {
       const ban_members = this.block.getBlockUsers(user_id);
       if (ban_members && ban_members.has(target_id)) {
-        console.log('block~~');
         this.chatService.saveDirectMessage(
           user_id,
           target_id,
@@ -342,13 +341,6 @@ export class ChatGateway
     return true;
   }
 
-  /*
-  [
-    {id: 'tester1, nickname:'nick1'},
-    {id: 'tester2, nickname:'nick2'}
-  }
-  이런 형태의 배열. 친구 제거 할 때, 서버에서 db 조회하려면 id도 필요할 것 같아서 이런형태로 만들었음.
-  */
   @SubscribeMessage('friend-list')
   async handleFriendList(@ConnectedSocket() socket: Socket) {
     const user_id = socket.handshake.query.user_id as string;
@@ -391,7 +383,4 @@ export class ChatGateway
       return false;
     }
   }
-
-  // add, del 실행한 후에 friend-list 호출해서 친구목록 변화한거 바로바로 적용하도록 했음
-  // 나중에 온, 오프라인, 게임상태 추가해야 함.
 }
