@@ -51,7 +51,7 @@ export default function UserInfoPage({user_info}: {user_info: UserType}) {
       <>
         <Box display="flex" justifyContent="space-between">
           <Test user_info={user_info} />
-          <ProfileGame />
+          <ProfileGame user_info={user_info} />
           <HandleAddDmList user_info={user_info} />
           <Block block_user={user_info} component={Button} />
         </Box>
