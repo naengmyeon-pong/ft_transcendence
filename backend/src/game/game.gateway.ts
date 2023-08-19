@@ -286,11 +286,14 @@ export class GameGateway implements OnGatewayDisconnect {
     @MessageBody() inviteGameInfo: InviteGameInfo
   ) {
     console.log(inviteGameInfo);
-    const target_socket_id = this.socketArray.getUserSocket(
+    console.log('login users: ', this.socketArray);
+    const targetInfo = this.socketArray.getUserSocket(
       inviteGameInfo.invitee_id
     );
-    if (target_socket_id === undefined) {
-      return false;
+    if (targetInfo === undefined) {
+      return '접속중인 유저가 아닙니다.';
+    } else if (targetInfo.is_gaming === true) {
+      return '게임중인 유저입니다.';
     }
     // 소켓에서 찾고 게임만들고 전달하는 과정 접속중이 아니면 false리턴
 
