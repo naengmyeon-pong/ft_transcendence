@@ -49,9 +49,7 @@ interface GameSocketInfo {
     origin: '*',
   },
 })
-export class GameGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+export class GameGateway implements OnGatewayInit, OnGatewayDisconnect {
   private logger = new Logger('Gateway');
   constructor(
     private gameService: GameService,
@@ -68,16 +66,6 @@ export class GameGateway
     this.logger.log('게임 서버 초기화');
   }
 
-  handleConnection(@ConnectedSocket() socket: Socket) {
-    this.logger.log(`${socket.id} 게임 소켓 연결`);
-    const userID = this.getUserID(socket);
-    // const user_id = socket.handshake.query.user_id as string;
-    this.socketArray.addGameSocketArray({
-      user_id: userID,
-      socket_id: socket.id,
-    });
-  }
-
   handleDisconnect(@ConnectedSocket() socket: Socket) {
     const roomName: string | null = this.gameService.isForfeit(socket);
     if (roomName) {
@@ -86,7 +74,7 @@ export class GameGateway
       clearInterval(roomInfo.interval);
       gameRooms.delete(roomName);
     }
-    this.logger.log(`${socket.id} 게임 소켓 연결 해제`);
+    console.log('소켓 연결 해제');
   }
 
   createGameRoom(userId: string, gameUserSockets: GameUser[]): string {
@@ -295,6 +283,7 @@ export class GameGateway
     });
     return decodedToken.user_id;
   };
+
   @SubscribeMessage('invite_game')
   handleInviteGame(
     @ConnectedSocket() inviterSocket: Socket,

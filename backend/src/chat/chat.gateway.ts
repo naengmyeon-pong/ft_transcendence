@@ -69,12 +69,6 @@ export class ChatGateway
     this.logger.log(`${socket.id} 채팅 소켓 연결`);
   }
 
-  async handleDisconnect(@ConnectedSocket() socket: Socket) {
-    const user_id = socket.handshake.query.user_id as string;
-    this.socketArray.removeSocketArray(user_id);
-    this.logger.log(`${socket.id} 소켓 연결 해제 ❌`);
-  }
-
   @SubscribeMessage('message')
   handleMessage(
     @ConnectedSocket() socket: Socket,
