@@ -163,6 +163,31 @@ function SideBar() {
     };
   }, [handleDMCnt, chat_socket]);
 
+  //friendlist 갱신
+  useEffect(() => {
+    chat_socket?.on('update-friend-state', ({userId, state}) => {
+      console.log(`userId : ${userId}, state :${state}`);
+      friend_list.forEach(friend => {
+        if (friend.id === userId) {
+          friend.state = state;
+        }
+      });
+      setFriendList(prev => {
+        const tmp_list: UserType[] = [];
+        prev.forEach(friend => {
+          if (friend.id === userId) {
+            friend.state = state;
+          }
+          tmp_list.push(friend);
+        });
+        return tmp_list;
+      });
+    });
+    return () => {
+      chat_socket?.off('update-friend-state');
+    };
+  }, []);
+
   useEffect(() => {
     function handleBlockList() {
       setBlockUsersSize(block_users.size);

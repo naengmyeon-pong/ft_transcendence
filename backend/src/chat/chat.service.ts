@@ -450,14 +450,14 @@ export class ChatService {
       .getRawMany();
 
     ret.forEach(element => {
-      const status = this.socketArray.getUserSocket(element.id);
-      if (status) {
-        if (status.is_gaming) {
-          element.status = 2;
+      const state = this.socketArray.getUserSocket(element.id);
+      if (state) {
+        if (state.is_gaming) {
+          element.state = '게임 중';
         }
-        element.status = 1;
+        element.state = '온라인';
       } else {
-        element.status = 0;
+        element.state = '오프라인';
       }
     });
     return ret;
@@ -604,5 +604,14 @@ export class ChatService {
       room.is_password = false;
     }
     await this.chatRoomRepository.save(room);
+  }
+
+  async getUsersAsFriend(user_id: string) {
+    const ret = await this.friendListRepository.find({
+      where: {
+        friendId: user_id,
+      },
+    });
+    return ret;
   }
 }

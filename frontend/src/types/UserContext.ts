@@ -28,6 +28,7 @@ export interface UserType {
   nickName: string;
   id: string;
   image: string;
+  state?: string;
 }
 
 export interface UserProps {
