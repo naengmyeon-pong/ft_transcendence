@@ -88,10 +88,16 @@ export class RecordController {
   })
   async getDetailRecord(
     @Query('id') userID: string,
+    @Query('type') type: string,
     @Query('page') pageNo: number,
     @Query('size') pageSize: number
   ): Promise<{records: Record[]; pageNo: number; totalPage: number}> {
-    return await this.recordService.getDetailRecord(userID, pageNo, pageSize);
+    return await this.recordService.getDetailRecord(
+      userID,
+      type,
+      pageNo,
+      pageSize
+    );
   }
 
   // For Test

@@ -28,6 +28,8 @@ import {TypeRepository} from 'src/record/type/type.repository';
 import {JwtService} from '@nestjs/jwt';
 import {GameService} from './game.service';
 import {SocketArray} from '@/globalVariable/global.socket';
+import {Type} from '@/record/type/type.entity';
+import {Mode} from '@/record/mode/mode.entity';
 
 const NORMAL_EASY = 0;
 const NORMAL_HARD = 1;
@@ -63,9 +65,42 @@ export class GameGateway
     private socketArray: SocketArray
   ) {}
 
+  async createData(arr: string[], arg: string) {
+    for (const elem of arr) {
+      let findData: Type | Mode;
+      let newData: Type | Mode;
+
+      if (arg === 'type') {
+        findData = await this.typeRepository.findOneBy({type: elem});
+        if (findData !== null) {
+          break;
+        }
+        newData = this.typeRepository.create({
+          type: elem,
+        });
+        await this.typeRepository.save(newData);
+      } else {
+        findData = await this.modeRepository.findOneBy({mode: elem});
+        if (findData !== null) {
+          break;
+        }
+        newData = this.modeRepository.create({
+          mode: elem,
+        });
+        await this.modeRepository.save(newData);
+      }
+    }
+  }
+
   @WebSocketServer() nsp: Namespace;
-  afterInit() {
+  async afterInit() {
     this.logger.log('게임 서버 초기화');
+
+    const gameTypes = ['normal', 'rank'];
+    const gameModes = ['easy', 'hard'];
+
+    this.createData(gameTypes, 'type');
+    this.createData(gameModes, 'mode');
   }
 
   handleConnection(@ConnectedSocket() socket: Socket) {
