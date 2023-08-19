@@ -38,13 +38,14 @@ const fetchUserRecord = async ({pageParam = 1}: FetchUserRecordProps) => {
 
 function DetailRecord({user_info}: {user_info: UserType}) {
   const [recentRecordState, setRecentRecordState] = useState<string[]>([]);
-  const [value, setValue] = useState<number>(0);
+  const [tabValue, setTabValue] = useState<number>(0);
 
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
-    setValue(newValue);
+    setTabValue(newValue);
   };
 
   const {data, fetchNextPage, hasNextPage, isLoading, isError} =
+    //TODO: useQuery 로 변경하기
     useInfiniteQuery(
       ['getUserRecord'],
       ({pageParam = 1}) => fetchUserRecord({pageParam}),
@@ -66,7 +67,7 @@ function DetailRecord({user_info}: {user_info: UserType}) {
       <Box sx={{width: '100%'}}>
         <Box sx={{borderBottom: 1, borderColor: 'divider'}}>
           <Tabs
-            value={value}
+            value={tabValue}
             onChange={handleChange}
             aria-label="user game records"
             variant="fullWidth"
@@ -75,10 +76,10 @@ function DetailRecord({user_info}: {user_info: UserType}) {
             <Tab label="랭크 게임" {...tabYprops(1)} />
           </Tabs>
         </Box>
-        <TabPanel value={value} index={0}>
+        <TabPanel value={tabValue} index={0}>
           <RecordTable />
         </TabPanel>
-        <TabPanel value={value} index={1}>
+        <TabPanel value={tabValue} index={1}>
           <RecordTable />
         </TabPanel>
       </Box>
