@@ -27,6 +27,7 @@ import {ModeRepository} from 'src/record/mode/mode.repository';
 import {TypeRepository} from 'src/record/type/type.repository';
 import {JwtService} from '@nestjs/jwt';
 import {GameService} from './game.service';
+import {SocketArray} from '@/globalVariable/global.socket';
 
 const NORMAL_EASY = 0;
 const NORMAL_HARD = 1;
@@ -43,7 +44,7 @@ interface GameSocketInfo {
 }
 
 @WebSocketGateway({
-  namespace: 'game',
+  namespace: 'pong',
   cors: {
     origin: '*',
   },
@@ -58,7 +59,8 @@ export class GameGateway
     private recordRepository: RecordRepository,
     private modeRepository: ModeRepository,
     private typeRepository: TypeRepository,
-    private jwtService: JwtService
+    private jwtService: JwtService,
+    private socketArray: SocketArray
   ) {}
 
   @WebSocketServer() nsp: Namespace;
@@ -128,6 +130,7 @@ export class GameGateway
         keys,
         type_mode: -1,
       };
+      console.log(userSocket);
       if (this.isGameMatched(joinGameInfo, userSocket) === false) {
         return;
       } else {
@@ -284,6 +287,14 @@ export class GameGateway
     @MessageBody() inviteGameInfo: InviteGameInfo
   ) {
     console.log(inviteGameInfo);
+    const target_socket_id = this.socketArray.getUserSocket(
+      inviteGameInfo.invitee_id
+    );
+    if (target_socket_id === undefined) {
+      return false;
+    }
+    // 소켓에서 찾고 게임만들고 전달하는 과정 접속중이 아니면 false리턴
+
     // if (
     //   inviterSocket.id !==
     //   this.socketArray.getUserSocket(inviteGameInfo.inviter_id)

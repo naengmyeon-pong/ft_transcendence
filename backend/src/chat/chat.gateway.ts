@@ -31,7 +31,7 @@ interface MutePayload {
 }
 
 @WebSocketGateway({
-  namespace: 'chat',
+  namespace: 'pong',
   cors: {
     origin: '*',
   },
