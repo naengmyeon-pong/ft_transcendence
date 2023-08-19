@@ -1,7 +1,7 @@
 'use client';
 
-import {useGlobalModal} from '@/hooks/useGlobalModal';
-import {UserType} from '@/types/UserContext';
+import {useState, useCallback} from 'react';
+
 import {
   Avatar,
   Box,
@@ -12,12 +12,33 @@ import {
   Typography,
 } from '@mui/material';
 import Divider from '@mui/material/Divider';
-import React, {useCallback} from 'react';
+import {useGlobalModal} from '@/hooks/useGlobalModal';
+import {UserType} from '@/types/UserContext';
 import Block from '@/components/Block';
-import SimpleRecord from '@/components/Record/SimpleRecord';
+import RecordSummary from '@/components/Record/RecordSummary';
 import {HandleAddDmList} from '@/components/UserProfileModal/DMButton';
 import {Test} from '@/components/UserProfileModal/Test';
-import ProfileGame from './Game';
+import ProfileGame from '@/components/UserProfileModal/Game';
+import DetailRecord from '../Record/DetailRecord';
+
+function UserProfileModalAction({user_info}: {user_info: UserType}) {
+  return (
+    <>
+      <Box display="flex" justifyContent="space-between">
+        <ProfileGame user_info={user_info} />
+        <HandleAddDmList user_info={user_info} />
+        <Block block_user={user_info} component={Button} />
+      </Box>
+      <Divider sx={{mt: 2, mb: 2}} />
+      <Box display="flex" flexDirection="column">
+        <RecordSummary />
+      </Box>
+      <Box display="flex" flexDirection="column">
+        <DetailRecord user_info={user_info} />
+      </Box>
+    </>
+  );
+}
 
 export default function UserInfoPage({user_info}: {user_info: UserType}) {
   const {openGlobalModal} = useGlobalModal();
@@ -46,28 +67,11 @@ export default function UserInfoPage({user_info}: {user_info: UserType}) {
     );
   }, [user_info.image, user_info.nickName]);
 
-  const action = useCallback(() => {
-    return (
-      <>
-        <Box display="flex" justifyContent="space-between">
-          <Test user_info={user_info} />
-          <ProfileGame user_info={user_info} />
-          <HandleAddDmList user_info={user_info} />
-          <Block block_user={user_info} component={Button} />
-        </Box>
-        <Divider sx={{mt: 2, mb: 2}} />
-        <Box display="flex" flexDirection="column">
-          <SimpleRecord />
-        </Box>
-      </>
-    );
-  }, [user_info]);
-
   function handleClick() {
     openGlobalModal({
       title: '프로필 보기',
       content: content(),
-      action: action(),
+      action: <UserProfileModalAction user_info={user_info} />,
     });
   }
 

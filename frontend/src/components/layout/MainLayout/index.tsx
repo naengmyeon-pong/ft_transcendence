@@ -92,6 +92,16 @@ function MainLayout({children}: MainLayoutProps) {
         setDmList(rep.data);
         setInitMainLayout(true);
         // console.log('dmList: ', rep);
+
+        socketIo.on('disconnect', reason => {
+          if (reason === 'io server disconnect') {
+            sessionStorage.clear();
+            router.push('/');
+          }
+          socketIo.connect();
+          setChatSocket(socketIo);
+        });
+
       } catch (error) {
         router.push('/');
         console.log('MainLayout error: ', error);

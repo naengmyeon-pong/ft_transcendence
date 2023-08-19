@@ -8,7 +8,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import {RecordService} from './record.service';
-import {SimpleRecordDto} from './dto/simple-record.dto';
+import {RecordSummaryDto} from './dto/record-summary.dto';
 import {DetailRecordDto} from './dto/detail-record.dto';
 import {Record} from './record.entity';
 import {ApiOperation, ApiQuery, ApiResponse, ApiTags} from '@nestjs/swagger';
@@ -49,8 +49,10 @@ export class RecordController {
     status: 404,
     description: '사용자가 존재하지 않는 경우',
   })
-  async getSimpleRecord(@Query('id') userID: string): Promise<SimpleRecordDto> {
-    return await this.recordService.getSimpleRecord(userID);
+  async getRecordSummary(
+    @Query('id') userID: string
+  ): Promise<RecordSummaryDto> {
+    return await this.recordService.getRecordSummary(userID);
   }
 
   @Get('detail')
@@ -88,10 +90,16 @@ export class RecordController {
   })
   async getDetailRecord(
     @Query('id') userID: string,
+    @Query('type') type: string,
     @Query('page') pageNo: number,
     @Query('size') pageSize: number
   ): Promise<{records: Record[]; pageNo: number; totalPage: number}> {
-    return await this.recordService.getDetailRecord(userID, pageNo, pageSize);
+    return await this.recordService.getDetailRecord(
+      userID,
+      type,
+      pageNo,
+      pageSize
+    );
   }
 
   // For Test
