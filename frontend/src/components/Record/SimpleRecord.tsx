@@ -10,6 +10,8 @@ import apiManager from '@/api/apiManager';
 
 function SimpleRecord() {
   const [recentRecord, setRecentRecord] = useState<string[]>([]);
+  const [win, setWin] = useState<number>(0);
+  const [lose, setLose] = useState<number>(0);
 
   useEffect(() => {
     const getUserRecord = async () => {
@@ -23,13 +25,15 @@ function SimpleRecord() {
     };
 
     getUserRecord();
-    // MEMO: 무한으로 요청하는 버그 수정
   }, []);
 
   return (
     <>
       <Typography variant="h6">최근 {recentRecord.length}경기 전적</Typography>
-      <Stack direction="row" spacing={1}>
+      <Typography color="text.secondary">
+        {win} 승 {lose} 패 (승률 {(win / 5) * 100}%){' '}
+      </Typography>
+      <Stack direction="row" spacing={1} sx={{mt: 2}}>
         {recentRecord.map((record, idx) => {
           return (
             <Chip
