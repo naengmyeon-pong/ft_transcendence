@@ -18,9 +18,7 @@ import {Namespace, Socket} from 'socket.io';
     origin: '*',
   },
 })
-export class UserGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+export class UserGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private logger = new Logger('UserGateway');
   constructor(
     private jwtService: JwtService,
@@ -29,23 +27,23 @@ export class UserGateway
 
   @WebSocketServer() nsp: Namespace;
 
-  afterInit() {
-    this.logger.log('소켓 서버 초기화');
-  }
-
   handleConnection(@ConnectedSocket() socket: Socket) {
-    this.logger.log(`${socket.id} 유저 소켓 연결`);
-    // const userID = this.getUserID(socket);
-    // this.socketArray.addSocketArray({
-    //   user_id: userID,
-    //   socket_id: socket.id,
-    // });
+    this.logger.log(`${socket.id} 웹소켓 연결`);
+    try {
+      const userID = this.getUserID(socket);
+      this.socketArray.addSocketArray({
+        user_id: userID,
+        socket_id: socket.id,
+      });
+    } catch (e) {
+      // socket.disconnect();
+    }
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
-    // const userID = this.getUserID(socket);
-    // this.socketArray.removeSocketArray(userID);
-    this.logger.log('유저 소켓 연결 해제');
+    const userID = this.getUserID(socket);
+    this.socketArray.removeSocketArray(userID);
+    this.logger.log('웹소켓 연결 해제');
   }
 
   getUserID = (socket: Socket): string => {

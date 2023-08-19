@@ -49,9 +49,7 @@ interface GameSocketInfo {
     origin: '*',
   },
 })
-export class GameGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+export class GameGateway implements OnGatewayDisconnect {
   private logger = new Logger('GameGateway');
   constructor(
     private gameService: GameService,
@@ -64,14 +62,6 @@ export class GameGateway
   ) {}
 
   @WebSocketServer() nsp: Namespace;
-
-  afterInit() {
-    this.logger.log('게임 서버 초기화');
-  }
-
-  handleConnection(@ConnectedSocket() socket: Socket) {
-    this.logger.log(`${socket.id} 게임 소켓 연결`);
-  }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
     const roomName: string | null = this.gameService.isForfeit(socket);
@@ -119,7 +109,6 @@ export class GameGateway
     @MessageBody() joinGameInfo: JoinGameInfo
   ) {
     let user_id: string;
-    socket.handshake.auth;
     try {
       const decodedToken = this.jwtService.verify(joinGameInfo.jwt, {
         secret: process.env.SIGNIN_JWT_SECRET_KEY,

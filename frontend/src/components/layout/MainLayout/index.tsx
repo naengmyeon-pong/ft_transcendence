@@ -55,7 +55,10 @@ function MainLayout({children}: MainLayoutProps) {
         setUserId(response.data.user_id);
         setUserNickName(response.data.user_nickname);
         setUserImage(`${response.data.user_image}`);
-
+        const accessToken = sessionStorage.getItem('accessToken');
+        if (accessToken === null) {
+          router.push('/');
+        }
         const manager = new Manager(
           `${process.env.NEXT_PUBLIC_BACKEND_SERVER}`,
           {
@@ -68,7 +71,11 @@ function MainLayout({children}: MainLayoutProps) {
           }
         );
 
-        const socketIo = manager.socket('/pong');
+        const socketIo = manager.socket('/pong', {
+          auth: {
+            token: accessToken,
+          },
+        });
         setChatSocket(socketIo);
         setManager(manager);
         const rep_block_list = await apiManager.get(

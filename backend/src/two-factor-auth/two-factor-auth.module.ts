@@ -8,16 +8,14 @@ import {UserRepository} from 'src/user/user.repository';
 import {TwoFactorAuthController} from './two-factor-auth.controller';
 import {TwoFactorAuthService} from './two-factor-auth.service';
 import {JwtStrategy} from '@/user/jwt.strategy';
+import {JwtCustomModule} from '@/utils/jwt-custom.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User]),
     UserModule,
     ConfigModule,
-    JwtModule.register({
-      secret: process.env.SIGNIN_JWT_SECRET_KEY,
-      signOptions: {expiresIn: '1h'},
-    }),
+    JwtCustomModule,
   ],
   providers: [UserRepository, TwoFactorAuthService, JwtStrategy],
   controllers: [TwoFactorAuthController],
