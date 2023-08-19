@@ -36,6 +36,7 @@ export class UserGateway implements OnGatewayConnection, OnGatewayDisconnect {
         socket_id: socket.id,
       });
     } catch (e) {
+      this.logger.log(e.message);
       // socket.disconnect();
     }
   }

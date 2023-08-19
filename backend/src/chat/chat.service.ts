@@ -449,6 +449,17 @@ export class ChatService {
       .where('bl.blockId is null')
       .getRawMany();
 
+    ret.forEach(element => {
+      const status = this.socketArray.getUserSocket(element.id);
+      if (status) {
+        if (status.is_gaming) {
+          element.status = 2;
+        }
+        element.status = 1;
+      } else {
+        element.status = 0;
+      }
+    });
     return ret;
   }
 
@@ -470,16 +481,6 @@ export class ChatService {
       userId: user_id,
       friendId: friend_id,
     });
-  }
-
-  //모든 로그인 유저 조회
-  getLoginUsers() {
-    const members = this.socketArray.getSocketArray();
-    const users: string[] = [];
-    members.forEach((value, key) => {
-      users.push(key);
-    });
-    return users;
   }
 
   async getBlockList(user_id: string) {

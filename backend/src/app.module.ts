@@ -14,6 +14,7 @@ import {TwoFactorAuthController} from './two-factor-auth/two-factor-auth.control
 import {TwoFactorAuthService} from './two-factor-auth/two-factor-auth.service';
 import {TwoFactorAuthModule} from './two-factor-auth/two-factor-auth.module';
 import {RecordModule} from './record/record.module';
+import { GlobalVariableModule } from './global-variable/global-variable.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import {RecordModule} from './record/record.module';
     ConfigModule,
     TwoFactorAuthModule,
     RecordModule,
+    GlobalVariableModule,
   ],
   controllers: [],
   providers: [],
