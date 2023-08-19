@@ -20,4 +20,4 @@ import {TypeOrmModule} from '@nestjs/typeorm';
   providers: [JwtStrategy, UserRepository],
   exports: [JwtModule, JwtStrategy],
 })
-export class JwtcustomeModule {}
+export class JwtCustomModule {}
