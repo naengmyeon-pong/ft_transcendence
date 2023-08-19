@@ -12,7 +12,6 @@ import {
   Typography,
 } from '@mui/material';
 import Divider from '@mui/material/Divider';
-
 import {useGlobalModal} from '@/hooks/useGlobalModal';
 import {UserType} from '@/types/UserContext';
 import Block from '@/components/Block';

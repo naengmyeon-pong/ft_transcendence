@@ -31,6 +31,7 @@ import {SocketArray} from '@/globalVariable/global.socket';
 import {Type} from '@/record/type/type.entity';
 import {Mode} from '@/record/mode/mode.entity';
 
+
 const NORMAL_EASY = 0;
 const NORMAL_HARD = 1;
 const RANK_EASY = 2;
@@ -51,10 +52,8 @@ interface GameSocketInfo {
     origin: '*',
   },
 })
-export class GameGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
-  private logger = new Logger('Gateway');
+export class GameGateway implements OnGatewayDisconnect {
+  private logger = new Logger('GameGateway');
   constructor(
     private gameService: GameService,
     private userRepository: UserRepository,
@@ -115,7 +114,7 @@ export class GameGateway
       clearInterval(roomInfo.interval);
       gameRooms.delete(roomName);
     }
-    this.logger.log(`${socket.id} 게임 소켓 연결 해제`);
+    this.logger.log('게임 소켓 연결 해제');
   }
 
   createGameRoom(userId: string, gameUserSockets: GameUser[]): string {
@@ -314,6 +313,14 @@ export class GameGateway
     this.nsp
       .to(roomInfo.room_name)
       .emit('game_info', {game_info: roomInfo.game_info});
+  };
+
+  getUserID = (socket: Socket): string => {
+    const jwt: string = socket.handshake.auth.token;
+    const decodedToken = this.jwtService.verify(jwt, {
+      secret: process.env.SIGNIN_JWT_SECRET_KEY,
+    });
+    return decodedToken.user_id;
   };
 
   @SubscribeMessage('invite_game')

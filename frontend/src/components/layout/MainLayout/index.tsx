@@ -101,6 +101,7 @@ function MainLayout({children}: MainLayoutProps) {
           socketIo.connect();
           setChatSocket(socketIo);
         });
+
       } catch (error) {
         router.push('/');
         console.log('MainLayout error: ', error);
