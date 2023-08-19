@@ -11,6 +11,8 @@ import {IsUserAuth} from 'src/signup/signup.entity';
 import {IsUserAuthRepository} from 'src/signup/signup.repository';
 import {MulterModule} from '@nestjs/platform-express';
 import {MulterConfigService} from '@/utils/multer.config';
+import {UserGateway} from './user.gateway';
+import {SocketArray} from '@/global-variable/global.socket';
 
 @Module({
   imports: [
@@ -28,7 +30,14 @@ import {MulterConfigService} from '@/utils/multer.config';
     }),
   ],
   controllers: [UserController],
-  providers: [UserService, JwtStrategy, UserRepository, IsUserAuthRepository],
+  providers: [
+    UserService,
+    JwtStrategy,
+    UserRepository,
+    IsUserAuthRepository,
+    UserGateway,
+    SocketArray,
+  ],
   exports: [UserService],
 })
 export class UserModule {}

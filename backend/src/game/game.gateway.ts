@@ -49,8 +49,10 @@ interface GameSocketInfo {
     origin: '*',
   },
 })
-export class GameGateway implements OnGatewayDisconnect {
-  private logger = new Logger('Gateway');
+export class GameGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
+  private logger = new Logger('GameGateway');
   constructor(
     private gameService: GameService,
     private userRepository: UserRepository,
@@ -62,9 +64,10 @@ export class GameGateway implements OnGatewayDisconnect {
   ) {}
 
   @WebSocketServer() nsp: Namespace;
-  // afterInit() {
-  //   this.logger.log('게임 서버 초기화');
-  // }
+
+  afterInit() {
+    this.logger.log('게임 서버 초기화');
+  }
 
   handleConnection(@ConnectedSocket() socket: Socket) {
     this.logger.log(`${socket.id} 게임 소켓 연결`);
@@ -78,7 +81,7 @@ export class GameGateway implements OnGatewayDisconnect {
       clearInterval(roomInfo.interval);
       gameRooms.delete(roomName);
     }
-    console.log('소켓 연결 해제');
+    this.logger.log('게임 소켓 연결 해제');
   }
 
   createGameRoom(userId: string, gameUserSockets: GameUser[]): string {

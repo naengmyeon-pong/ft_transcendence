@@ -38,7 +38,9 @@ interface MutePayload {
     origin: '*',
   },
 })
-export class ChatGateway implements OnGatewayConnection {
+export class ChatGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   constructor(
     private chatService: ChatService,
     private socketArray: SocketArray,
@@ -49,21 +51,25 @@ export class ChatGateway implements OnGatewayConnection {
 
   private logger = new Logger('ChatGateway');
 
-  // afterInit() {
-  //   this.block.setBlock();
-  //   this.logger.log('웹소켓 서버 초기화 ✅');
-  // }
+  afterInit() {
+    this.block.setBlock();
+    this.logger.log('채팅 서버 초기화');
+  }
 
   async handleConnection(@ConnectedSocket() socket: Socket) {
+    this.logger.log(`${socket.id} 채팅 소켓 연결`);
     try {
       const token = this.jwtService.verify(socket.handshake.auth.token);
       const user_id = token.user_id;
       this.socketArray.addSocketArray({user_id, socket_id: socket.id});
-      this.logger.log(`${socket.id} 채팅 소켓 연결`);
     } catch (e) {
       // 연결했을 때 토큰이 이상하거나 없으면 그대로 끊어버림.
       socket.disconnect();
     }
+  }
+
+  handleDisconnect(@ConnectedSocket() socket: Socket) {
+    this.logger.log('게임 소켓 연결 해제');
   }
 
   @SubscribeMessage('message')
