@@ -16,7 +16,7 @@ import Divider from '@mui/material/Divider';
 import {useGlobalModal} from '@/hooks/useGlobalModal';
 import {UserType} from '@/types/UserContext';
 import Block from '@/components/Block';
-import SimpleRecord from '@/components/Record/SimpleRecord';
+import RecordSummary from '@/components/Record/RecordSummary';
 import {HandleAddDmList} from '@/components/UserProfileModal/DMButton';
 import {Test} from '@/components/UserProfileModal/Test';
 import ProfileGame from '@/components/UserProfileModal/Game';
@@ -32,7 +32,7 @@ function UserProfileModalAction({user_info}: {user_info: UserType}) {
       </Box>
       <Divider sx={{mt: 2, mb: 2}} />
       <Box display="flex" flexDirection="column">
-        <SimpleRecord />
+        <RecordSummary />
       </Box>
       <Box display="flex" flexDirection="column">
         <DetailRecord user_info={user_info} />

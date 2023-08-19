@@ -27,9 +27,9 @@ interface FetchUserRecordProps {
 const fetchUserRecord = async ({pageParam = 1}: FetchUserRecordProps) => {
   try {
     const response = await apiManager.get(
-      `/record/detail?id=user1&page=${pageParam}&size=5`
+      `/record/detail?id=user1&type=normal&page=${pageParam}&size=5`
     );
-    // console.log(response);
+    console.log(response);
     return response.data;
   } catch (error) {
     console.log(error);

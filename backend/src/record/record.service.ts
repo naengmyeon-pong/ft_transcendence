@@ -8,7 +8,7 @@ import {InjectRepository} from '@nestjs/typeorm';
 import {RecordRepository} from './record.repository';
 import {UserRepository} from 'src/user/user.repository';
 import {Record} from './record.entity';
-import {SimpleRecordDto} from './dto/simple-record.dto';
+import {RecordSummaryDto} from './dto/record-summary.dto';
 import {DetailRecordDto} from './dto/detail-record.dto';
 import {TypeRepository} from './type/type.repository';
 
@@ -29,7 +29,7 @@ export class RecordService {
     return JSON.stringify(records);
   }
 
-  getSimpleRecord = async (userID: string): Promise<SimpleRecordDto> => {
+  getRecordSummary = async (userID: string): Promise<RecordSummaryDto> => {
     if (!userID || typeof userID !== 'string') {
       throw new BadRequestException('Invalid request format');
     }
@@ -67,14 +67,14 @@ export class RecordService {
       recentCount = win + lose;
     }
     const recentRecord = await this.getRecentGames(userID, recentCount);
-    const simpleRecordDto: SimpleRecordDto = {
+    const RecordSummaryDto: RecordSummaryDto = {
       win,
       lose,
       rank_score,
       forfeit,
       recent_record: recentRecord,
     };
-    return simpleRecordDto;
+    return RecordSummaryDto;
   };
 
   getRecentGames = async (userID: string, limit: number): Promise<string[]> => {
