@@ -2,7 +2,7 @@
 
 import {useContext, useEffect, useState} from 'react';
 import {io, Socket} from 'socket.io-client';
-import {Button, Grid} from '@mui/material';
+import {Button, Grid, Typography} from '@mui/material';
 import {
   Radio,
   RadioGroup,
@@ -15,21 +15,38 @@ import Pong from '@/components/game/Pong';
 
 import {GameInfo, RoomUserInfo, JoinGameInfo} from '@/common/types/game';
 import {UserContext} from '@/components/layout/MainLayout/Context';
+import {useRecoilState, useRecoilValue} from 'recoil';
+import {inviteGameState, inviteGameStateBool} from '@/states/inviteGame';
 
-function GameManager() {
-  const {manager} = useContext(UserContext);
+// function GameManager() {
+//   const {manager} = useContext(UserContext);
 
-  const socket = manager?.socket('/game');
-  useEffect(() => {
-    return () => {
-      socket?.disconnect();
-    };
-  });
+//   const socket = manager?.socket('/game');
+//   useEffect(() => {
+//     return () => {
+//       socket?.disconnect();
+//     };
+//   });
 
-  return <Game socket={socket} />;
+//   return <Game socket={socket} />;
+// }
+
+function IsInviteComponent() {
+  const isInvite = useRecoilValue(inviteGameStateBool);
+
+  if (isInvite === false) {
+    return null;
+  }
+  return (
+    <>
+      <Grid>
+        <Typography>유저 대기중</Typography>
+      </Grid>
+    </>
+  );
 }
 
-function Game({socket}: {socket: Socket | undefined}) {
+function Game() {
   const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
   const [gameType, setGameType] = useState<string>('');
   const [gameMode, setGameMode] = useState<string>('');
@@ -38,6 +55,8 @@ function Game({socket}: {socket: Socket | undefined}) {
   const [isWaitingGame, setIsWaitingGame] = useState<boolean>(false);
   const [isStartingGame, setIsStartingGame] = useState<boolean>(false);
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
+  const socket = useContext(UserContext).chat_socket;
+  const [isInvite, setIsInvite] = useRecoilState(inviteGameStateBool);
 
   const handleBeforeUnload = (e: BeforeUnloadEvent) => {
     e.preventDefault();
@@ -182,7 +201,8 @@ function Game({socket}: {socket: Socket | undefined}) {
   return (
     <>
       <Grid id="game-area" container justifyContent="center">
-        {!isStartingGame && (
+        <IsInviteComponent />
+        {!isInvite && !isStartingGame && (
           <Grid id="game-selection" container>
             <Grid id="mode-selection" container justifyContent="center">
               <Grid item xs={4}>
@@ -278,4 +298,5 @@ function Game({socket}: {socket: Socket | undefined}) {
   );
 }
 
-export default GameManager;
+// export default GameManager;
+export default Game;

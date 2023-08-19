@@ -2,11 +2,6 @@ import {DmListData, UserType} from '@/types/UserContext';
 import {atom} from 'recoil';
 import {Socket} from 'socket.io-client';
 
-export const socketState = atom<Socket | null>({
-  key: 'socketState',
-  default: null,
-});
-
 export const userIdState = atom<string | null>({
   key: 'userIdState',
   default: null,

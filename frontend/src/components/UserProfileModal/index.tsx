@@ -11,10 +11,13 @@ import {
   ListItemText,
   Typography,
 } from '@mui/material';
+import Divider from '@mui/material/Divider';
 import React, {useCallback} from 'react';
 import Block from '@/components/Block';
-import {HandleAddDmList} from './DMButton';
-import {Test} from './Test';
+import SimpleRecord from '@/components/Record/SimpleRecord';
+import {HandleAddDmList} from '@/components/UserProfileModal/DMButton';
+import {Test} from '@/components/UserProfileModal/Test';
+import ProfileGame from './Game';
 
 export default function UserInfoPage({user_info}: {user_info: UserType}) {
   const {openGlobalModal} = useGlobalModal();
@@ -45,12 +48,18 @@ export default function UserInfoPage({user_info}: {user_info: UserType}) {
 
   const action = useCallback(() => {
     return (
-      <Box display={'flex'} justifyContent={'space-between'}>
-        <Test user_info={user_info} />
-        <Button>1:1 게임하기</Button>
-        <HandleAddDmList user_info={user_info} />
-        <Block block_user={user_info} component={Button} />
-      </Box>
+      <>
+        <Box display="flex" justifyContent="space-between">
+          <Test user_info={user_info} />
+          <ProfileGame user_info={user_info} />
+          <HandleAddDmList user_info={user_info} />
+          <Block block_user={user_info} component={Button} />
+        </Box>
+        <Divider sx={{mt: 2, mb: 2}} />
+        <Box display="flex" flexDirection="column">
+          <SimpleRecord />
+        </Box>
+      </>
     );
   }, [user_info]);
 
