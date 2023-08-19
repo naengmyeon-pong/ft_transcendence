@@ -37,13 +37,13 @@ function MainLayout({children}: MainLayoutProps) {
     for (const node of data) {
       block_users.set(node.id, node);
     }
-    console.log('block_users: ', block_users);
+    // console.log('block_users: ', block_users);
   }
   useEffect(() => {
     (async () => {
       try {
         const response = await apiManager.get('/user/user-info');
-        console.log('response: ', response);
+        // console.log('response: ', response);
         const {user_id, user_image, user_nickname, is_2fa_enabled} =
           response.data;
         setProfileDataState({
@@ -55,7 +55,10 @@ function MainLayout({children}: MainLayoutProps) {
         setUserId(response.data.user_id);
         setUserNickName(response.data.user_nickname);
         setUserImage(`${response.data.user_image}`);
-
+        const accessToken = sessionStorage.getItem('accessToken');
+        if (accessToken === null) {
+          router.push('/');
+        }
         const manager = new Manager(
           `${process.env.NEXT_PUBLIC_BACKEND_SERVER}`,
           {
@@ -68,7 +71,11 @@ function MainLayout({children}: MainLayoutProps) {
           }
         );
 
-        const socketIo = manager.socket('/chat');
+        const socketIo = manager.socket('/pong', {
+          auth: {
+            token: accessToken,
+          },
+        });
         setChatSocket(socketIo);
         setManager(manager);
         const rep_block_list = await apiManager.get(
@@ -84,7 +91,7 @@ function MainLayout({children}: MainLayoutProps) {
         });
         setDmList(rep.data);
         setInitMainLayout(true);
-        console.log('dmList: ', rep);
+        // console.log('dmList: ', rep);
       } catch (error) {
         router.push('/');
         console.log('MainLayout error: ', error);

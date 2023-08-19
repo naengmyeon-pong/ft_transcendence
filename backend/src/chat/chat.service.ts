@@ -16,8 +16,8 @@ import {
 } from './chat.repository';
 import {UserRepository} from 'src/user/user.repository';
 import {RoomDto} from './dto/room.dto';
-import {SocketArray} from 'src/globalVariable/global.socket';
-import {Block} from 'src/globalVariable/global.block';
+import {SocketArray} from '@/global-variable/global.socket';
+import {Block} from '@/global-variable/global.block';
 import {DataSource, IsNull, Not} from 'typeorm';
 import {ChatMember, ChatRoom} from './chat.entity';
 
@@ -214,6 +214,7 @@ export class ChatService {
   }
 
   async leaveRoom(room_id: number, user_id: string) {
+    // throw new InternalServerErrorException();
     if (!room_id || !user_id) {
       throw new BadRequestException('empty parameter.');
     }
@@ -227,29 +228,20 @@ export class ChatService {
       chatroomId: room_id,
       userId: user_id,
     });
-    const query_runner = this.dataSource.createQueryRunner();
-    await query_runner.connect();
-    await query_runner.startTransaction();
-    try {
-      if (!member) {
-        return;
-      } else if (member.permission === 2) {
-        //owner 일 때 방 전체가 터지게. // 여기에서 다 처리해야될듯 front한테 부르는게 아니라.
-        await this.chatRoomRepository.delete({id: room_id});
-        return member;
-      } else {
-        await this.chatMemberRepository.delete({
-          userId: member.userId,
-          chatroomId: room_id,
-        });
-        room.current_nums -= 1;
-        await this.chatRoomRepository.save(room);
-      }
+    if (!member) {
+      return;
+    } else if (member.permission === 2) {
+      //owner 일 때 방 전체가 터지게. // 여기에서 다 처리해야될듯 front한테 부르는게 아니라.
+      await this.chatRoomRepository.delete({id: room_id});
       return member;
-    } catch (e) {
-      query_runner.rollbackTransaction();
-    } finally {
-      query_runner.release();
+    } else {
+      await this.chatMemberRepository.delete({
+        userId: member.userId,
+        chatroomId: room_id,
+      });
+      room.current_nums -= 1;
+      await this.chatRoomRepository.save(room);
+      return member;
     }
   }
 
@@ -608,6 +600,7 @@ export class ChatService {
       room.password = password;
     } else {
       room.password = null;
+      room.is_password = false;
     }
     await this.chatRoomRepository.save(room);
   }

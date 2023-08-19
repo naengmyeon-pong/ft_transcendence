@@ -11,7 +11,12 @@ import {
 } from '@nestjs/websockets';
 import {Namespace, Socket, Server} from 'socket.io';
 import {User} from 'src/user/user.entitiy';
-import {GameInfo, RoomUserInfo, JoinGameInfo} from '@/types/game';
+import {
+  GameInfo,
+  RoomUserInfo,
+  JoinGameInfo,
+  InviteGameInfo,
+} from '@/types/game';
 import {GameUser} from './types/game-user.interface';
 import {KeyData} from './types/key-data.interface';
 import {RoomInfo} from './types/room-info.interface';
@@ -22,6 +27,7 @@ import {ModeRepository} from 'src/record/mode/mode.repository';
 import {TypeRepository} from 'src/record/type/type.repository';
 import {JwtService} from '@nestjs/jwt';
 import {GameService} from './game.service';
+import {SocketArray} from '@/global-variable/global.socket';
 
 const NORMAL_EASY = 0;
 const NORMAL_HARD = 1;
@@ -32,33 +38,30 @@ const waitUserList: GameUser[][] = [[], [], [], []];
 
 export const gameRooms: Map<string, RoomInfo> = new Map();
 
+interface GameSocketInfo {
+  socket: Socket;
+  is_gaming: boolean;
+}
+
 @WebSocketGateway({
-  namespace: 'game',
+  namespace: 'pong',
   cors: {
     origin: '*',
   },
 })
-export class GameGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
-  private logger = new Logger('Gateway');
+export class GameGateway implements OnGatewayDisconnect {
+  private logger = new Logger('GameGateway');
   constructor(
     private gameService: GameService,
     private userRepository: UserRepository,
     private recordRepository: RecordRepository,
     private modeRepository: ModeRepository,
     private typeRepository: TypeRepository,
-    private jwtService: JwtService
+    private jwtService: JwtService,
+    private socketArray: SocketArray
   ) {}
 
   @WebSocketServer() nsp: Namespace;
-  afterInit() {
-    this.logger.log('게임 서버 초기화');
-  }
-
-  handleConnection(@ConnectedSocket() socket: Socket) {
-    this.logger.log(`${socket.id} 게임 소켓 연결`);
-  }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
     const roomName: string | null = this.gameService.isForfeit(socket);
@@ -68,7 +71,7 @@ export class GameGateway
       clearInterval(roomInfo.interval);
       gameRooms.delete(roomName);
     }
-    this.logger.log(`${socket.id} 게임 소켓 연결 해제`);
+    this.logger.log('게임 소켓 연결 해제');
   }
 
   createGameRoom(userId: string, gameUserSockets: GameUser[]): string {
@@ -118,6 +121,7 @@ export class GameGateway
         keys,
         type_mode: -1,
       };
+      console.log(userSocket);
       if (this.isGameMatched(joinGameInfo, userSocket) === false) {
         return;
       } else {
@@ -267,6 +271,49 @@ export class GameGateway
       .to(roomInfo.room_name)
       .emit('game_info', {game_info: roomInfo.game_info});
   };
+
+  getUserID = (socket: Socket): string => {
+    const jwt: string = socket.handshake.auth.token;
+    const decodedToken = this.jwtService.verify(jwt, {
+      secret: process.env.SIGNIN_JWT_SECRET_KEY,
+    });
+    return decodedToken.user_id;
+  };
+
+  @SubscribeMessage('invite_game')
+  handleInviteGame(
+    @ConnectedSocket() inviterSocket: Socket,
+    @MessageBody() inviteGameInfo: InviteGameInfo
+  ) {
+    console.log(inviteGameInfo);
+    const target_socket_id = this.socketArray.getUserSocket(
+      inviteGameInfo.invitee_id
+    );
+    if (target_socket_id === undefined) {
+      return false;
+    }
+    // 소켓에서 찾고 게임만들고 전달하는 과정 접속중이 아니면 false리턴
+
+    // if (
+    //   inviterSocket.id !==
+    //   this.socketArray.getUserSocket(inviteGameInfo.inviter_id)
+    // ) {
+    //   // 유저의 ID와 소켓이 매칭되지 않는 경우
+    //   throw new BadRequestException();
+    // }
+    // const inviteeSocket = this.socketArray.getUserSocket(
+    //   inviteGameInfo.invitee_id
+    // );
+    // if (!inviteeSocket) {
+    // 초대받은 유저가 로그인 상태가 아닌 경우
+    // inviterSocket.emit('invite_error', '유저가 로그인 상태가 아님');
+    // return;
+    // }
+    // console.log('invitee : ', inviteeSocket);
+    // inviterSocket.join(inviteGameInfo.inviter_id);
+    // inviterSocket.to(inviteeSocket).emit('invite_game', inviteGameInfo);
+    // inviterSocket.emit('test', 'hello');
+  }
 }
 
 const findTypeMode = (joinGameInfo: JoinGameInfo): number => {
