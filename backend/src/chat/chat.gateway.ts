@@ -38,7 +38,9 @@ interface MutePayload {
     origin: '*',
   },
 })
-export class ChatGateway implements OnGatewayInit {
+export class ChatGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   constructor(
     private chatService: ChatService,
     private socketArray: SocketArray,
@@ -52,6 +54,42 @@ export class ChatGateway implements OnGatewayInit {
   afterInit() {
     this.block.setBlock();
     this.logger.log('웹소켓 서버 초기화');
+  }
+
+  async handleConnection(@ConnectedSocket() socket: Socket) {
+    try {
+      const user_id = this.getUserID(socket);
+      const friends = await this.chatService.getUsersAsFriend(user_id);
+      friends.forEach(friend => {
+        const login_user = this.socketArray.getUserSocket(friend.userId);
+        if (login_user) {
+          // console.log(`login ${user_id}`);
+          socket
+            .to(login_user.socket_id)
+            .emit('update-friend-state', {userId: user_id, state: '온라인'});
+        }
+      });
+    } catch (e) {
+      this.logger.log(e.message);
+    }
+  }
+
+  async handleDisconnect(@ConnectedSocket() socket: Socket) {
+    try {
+      const user_id = this.getUserID(socket);
+      const friends = await this.chatService.getUsersAsFriend(user_id);
+      friends.forEach(friend => {
+        const login_user = this.socketArray.getUserSocket(friend.userId);
+        if (login_user) {
+          // console.log(`logout ${user_id}`);
+          socket
+            .to(login_user.socket_id)
+            .emit('update-friend-state', {userId: user_id, state: '오프라인'});
+        }
+      });
+    } catch (e) {
+      this.logger.log(e.message);
+    }
   }
 
   @SubscribeMessage('message')
@@ -73,7 +111,10 @@ export class ChatGateway implements OnGatewayInit {
 
     if (block_members) {
       block_members.forEach(e => {
-        except_member.push(this.socketArray.getUserSocket(e).socket_id);
+        const login_user = this.socketArray.getUserSocket(e);
+        if (login_user) {
+          except_member.push(login_user.socket_id);
+        }
       });
     }
     socket
@@ -191,11 +232,13 @@ export class ChatGateway implements OnGatewayInit {
           target_id,
           mute_time
         );
-        const target_socket_id = this.socketArray.getUserSocket(target_id);
-        socket
-          .to(`${room_id}`)
-          .to(`${target_socket_id}`)
-          .emit('mute-member', mute_time);
+        const login_user = this.socketArray.getUserSocket(target_id);
+        if (login_user) {
+          socket
+            .to(`${room_id}`)
+            .to(`${login_user.socket_id}`)
+            .emit('mute-member', mute_time);
+        }
         return true;
       }
     } catch (e) {
@@ -213,8 +256,10 @@ export class ChatGateway implements OnGatewayInit {
     const user_id = socket.handshake.query.user_id as string;
     try {
       if (await this.chatService.kickMember(room_id, user_id, target_id)) {
-        const target_socket_id = this.socketArray.getUserSocket(target_id);
-        socket.to(`${target_socket_id}`).emit('kick-member');
+        const login_user = this.socketArray.getUserSocket(target_id);
+        if (login_user) {
+          socket.to(`${login_user.socket_id}`).emit('kick-member');
+        }
         return true;
       }
     } catch (e) {
@@ -299,13 +344,15 @@ export class ChatGateway implements OnGatewayInit {
           target_id
         );
       } else {
-        const target_socket_id = this.socketArray.getUserSocket(target_id);
-        socket.to(`${target_socket_id}`).emit('dm-message', {
-          message,
-          userId: user_id,
-          someoneId: target_id,
-          nickname,
-        });
+        const login_user = this.socketArray.getUserSocket(target_id);
+        if (login_user) {
+          socket.to(`${login_user.socket_id}`).emit('dm-message', {
+            message,
+            userId: user_id,
+            someoneId: target_id,
+            nickname,
+          });
+        }
         this.chatService.saveDirectMessage(user_id, target_id, message);
       }
     } catch (e) {
@@ -327,6 +374,7 @@ export class ChatGateway implements OnGatewayInit {
     return true;
   }
 
+  // state 0 = 오프라인, 1 = 온라인, 2 = 게임중
   @SubscribeMessage('friend-list')
   async handleFriendList(@ConnectedSocket() socket: Socket) {
     const user_id = socket.handshake.query.user_id as string;
@@ -369,4 +417,12 @@ export class ChatGateway implements OnGatewayInit {
       return false;
     }
   }
+
+  getUserID = (socket: Socket): string => {
+    const jwt: string = socket.handshake.auth.token;
+    const decodedToken = this.jwtService.verify(jwt, {
+      secret: process.env.SIGNIN_JWT_SECRET_KEY,
+    });
+    return decodedToken.user_id;
+  };
 }

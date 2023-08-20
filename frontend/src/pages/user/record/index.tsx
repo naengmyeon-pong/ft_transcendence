@@ -18,7 +18,7 @@ import RecordItem from '@/components/RecordItem';
 import * as HTTP_STATUS from 'http-status';
 import {useGlobalDialog} from '@/hooks/useGlobalDialog';
 
-interface SimpleRecord {
+interface RecordSummary {
   win: number;
   lose: number;
   rank_score: number;

@@ -24,6 +24,7 @@ import {UserRepository} from 'src/user/user.repository';
 import {SocketArray} from '@/global-variable/global.socket';
 import {Block} from '@/global-variable/global.block';
 import {JwtCustomModule} from '@/utils/jwt-custom.module';
+import {GlobalVariableModule} from '@/global-variable/global-variable.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import {JwtCustomModule} from '@/utils/jwt-custom.module';
     TypeOrmModule.forFeature([DirectMessage]),
     TypeOrmModule.forFeature([FriendList]),
     JwtCustomModule,
+    GlobalVariableModule,
   ],
   providers: [
     ChatGateway,
@@ -46,8 +48,6 @@ import {JwtCustomModule} from '@/utils/jwt-custom.module';
     BlockRepository,
     DMRepository,
     FriendListRepository,
-    SocketArray,
-    Block,
   ],
   controllers: [ChatController],
 })

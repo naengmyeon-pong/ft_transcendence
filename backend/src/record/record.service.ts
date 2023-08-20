@@ -8,14 +8,16 @@ import {InjectRepository} from '@nestjs/typeorm';
 import {RecordRepository} from './record.repository';
 import {UserRepository} from 'src/user/user.repository';
 import {Record} from './record.entity';
-import {SimpleRecordDto} from './dto/simple-record.dto';
+import {RecordSummaryDto} from './dto/record-summary.dto';
 import {DetailRecordDto} from './dto/detail-record.dto';
+import {TypeRepository} from './type/type.repository';
 
 @Injectable()
 export class RecordService {
   constructor(
     private recordRepository: RecordRepository,
-    private userRepository: UserRepository
+    private userRepository: UserRepository,
+    private typeRepository: TypeRepository
   ) {}
 
   async getEntireRecords(): Promise<string> {
@@ -27,7 +29,7 @@ export class RecordService {
     return JSON.stringify(records);
   }
 
-  getSimpleRecord = async (userID: string): Promise<SimpleRecordDto> => {
+  getRecordSummary = async (userID: string): Promise<RecordSummaryDto> => {
     if (!userID || typeof userID !== 'string') {
       throw new BadRequestException('Invalid request format');
     }
@@ -35,14 +37,24 @@ export class RecordService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    let win = 0,
-      lose = 0;
-    if (user.win_records) {
-      win = user.win_records.length;
-    }
-    if (user.lose_records) {
-      lose = user.lose_records.length;
-    }
+    // let win = 0,
+    //   lose = 0;
+    // if (user.win_records) {
+    //   win = user.win_records.length;
+    // }
+    // if (user.lose_records) {
+    //   lose = user.lose_records.length;
+    // }
+    const win: number = await this.recordRepository.count({
+      where: {
+        winnerId: userID,
+      },
+    });
+    const lose: number = await this.recordRepository.count({
+      where: {
+        loserId: userID,
+      },
+    });
     const forfeit: number = await this.recordRepository.count({
       where: {
         loserId: userID,
@@ -55,14 +67,14 @@ export class RecordService {
       recentCount = win + lose;
     }
     const recentRecord = await this.getRecentGames(userID, recentCount);
-    const simpleRecordDto: SimpleRecordDto = {
+    const RecordSummaryDto: RecordSummaryDto = {
       win,
       lose,
       rank_score,
       forfeit,
       recent_record: recentRecord,
     };
-    return simpleRecordDto;
+    return RecordSummaryDto;
   };
 
   getRecentGames = async (userID: string, limit: number): Promise<string[]> => {
@@ -85,6 +97,7 @@ export class RecordService {
 
   getDetailRecord = async (
     userID: string,
+    type: string,
     pageNo: number,
     pageSize: number
   ): Promise<{records: Record[]; pageNo: number; totalPage: number}> => {
@@ -96,8 +109,15 @@ export class RecordService {
       throw new NotFoundException('User not found');
     }
     const skip = (pageNo - 1) * pageSize;
+    const typeData = await this.typeRepository.findOneBy({type});
+    const typeID: number = typeData.id;
     const [records, count]: [Record[], number] =
-      await this.recordRepository.getDetailGames(userID, pageSize, skip);
+      await this.recordRepository.getDetailGames(
+        userID,
+        typeID,
+        pageSize,
+        skip
+      );
     const totalPage = Math.ceil(count / pageSize);
     return {records, pageNo, totalPage};
   };

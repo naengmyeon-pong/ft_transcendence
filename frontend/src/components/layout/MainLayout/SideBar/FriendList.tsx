@@ -69,7 +69,7 @@ function FriendList({friend}: {friend: UserType}) {
               variant="body2"
               color="text.primary"
             >
-              {'오프라인'}
+              {friend.state}
             </Typography>
           }
         />

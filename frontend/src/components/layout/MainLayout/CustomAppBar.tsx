@@ -93,6 +93,7 @@ function CustomAppBar() {
 
   const logOut = useCallback(() => {
     sessionStorage.removeItem('accessToken');
+    chat_socket?.disconnect();
     router.push('/');
   }, []);
 

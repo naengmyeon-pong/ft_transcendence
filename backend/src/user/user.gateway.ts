@@ -39,14 +39,19 @@ export class UserGateway implements OnGatewayConnection, OnGatewayDisconnect {
       console.log('connected user : ', userID);
       console.log('array : ', this.socketArray);
     } catch (e) {
+      this.logger.log(e.message);
       // socket.disconnect();
     }
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
-    const userID = this.getUserID(socket);
-    this.socketArray.removeSocketArray(userID);
-    this.logger.log('웹소켓 연결 해제');
+    try {
+      const userID = this.getUserID(socket);
+      this.socketArray.removeSocketArray(userID);
+      this.logger.log('웹소켓 연결 해제');
+    } catch (e) {
+      this.logger.log(e.message);
+    }
   }
 
   getUserID = (socket: Socket): string => {

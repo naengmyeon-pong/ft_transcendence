@@ -14,6 +14,7 @@ import {MulterConfigService} from '@/utils/multer.config';
 import {UserGateway} from './user.gateway';
 import {SocketArray} from '@/global-variable/global.socket';
 import {JwtCustomModule} from '@/utils/jwt-custom.module';
+import {GlobalVariableModule} from '@/global-variable/global-variable.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import {JwtCustomModule} from '@/utils/jwt-custom.module';
     MulterModule.registerAsync({
       useClass: MulterConfigService,
     }),
+    GlobalVariableModule,
   ],
   controllers: [UserController],
   providers: [
@@ -31,7 +33,6 @@ import {JwtCustomModule} from '@/utils/jwt-custom.module';
     UserRepository,
     IsUserAuthRepository,
     UserGateway,
-    SocketArray,
   ],
   exports: [UserService],
 })
