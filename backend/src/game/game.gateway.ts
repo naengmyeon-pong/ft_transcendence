@@ -27,10 +27,10 @@ import {ModeRepository} from 'src/record/mode/mode.repository';
 import {TypeRepository} from 'src/record/type/type.repository';
 import {JwtService} from '@nestjs/jwt';
 import {GameService} from './game.service';
-import {SocketArray} from '@/globalVariable/global.socket';
+import {GlobalVariableModule} from '@/global-variable/global-variable.module';
 import {Type} from '@/record/type/type.entity';
 import {Mode} from '@/record/mode/mode.entity';
-
+import {SocketArray} from '@/global-variable/global.socket';
 
 const NORMAL_EASY = 0;
 const NORMAL_HARD = 1;

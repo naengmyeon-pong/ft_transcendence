@@ -12,8 +12,8 @@ import {TypeRepository} from 'src/record/type/type.repository';
 import {JwtModule} from '@nestjs/jwt';
 import {JwtStrategy} from 'src/user/jwt.strategy';
 import {GameService} from './game.service';
-import {SocketArray} from '@/global-variable/global.socket';
 import {JwtCustomModule} from '@/utils/jwt-custom.module';
+import {GlobalVariableModule} from '@/global-variable/global-variable.module';
 
 @Module({
   imports: [
@@ -22,6 +22,7 @@ import {JwtCustomModule} from '@/utils/jwt-custom.module';
     TypeOrmModule.forFeature([Mode]),
     TypeOrmModule.forFeature([Type]),
     JwtCustomModule,
+    GlobalVariableModule,
   ],
   providers: [
     GameGateway,
@@ -31,7 +32,6 @@ import {JwtCustomModule} from '@/utils/jwt-custom.module';
     TypeRepository,
     JwtStrategy,
     GameService,
-    SocketArray,
   ],
 })
 export class GameModule {}

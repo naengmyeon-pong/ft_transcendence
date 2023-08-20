@@ -167,11 +167,6 @@ function SideBar() {
   useEffect(() => {
     chat_socket?.on('update-friend-state', ({userId, state}) => {
       console.log(`userId : ${userId}, state :${state}`);
-      friend_list.forEach(friend => {
-        if (friend.id === userId) {
-          friend.state = state;
-        }
-      });
       setFriendList(prev => {
         const tmp_list: UserType[] = [];
         prev.forEach(friend => {
