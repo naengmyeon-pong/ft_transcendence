@@ -103,20 +103,6 @@ export class ChatController {
     return await this.chatService.getRoom(room_id);
   }
 
-  @ApiOperation({
-    summary: '접속중인 유저 목록 조회 API',
-    description: '현재 로그인 한 유저들의 목록을 가져옵니다.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: '로그인 유저 목록을 잘 가져온 경우',
-  })
-  @Get('users')
-  getLoginUsers() {
-    const member = this.chatService.getLoginUsers();
-    return member;
-  }
-
   // 함수 이름 변경 필요함.
   @ApiOperation({
     summary: '채팅방 초대를 위한 유저 검색 API',
