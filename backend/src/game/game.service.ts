@@ -1,13 +1,13 @@
-import {Injectable} from '@nestjs/common';
-import {Socket} from 'socket.io';
-import {Coordinate, Ball, GameInfo, DEFAULT_BALL_SPEED} from '@/types/game';
-import {RoomInfo} from './types/room-info.interface';
-import {EUserIndex} from './types/user-index.enum';
-import {gameRooms} from './game.gateway';
-import {UserRepository} from 'src/user/user.repository';
-import {RecordRepository} from 'src/record/record.repository';
-import {ModeRepository} from 'src/record/mode/mode.repository';
-import {TypeRepository} from 'src/record/type/type.repository';
+import { Injectable } from '@nestjs/common';
+import { Socket } from 'socket.io';
+import { Coordinate, Ball, GameInfo, DEFAULT_BALL_SPEED } from '@/types/game';
+import { RoomInfo } from './types/room-info.interface';
+import { EUserIndex } from './types/user-index.enum';
+import { gameRooms } from './game.gateway';
+import { UserRepository } from 'src/user/user.repository';
+import { RecordRepository } from 'src/record/record.repository';
+import { ModeRepository } from 'src/record/mode/mode.repository';
+import { TypeRepository } from 'src/record/type/type.repository';
 
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
@@ -28,7 +28,7 @@ export class GameService {
     private recordRepository: RecordRepository,
     private modeRepository: ModeRepository,
     private typeRepository: TypeRepository
-  ) {}
+  ) { }
 
   initGameInfo = (): GameInfo => {
     const leftPaddle: Coordinate = {
@@ -63,39 +63,37 @@ export class GameService {
     return gameInfo;
   };
 
-  isForfeit = (socket: Socket): string | null => {
+  isForfeit = (userID: string): string | null => {
+    let loserIdx: number;
     for (const [key, value] of gameRooms) {
+
+      if (userID === value.users[0].user_id) {
+        loserIdx = 0;
+      } else if (userID === value.users[1].user_id) {
+        loserIdx = 1;
+      } else {
+        continue;
+      }
+      // 소켓이 gameRooms에 존재하는 경우
       if (
-        socket.id === value.users[0].socket.id ||
-        socket.id === value.users[1].socket.id
+        value.game_info.leftScore === 5 ||
+        value.game_info.rightScore === 5
       ) {
-        // 소켓이 gameRooms에 존재하는 경우
-        if (
-          value.game_info.leftScore === 5 ||
-          value.game_info.rightScore === 5
-        ) {
-          // 정상 종료된 경우
-          return null;
-        } else {
-          // 비정상 종료된 경우 => 몰수패 처리
-          let loserID: string;
-          let winnerID: string;
-          if (socket.id === value.users[0].socket.id) {
-            loserID = value.users[0].user_id;
-            winnerID = value.users[1].user_id;
-          } else {
-            winnerID = value.users[0].user_id;
-            loserID = value.users[1].user_id;
-          }
-          this.saveRecord(value, true, socket.id);
-          return key;
-        }
+        // 정상 종료된 경우
+        return null;
+      } else {
+        // 비정상 종료된 경우 => 몰수패 처리
+        // const loserID = value.users[loserIdx].user_id;
+        // const winnerID = value.users[(loserIdx + 1) % 2].user_id;
+        this.saveRecord(value, true, userID);
+        return key;
+
       }
     }
   };
 
-  isLeftUser = (roomInfo: RoomInfo, socket: Socket): boolean => {
-    if (socket === roomInfo.users[EUserIndex.LEFT].socket) {
+  isLeftUser = (roomInfo: RoomInfo, socketID: string): boolean => {
+    if (socketID === roomInfo.users[EUserIndex.LEFT].socket_id) {
       return true;
     }
     return false;
@@ -146,7 +144,7 @@ export class GameService {
   };
 
   updateBallPosition = (gameInfo: GameInfo, currentTime: number): boolean => {
-    const {ball, leftPaddle, rightPaddle} = gameInfo;
+    const { ball, leftPaddle, rightPaddle } = gameInfo;
     const elapse = currentTime - gameInfo.timeStamp;
     ball.pos.x = ball.pos.x + (ball.speed * ball.vel.x * elapse) / 10;
     ball.pos.y = ball.pos.y + (ball.speed * ball.vel.y * elapse) / 10;
@@ -205,19 +203,19 @@ export class GameService {
   saveRecord = async (
     roomInfo: RoomInfo,
     isForfeit: boolean,
-    socketID: string | null
+    userID: string | null
   ) => {
     const [winner, loser, loser_score] = this.findRecordData(
       roomInfo,
       isForfeit,
-      socketID
+      userID
     );
     if (isForfeit === true) {
       // 몰수패인 경우
       this.setRoomInfoScore(roomInfo, winner);
     }
     const [type, mode] = this.getTypeModeName(roomInfo.type_mode);
-    const {game_type, game_mode} = await this.getTypeModeID(type, mode);
+    const { game_type, game_mode } = this.getTypeModeID(type, mode);
     const record = this.recordRepository.create({
       game_type,
       game_mode,
@@ -237,7 +235,7 @@ export class GameService {
   };
 
   saveRankScore = async (userId: string, isWinner: boolean) => {
-    const user = await this.userRepository.findOneBy({user_id: userId});
+    const user = await this.userRepository.findOneBy({ user_id: userId });
     if (user === null) {
       // user not found
       console.log('user not found');
@@ -274,13 +272,13 @@ export class GameService {
   findRecordData = (
     roomInfo: RoomInfo,
     isForfeit: boolean,
-    socketID: string | null
+    userID: string | null
   ): [string, string, number] => {
     let loserID: string;
     let winnerID: string;
     let loser_score = 0;
     if (isForfeit === true) {
-      if (socketID === roomInfo.users[0].socket.id) {
+      if (userID === roomInfo.users[0].user_id) {
         loserID = roomInfo.users[0].user_id;
         winnerID = roomInfo.users[1].user_id;
       } else {
@@ -288,8 +286,8 @@ export class GameService {
         loserID = roomInfo.users[1].user_id;
       }
     } else {
-      const {leftScore} = roomInfo.game_info;
-      const {rightScore} = roomInfo.game_info;
+      const { leftScore } = roomInfo.game_info;
+      const { rightScore } = roomInfo.game_info;
       if (leftScore === 5) {
         winnerID = roomInfo.users[0].user_id;
         loserID = roomInfo.users[1].user_id;
@@ -321,25 +319,23 @@ export class GameService {
     return false;
   };
 
-  getTypeModeID = async (
+  getTypeModeID = (
     type: string,
     mode: string
-  ): Promise<{game_type: number; game_mode: number}> => {
-    let type_Record = await this.typeRepository.findOneBy({type});
-    if (type_Record === null) {
-      type_Record = this.typeRepository.create({
-        type,
-      });
-      await this.typeRepository.save(type_Record);
+  ): { game_type: number; game_mode: number } => {
+    let typeID: number;
+    let modeID: number;
+    if (type === 'normal') {
+      typeID === 1;
+    } else {
+      typeID === 2;
     }
-    let mode_Record = await this.modeRepository.findOneBy({mode});
-    if (mode_Record === null) {
-      mode_Record = this.modeRepository.create({
-        mode,
-      });
-      await this.modeRepository.save(mode_Record);
+    if (mode === 'easy') {
+      modeID === 1;
+    } else {
+      modeID === 2;
     }
-    return {game_type: type_Record.id, game_mode: mode_Record.id};
+    return { game_type: typeID, game_mode: modeID }
   };
 
   getTypeModeName = (type_mode: number): [string, string] => {

@@ -1,4 +1,4 @@
-import {InternalServerErrorException, Logger, UseGuards} from '@nestjs/common';
+import { BadRequestException, InternalServerErrorException, Logger, UseGuards } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -9,28 +9,28 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import {Namespace, Socket, Server} from 'socket.io';
-import {User} from 'src/user/user.entitiy';
+import { Namespace, Socket, Server } from 'socket.io';
+import { User } from 'src/user/user.entitiy';
 import {
   GameInfo,
   RoomUserInfo,
   JoinGameInfo,
   InviteGameInfo,
 } from '@/types/game';
-import {GameUser} from './types/game-user.interface';
-import {KeyData} from './types/key-data.interface';
-import {RoomInfo} from './types/room-info.interface';
-import {EUserIndex} from './types/user-index.enum';
-import {UserRepository} from 'src/user/user.repository';
-import {RecordRepository} from 'src/record/record.repository';
-import {ModeRepository} from 'src/record/mode/mode.repository';
-import {TypeRepository} from 'src/record/type/type.repository';
-import {JwtService} from '@nestjs/jwt';
-import {GameService} from './game.service';
-import {GlobalVariableModule} from '@/global-variable/global-variable.module';
-import {Type} from '@/record/type/type.entity';
-import {Mode} from '@/record/mode/mode.entity';
-import {SocketArray} from '@/global-variable/global.socket';
+import { GameUser } from './types/game-user.interface';
+import { KeyData } from './types/key-data.interface';
+import { RoomInfo } from './types/room-info.interface';
+import { EUserIndex } from './types/user-index.enum';
+import { UserRepository } from 'src/user/user.repository';
+import { RecordRepository } from 'src/record/record.repository';
+import { ModeRepository } from 'src/record/mode/mode.repository';
+import { TypeRepository } from 'src/record/type/type.repository';
+import { JwtService } from '@nestjs/jwt';
+import { GameService } from './game.service';
+import { GlobalVariableModule } from '@/global-variable/global-variable.module';
+import { Type } from '@/record/type/type.entity';
+import { Mode } from '@/record/mode/mode.entity';
+import { SocketArray } from '@/global-variable/global.socket';
 
 const NORMAL_EASY = 0;
 const NORMAL_HARD = 1;
@@ -62,7 +62,8 @@ export class GameGateway implements OnGatewayDisconnect {
     private typeRepository: TypeRepository,
     private jwtService: JwtService,
     private socketArray: SocketArray
-  ) {}
+  ) { }
+  @WebSocketServer() nsp: Namespace;
 
   async createData(arr: string[], arg: string) {
     for (const elem of arr) {
@@ -70,7 +71,7 @@ export class GameGateway implements OnGatewayDisconnect {
       let newData: Type | Mode;
 
       if (arg === 'type') {
-        findData = await this.typeRepository.findOneBy({type: elem});
+        findData = await this.typeRepository.findOneBy({ type: elem });
         if (findData !== null) {
           break;
         }
@@ -79,7 +80,7 @@ export class GameGateway implements OnGatewayDisconnect {
         });
         await this.typeRepository.save(newData);
       } else {
-        findData = await this.modeRepository.findOneBy({mode: elem});
+        findData = await this.modeRepository.findOneBy({ mode: elem });
         if (findData !== null) {
           break;
         }
@@ -91,7 +92,6 @@ export class GameGateway implements OnGatewayDisconnect {
     }
   }
 
-  @WebSocketServer() nsp: Namespace;
   async afterInit() {
     this.logger.log('게임 서버 초기화');
 
@@ -107,7 +107,8 @@ export class GameGateway implements OnGatewayDisconnect {
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
-    const roomName: string | null = this.gameService.isForfeit(socket);
+    const userID = this.getUserID(socket);
+    const roomName: string | null = this.gameService.isForfeit(userID);
     if (roomName) {
       const roomInfo = gameRooms.get(roomName);
       this.sendGameInfo(roomInfo);
@@ -117,17 +118,31 @@ export class GameGateway implements OnGatewayDisconnect {
     this.logger.log('게임 소켓 연결 해제');
   }
 
-  createGameRoom(userId: string, gameUserSockets: GameUser[]): string {
+  createGameRoom(userId: string, gameUsers: GameUser[]): string {
     const gameInfo = this.gameService.initGameInfo();
 
     gameRooms.set(userId, {
       room_name: userId,
-      users: gameUserSockets,
+      users: gameUsers,
       game_info: gameInfo,
-      type_mode: gameUserSockets[0].type_mode,
+      type_mode: gameUsers[0].type_mode,
       interval: null,
     });
     return userId;
+  }
+
+  @SubscribeMessage('exit_game') // 유저가 페이지를 이탈한 경우 (임시 이벤트)
+  handleExitGame(
+    @ConnectedSocket() socket: Socket
+  ) {
+    const userID = this.getUserID(socket);
+    const roomName: string | null = this.gameService.isForfeit(userID);
+    if (roomName) {
+      const roomInfo = gameRooms.get(roomName);
+      this.sendGameInfo(roomInfo);
+      clearInterval(roomInfo.interval);
+      gameRooms.delete(roomName);
+    }
   }
 
   @SubscribeMessage('cancel_waiting')
@@ -137,8 +152,9 @@ export class GameGateway implements OnGatewayDisconnect {
   ) {
     const typeMode = findTypeMode(joinGameInfo);
     const waitUsers: GameUser[] = waitUserList[typeMode];
+    const user = this.getUserID(socket);
     for (let i = 0; i <= RANK_HARD; i++) {
-      if (waitUsers[i].socket.id === socket.id) {
+      if (waitUsers[i].user_id === user) {
         waitUsers.splice(i, 1);
         return;
       }
@@ -151,50 +167,38 @@ export class GameGateway implements OnGatewayDisconnect {
     @ConnectedSocket() socket: Socket,
     @MessageBody() joinGameInfo: JoinGameInfo
   ) {
-    let user_id: string;
-    try {
-      const decodedToken = this.jwtService.verify(joinGameInfo.jwt, {
-        secret: process.env.SIGNIN_JWT_SECRET_KEY,
-      });
-      user_id = decodedToken.user_id;
-      const keys: KeyData = {up: false, down: false};
-      const userSocket: GameUser = {
-        user_id,
-        socket,
-        keys,
-        type_mode: -1,
-      };
-      console.log(userSocket);
-      if (this.isGameMatched(joinGameInfo, userSocket) === false) {
-        return;
-      } else {
-        this.createRoom(userSocket);
-      }
-    } catch (err) {
-      console.error('JWT verification error: ', err.message);
-      // client에 이벤트 전송
+    const user_id = this.getUserID(socket);
+    const keys: KeyData = { up: false, down: false };
+    const waitingUser: GameUser = {
+      user_id,
+      socket_id: socket.id,
+      keys,
+      type_mode: -1,
+    };
+    if (this.isGameMatched(joinGameInfo, waitingUser) === false) {
+      return;
+    } else {
+      this.createRoom(waitingUser);
     }
   }
 
   createRoom = async (userSocket: GameUser) => {
-    const gameUserSockets: GameUser[] = [];
+    const gameUsers: GameUser[] = [];
     const firstUser = waitUserList[userSocket.type_mode].shift();
     const secondUser = userSocket;
-    gameUserSockets.push(firstUser);
-    gameUserSockets.push(secondUser);
+    gameUsers.push(firstUser);
+    gameUsers.push(secondUser);
 
-    const roomName = this.createGameRoom(firstUser.user_id, gameUserSockets);
-
-    firstUser.socket.join(roomName);
-    secondUser.socket.join(roomName);
+    const roomName = this.createGameRoom(firstUser.user_id, gameUsers);
+    this.joinRoom(firstUser.user_id, secondUser.user_id, roomName);
 
     const [left_user, right_user] = await this.findUserName(
       firstUser.user_id,
       secondUser.user_id
     );
-    secondUser.socket
-      .to(roomName)
-      .emit('notice', {notice: `${right_user}이 입장했습니다.`});
+    const firstSocketID = this.socketArray.getUserSocket(firstUser.user_id).socket_id;
+    this.nsp.to(firstSocketID)
+      .emit('notice', { notice: `${right_user}이 입장했습니다.` });
 
     const roomInfo: RoomInfo = gameRooms.get(roomName);
     const gameInfo: GameInfo = roomInfo.game_info;
@@ -211,19 +215,28 @@ export class GameGateway implements OnGatewayDisconnect {
     }
 
     this.nsp.to(roomName).emit('room_name', roomUserInfo);
-    this.nsp.to(roomName).emit('game_info', {game_info: gameInfo});
+    this.nsp.to(roomName).emit('game_info', { game_info: gameInfo });
+  };
+
+  joinRoom = (firstID: string, secondID: string, roomName: string) => {
+    const firstSocketID = this.socketArray.getUserSocket(firstID).socket_id;
+    const firstSocket = this.nsp.sockets.get(firstSocketID);
+    firstSocket.join(roomName);
+    const secondSocketID = this.socketArray.getUserSocket(secondID).socket_id;
+    const secondSocket = this.nsp.sockets.get(secondSocketID);
+    secondSocket.join(roomName);
   };
 
   findUserName = async (
     leftUserID: string,
     rightUserID: string
   ): Promise<[string, string]> => {
-    const left = await this.userRepository.findOneBy({user_id: leftUserID});
+    const left = await this.userRepository.findOneBy({ user_id: leftUserID });
     if (left === null) {
       throw new InternalServerErrorException();
     }
     const leftUser = left.user_nickname;
-    const right = await this.userRepository.findOneBy({user_id: rightUserID});
+    const right = await this.userRepository.findOneBy({ user_id: rightUserID });
     if (left === null) {
       throw new InternalServerErrorException();
     }
@@ -233,16 +246,16 @@ export class GameGateway implements OnGatewayDisconnect {
 
   isGameMatched = (
     joinGameInfo: JoinGameInfo,
-    userSocket: GameUser
+    waitingUser: GameUser
   ): boolean => {
-    userSocket.type_mode = findTypeMode(joinGameInfo);
-    const gameTypeMode = userSocket.type_mode;
+    waitingUser.type_mode = findTypeMode(joinGameInfo);
+    const gameTypeMode = waitingUser.type_mode;
     if (gameTypeMode === -1) {
-      // type & mode not found
+      throw new BadRequestException();
     }
     if (waitUserList[gameTypeMode].length === 0) {
       console.log('wait');
-      waitUserList[gameTypeMode].push(userSocket);
+      waitUserList[gameTypeMode].push(waitingUser);
       return false;
     } else {
       console.log('join');
@@ -254,11 +267,11 @@ export class GameGateway implements OnGatewayDisconnect {
   handleKeyDown(
     @ConnectedSocket() socket: Socket,
     @MessageBody()
-    {room_name, up, down}: {room_name: string; up: boolean; down: boolean}
+    { room_name, up, down }: { room_name: string; up: boolean; down: boolean }
   ) {
     const roomInfo: RoomInfo = gameRooms.get(room_name);
 
-    if (this.gameService.isLeftUser(roomInfo, socket) === true) {
+    if (this.gameService.isLeftUser(roomInfo, socket.id) === true) {
       roomInfo.users[EUserIndex.LEFT].keys.up = up;
       roomInfo.users[EUserIndex.LEFT].keys.down = down;
     } else {
@@ -312,7 +325,7 @@ export class GameGateway implements OnGatewayDisconnect {
   sendGameInfo = (roomInfo: RoomInfo) => {
     this.nsp
       .to(roomInfo.room_name)
-      .emit('game_info', {game_info: roomInfo.game_info});
+      .emit('game_info', { game_info: roomInfo.game_info });
   };
 
   getUserID = (socket: Socket): string => {
