@@ -4,20 +4,18 @@ import {UserType} from '@/types/UserContext';
 import {Button, FormControlLabel, Radio, RadioGroup} from '@mui/material';
 import {useRouter} from 'next/router';
 import {useContext, useEffect} from 'react';
-import {useRecoilState, useRecoilValue, useSetRecoilState} from 'recoil';
+import {useRecoilState, useRecoilValue} from 'recoil';
 import {UserContext} from '../layout/MainLayout/Context';
 
 function Action({user_info}: {user_info: UserType}) {
   const {closeGlobalModal} = useGlobalModal();
-  const mode = useRecoilValue(inviteGameState); //에러
+  const mode = useRecoilValue(inviteGameState);
   const router = useRouter();
   const {chat_socket, user_id} = useContext(UserContext);
-  const setState = useSetRecoilState(inviteGameStateBool);
 
   const inviteGame = () => {
     console.log('초대');
     console.log(mode);
-    setState(true);
     chat_socket?.emit(
       'invite_game',
       {
@@ -29,12 +27,10 @@ function Action({user_info}: {user_info: UserType}) {
         console.log(rep);
         if (rep === false) {
           alert('접속중인 유저가 아닙니다');
-          setState(false);
         }
       }
     );
     closeGlobalModal();
-    router.push('/main/game');
   };
 
   return (
@@ -46,7 +42,7 @@ function Action({user_info}: {user_info: UserType}) {
 }
 
 function Content() {
-  const [mode, setMode] = useRecoilState(inviteGameState); // 에러 없음
+  const [mode, setMode] = useRecoilState(inviteGameState);
   const handleGameMode = (event: React.ChangeEvent<HTMLInputElement>) => {
     setMode(event.currentTarget.value);
   };

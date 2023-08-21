@@ -1,8 +1,7 @@
 'use client';
 
 import {useContext, useEffect, useState} from 'react';
-import {io, Socket} from 'socket.io-client';
-import {Button, Grid, Typography} from '@mui/material';
+import {Button, Grid} from '@mui/material';
 import {
   Radio,
   RadioGroup,
@@ -15,36 +14,21 @@ import Pong from '@/components/game/Pong';
 
 import {GameInfo, RoomUserInfo, JoinGameInfo} from '@/common/types/game';
 import {UserContext} from '@/components/layout/MainLayout/Context';
-import {useRecoilState, useRecoilValue} from 'recoil';
-import {inviteGameState, inviteGameStateBool} from '@/states/inviteGame';
 
-// function GameManager() {
-//   const {manager} = useContext(UserContext);
+// function IsInviteComponent() {
+//   const isInvite = useRecoilValue(inviteGameStateBool);
 
-//   const socket = manager?.socket('/game');
-//   useEffect(() => {
-//     return () => {
-//       socket?.disconnect();
-//     };
-//   });
-
-//   return <Game socket={socket} />;
+//   if (isInvite === false) {
+//     return null;
+//   }
+//   return (
+//     <>
+//       <Grid>
+//         <Typography>유저 대기중</Typography>
+//       </Grid>
+//     </>
+//   );
 // }
-
-function IsInviteComponent() {
-  const isInvite = useRecoilValue(inviteGameStateBool);
-
-  if (isInvite === false) {
-    return null;
-  }
-  return (
-    <>
-      <Grid>
-        <Typography>유저 대기중</Typography>
-      </Grid>
-    </>
-  );
-}
 
 function Game() {
   const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
@@ -56,7 +40,6 @@ function Game() {
   const [isStartingGame, setIsStartingGame] = useState<boolean>(false);
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
   const socket = useContext(UserContext).chat_socket;
-  const [isInvite, setIsInvite] = useRecoilState(inviteGameStateBool);
 
   const handleBeforeUnload = (e: BeforeUnloadEvent) => {
     e.preventDefault();
@@ -201,8 +184,7 @@ function Game() {
   return (
     <>
       <Grid id="game-area" container justifyContent="center">
-        <IsInviteComponent />
-        {!isInvite && !isStartingGame && (
+        {!isStartingGame && (
           <Grid id="game-selection" container>
             <Grid id="mode-selection" container justifyContent="center">
               <Grid item xs={4}>

@@ -39,6 +39,8 @@ const RANK_HARD = 3;
 
 const waitUserList: GameUser[][] = [[], [], [], []];
 
+const inviteWaitList: InviteGameInfo[] = [];
+
 export const gameRooms: Map<string, RoomInfo> = new Map();
 
 interface GameSocketInfo {
@@ -323,18 +325,43 @@ export class GameGateway implements OnGatewayDisconnect {
     return decodedToken.user_id;
   };
 
+  /*
+    알람을 데이터베이스에 저장하지 않아서 생기는 문제
+    1. 이미 초대받은 사용자가 초대를 보내려는 경우
+    2. 닉네임이 변경되는경우 갱신이 안됨
+    3. 
+  */
+
+  // 전역변수로 두 아이디, 모드 저장
   @SubscribeMessage('invite_game')
-  handleInviteGame(
+  async handleInviteGame(
     @ConnectedSocket() inviterSocket: Socket,
     @MessageBody() inviteGameInfo: InviteGameInfo
   ) {
     console.log(inviteGameInfo);
-    const target_socket_id = this.socketArray.getUserSocket(
-      inviteGameInfo.invitee_id
-    );
-    if (target_socket_id === undefined) {
+    const target = this.socketArray.getUserSocket(inviteGameInfo.invitee_id);
+    if (target === undefined) {
       return false;
     }
+    console.log(target);
+    // 유저 아이디를 조회해서 타겟에 전송
+    try {
+      const B = await this.userRepository.findOneBy({
+        user_id: inviteGameInfo.invitee_id,
+      });
+      // 임시로 기존에 있으면 패스
+      inviteGameInfo.inviter_nickname = B.user_nickname;
+      const tmp = (item: InviteGameInfo) =>
+        item.invitee_id === inviteGameInfo.invitee_id;
+      if (!inviteWaitList.some(tmp)) {
+        inviteWaitList.push(inviteGameInfo);
+      }
+      inviterSocket.to(target.socket_id).emit('invite_game', inviteGameInfo);
+    } catch (error) {
+      console.log('handleInviteGame Error: ', error);
+    }
+
+    //
     // 소켓에서 찾고 게임만들고 전달하는 과정 접속중이 아니면 false리턴
 
     // if (
@@ -356,6 +383,13 @@ export class GameGateway implements OnGatewayDisconnect {
     // inviterSocket.join(inviteGameInfo.inviter_id);
     // inviterSocket.to(inviteeSocket).emit('invite_game', inviteGameInfo);
     // inviterSocket.emit('test', 'hello');
+  }
+  @SubscribeMessage('invite_response')
+  handleInviteGameResponse(
+    @ConnectedSocket() inviterSocket: Socket,
+    @MessageBody() inviteGameInfo: InviteGameInfo | string
+  ) {
+    inviterSocket.emit('invite_response', inviteGameInfo);
   }
 }
 
