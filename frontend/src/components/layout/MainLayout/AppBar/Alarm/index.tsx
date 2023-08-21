@@ -4,7 +4,11 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import {InviteGameInfo} from '@/common/types/game';
 import ChatAlarm from './ChatAlarm';
 import GameAlarm from './GameAlarm';
-import {Chatnotificate, InviteGameInfoProps} from './AlarmProps';
+import {
+  Chatnotificate,
+  InviteGameEnum,
+  InviteGameInfoProps,
+} from './AlarmProps';
 import {UserContext} from '../../Context';
 
 export default function AlarmEvent() {
@@ -31,7 +35,7 @@ export default function AlarmEvent() {
       console.log(inviteGameInfo);
       const tmp: InviteGameInfoProps = {
         invite_game_info: inviteGameInfo,
-        event_type: '초대',
+        event_type: InviteGameEnum.INVITE,
       };
       setGameAlarm(prev => [...prev, tmp]);
       setReadNotificate(true);
@@ -49,9 +53,9 @@ export default function AlarmEvent() {
         event_type: '',
       };
       if (typeof inviteGameInfo === 'string') {
-        tmp.event_type = '초대_거절';
+        tmp.event_type = InviteGameEnum.INVITE_RESPON_FALSE;
       } else {
-        tmp.event_type = '초대_수락';
+        tmp.event_type = InviteGameEnum.INVITE_RESPON_TRUE;
       }
       setGameAlarm(prev => [...prev, tmp]);
       setReadNotificate(true);

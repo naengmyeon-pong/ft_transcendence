@@ -2,33 +2,72 @@
 
 import {useContext, useEffect, useState} from 'react';
 import {Button, Grid} from '@mui/material';
-import {
-  Radio,
-  RadioGroup,
-  FormControlLabel,
-  FormControl,
-  FormLabel,
-} from '@mui/material';
-import {CircularProgress} from '@mui/material';
 import Pong from '@/components/game/Pong';
 
 import {GameInfo, RoomUserInfo, JoinGameInfo} from '@/common/types/game';
 import {UserContext} from '@/components/layout/MainLayout/Context';
+import {useRecoilState, useRecoilValue} from 'recoil';
+import {InviteGameUserType, inviteGameState} from '@/states/inviteGame';
+import GameType from '@/components/game/Choice/GameType';
+import GameMode from '@/components/game/Choice/GameMode';
+import GameAction from '@/components/game/Choice/GameAction';
 
-// function IsInviteComponent() {
-//   const isInvite = useRecoilValue(inviteGameStateBool);
+function InviteGame() {
+  const {chat_socket, user_id} = useContext(UserContext);
+  const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
+  const [isStartingGame, setIsStartingGame] = useState<boolean>(false);
+  const [isGameOver, setIsGameOver] = useState<boolean>(false);
+  const [invite_game_state, setInviteGameState] =
+    useRecoilState(inviteGameState);
 
-//   if (isInvite === false) {
-//     return null;
-//   }
-//   return (
-//     <>
-//       <Grid>
-//         <Typography>유저 대기중</Typography>
-//       </Grid>
-//     </>
-//   );
-// }
+  const handleReturnMain = () => {
+    setIsGameOver(false);
+    setIsStartingGame(false);
+    setGameInfo(null);
+  };
+
+  useEffect(() => {
+    chat_socket?.emit('enter_game', {
+      user_id: user_id,
+      room_name: invite_game_state.inviter_id,
+    });
+    // 게임방에 대한 정보를 받아오는 이벤트(유저의 닉네임 등)
+    // chat_socket?.on('room_name', handleRoomname);
+    // 게임에 대한 업데이트를 받아오는 이벤트
+    // chat_socket?.on('game_info', handleGameInfo);
+
+    return () => {};
+  }, []);
+
+  return (
+    <>
+      {isStartingGame && !isGameOver && (
+        <Grid item xs={8}>
+          <Pong socket={chat_socket} gameInfo={gameInfo} />
+        </Grid>
+      )}
+      {isGameOver && gameInfo !== null && (
+        <Grid item>
+          <p>
+            {gameInfo.leftScore > gameInfo.rightScore
+              ? sessionStorage.getItem('left_user')
+              : sessionStorage.getItem('right_user')}
+            승리!
+          </p>
+          <Button variant="contained" onClick={handleReturnMain}>
+            메인으로 돌아가기
+          </Button>
+        </Grid>
+      )}
+    </>
+  );
+}
+
+function GameManager() {
+  const invite_game_state = useRecoilValue(inviteGameState);
+
+  return <>{invite_game_state === null ? <Game /> : <InviteGame />}</>;
+}
 
 function Game() {
   const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
@@ -40,11 +79,6 @@ function Game() {
   const [isStartingGame, setIsStartingGame] = useState<boolean>(false);
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
   const socket = useContext(UserContext).chat_socket;
-
-  const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-    e.preventDefault();
-    e.returnValue = '';
-  };
 
   const handleUnload = () => {
     if (isWaitingGame === true) {
@@ -62,44 +96,6 @@ function Game() {
     }
   };
 
-  const handleGameType = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log(event.currentTarget.value);
-    setGameType(event.currentTarget.value);
-  };
-
-  const handleGameMode = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log(event.currentTarget.value);
-    setGameMode(event.currentTarget.value);
-  };
-
-  const handleGameStart = () => {
-    console.log(`gameType: ${gameType}, gameMode: ${gameMode}`);
-    if (gameType === '') {
-      console.error('게임 타입을 선택해주세요!');
-      return;
-    }
-    if (gameMode === '') {
-      console.error('게임 난이도를 선택해주세요!');
-      return;
-    }
-    const jwtToken = sessionStorage.getItem('accessToken');
-    // TODO: 에러 처리 추가하기
-    // TODO: 토큰 만료 시간 확인 추가하기
-    if (jwtToken === null) {
-      return;
-    }
-    setSelectedGameMode(gameMode);
-    setSelectedGameType(gameType);
-    const joinGameInfo: JoinGameInfo = {
-      jwt: jwtToken,
-      mode: gameMode,
-      type: gameType,
-    };
-    socket?.emit('join_game', joinGameInfo);
-    setIsWaitingGame(true);
-    window.addEventListener('beforeunload', handleBeforeUnload);
-  };
-
   const handleReturnMain = () => {
     setIsGameOver(false);
     setIsStartingGame(false);
@@ -109,23 +105,6 @@ function Game() {
     setGameType('');
     setSelectedGameMode('');
     setSelectedGameType('');
-  };
-
-  const handleStopWaiting = () => {
-    const jwtToken = sessionStorage.getItem('accessToken');
-    if (jwtToken === null) {
-      return;
-    }
-    const joinGameInfo: JoinGameInfo = {
-      jwt: jwtToken,
-      mode: selectedGameMode,
-      type: selectedGameType,
-    };
-    socket?.emit('cancel_waiting', joinGameInfo);
-    setIsWaitingGame(false);
-    setSelectedGameMode('');
-    setSelectedGameType('');
-    window.removeEventListener('beforeunload', handleBeforeUnload);
   };
 
   const handleNotice = (notice: string) => {
@@ -188,71 +167,23 @@ function Game() {
           <Grid id="game-selection" container>
             <Grid id="mode-selection" container justifyContent="center">
               <Grid item xs={4}>
-                <FormControl>
-                  <FormLabel id="game-mode-selection">게임 타입</FormLabel>
-                  <RadioGroup
-                    aria-labelledby="game-mode-selection"
-                    name="radio-buttons-group"
-                    onChange={handleGameType}
-                  >
-                    <FormControlLabel
-                      value="normal"
-                      control={<Radio />}
-                      label="일반 게임"
-                    />
-                    <FormControlLabel
-                      value="rank"
-                      control={<Radio />}
-                      label="랭크 게임"
-                    />
-                  </RadioGroup>
-                </FormControl>
+                {/* <GameType node={gameType} setNode={setGameMode} /> */}
+                <GameType setGameType={setGameType} />
               </Grid>
               <Grid item xs={4}>
-                <FormControl>
-                  <FormLabel id="game-type-selection">게임 난이도</FormLabel>
-                  <RadioGroup
-                    aria-labelledby="game-type-selection"
-                    name="radio-buttons-group"
-                    onChange={handleGameMode}
-                  >
-                    <FormControlLabel
-                      value="easy"
-                      control={<Radio />}
-                      label="일반 모드"
-                    />
-                    <FormControlLabel
-                      value="hard"
-                      control={<Radio />}
-                      label="가속 모드"
-                    />
-                  </RadioGroup>
-                </FormControl>
+                <GameMode setGameMode={setGameMode} />
               </Grid>
               <Grid item xs={4}>
-                <Button
-                  variant="contained"
-                  color={isWaitingGame ? 'error' : 'success'}
-                  onClick={handleGameStart}
-                >
-                  {isWaitingGame ? '상대 대기중' : '게임 시작'}
-                </Button>
-                {isWaitingGame && (
-                  <CircularProgress
-                    size={24}
-                    sx={{
-                      position: 'absolute',
-                      color: 'white',
-                      marginTop: '5px',
-                      marginLeft: '-60px',
-                    }}
-                  />
-                )}
-                {isWaitingGame && (
-                  <Button variant="outlined" onClick={handleStopWaiting}>
-                    대기 취소
-                  </Button>
-                )}
+                <GameAction
+                  setSelectedGameMode={setSelectedGameMode}
+                  setSelectedGameType={setSelectedGameType}
+                  gameMode={gameMode}
+                  gameType={gameType}
+                  setIsWaitingGame={setIsWaitingGame}
+                  isWaitingGame={isWaitingGame}
+                  selectedGameType={selectedGameType}
+                  selectedGameMode={selectedGameMode}
+                />
               </Grid>
             </Grid>
           </Grid>
@@ -280,5 +211,4 @@ function Game() {
   );
 }
 
-// export default GameManager;
-export default Game;
+export default GameManager;

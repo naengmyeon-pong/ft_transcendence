@@ -1,5 +1,5 @@
 import {useGlobalModal} from '@/hooks/useGlobalModal';
-import {inviteGameState, inviteGameStateBool} from '@/states/inviteGame';
+import {inviteGameModeState} from '@/states/inviteGame';
 import {UserType} from '@/types/UserContext';
 import {Button, FormControlLabel, Radio, RadioGroup} from '@mui/material';
 import {useRouter} from 'next/router';
@@ -9,7 +9,7 @@ import {UserContext} from '../layout/MainLayout/Context';
 
 function Action({user_info}: {user_info: UserType}) {
   const {closeGlobalModal} = useGlobalModal();
-  const mode = useRecoilValue(inviteGameState);
+  const mode = useRecoilValue(inviteGameModeState);
   const router = useRouter();
   const {chat_socket, user_id} = useContext(UserContext);
 
@@ -42,7 +42,7 @@ function Action({user_info}: {user_info: UserType}) {
 }
 
 function Content() {
-  const [mode, setMode] = useRecoilState(inviteGameState);
+  const [mode, setMode] = useRecoilState(inviteGameModeState);
   const handleGameMode = (event: React.ChangeEvent<HTMLInputElement>) => {
     setMode(event.currentTarget.value);
   };

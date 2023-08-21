@@ -19,3 +19,9 @@ export interface AlarmGameProps {
   game_noti: InviteGameInfoProps[];
   setGameAlarm: React.Dispatch<React.SetStateAction<InviteGameInfoProps[]>>;
 }
+
+export const InviteGameEnum = {
+  INVITE: '초대',
+  INVITE_RESPON_TRUE: '초대_수락',
+  INVITE_RESPON_FALSE: '초대_거절',
+};
