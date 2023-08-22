@@ -440,8 +440,17 @@ export class GameGateway implements OnGatewayDisconnect {
   @SubscribeMessage('cancel_game')
   handleCancelGame(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() inviteGameInfo: InviteGameInfo
-  ) {}
+    @MessageBody() {inviteGameInfo: InviteGameInfo, is_inviter: boolean}
+  ) {
+    const user = this.getUserID(socket);
+    if (user !== InviteGameInfo.inviter_id) {
+      return false;
+    }
+    const gameRoom = gameRooms.get(user);
+    const inviteeSocketID = gameRoom.users[1].socket_id;
+    socket.to(inviteeSocketID).emit('cancel_game');
+    gameRooms.delete(user);
+  }
 
   // 본인 아이디와 룸네임을 보내서, 서버에게 대기중이라는 상태를 보냅니다
   @SubscribeMessage('enter_game')
@@ -450,7 +459,13 @@ export class GameGateway implements OnGatewayDisconnect {
     @MessageBody() inviteGameInfo: InviteGameInfo
   ) {
     const roomInfo = gameRooms.get(inviteGameInfo.inviter_id);
-    // this.nsp.to(inviteGameInfo.inviter_id).emit('game_info', {game_info: gameInfo});
+    roomInfo.user_number++;
+    if (roomInfo.user_number !== 2) {
+      return;
+    }
+    // this.nsp
+    //   .to(inviteGameInfo.inviter_id)
+    //   .emit('game_info', {game_info: gameInfo});
   }
 }
 
