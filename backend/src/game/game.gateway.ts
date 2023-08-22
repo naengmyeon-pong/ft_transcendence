@@ -42,11 +42,6 @@ const waitUserList: GameUser[][] = [[], [], [], []];
 
 export const gameRooms: Map<string, RoomInfo> = new Map();
 
-interface GameSocketInfo {
-  socket: Socket;
-  is_gaming: boolean;
-}
-
 @WebSocketGateway({
   namespace: 'pong',
   cors: {
@@ -66,41 +61,15 @@ export class GameGateway implements OnGatewayDisconnect {
   ) {}
   @WebSocketServer() nsp: Namespace;
 
-  async createData(arr: string[], arg: string) {
-    for (const elem of arr) {
-      let findData: Type | Mode;
-      let newData: Type | Mode;
-
-      if (arg === 'type') {
-        findData = await this.typeRepository.findOneBy({type: elem});
-        if (findData !== null) {
-          break;
-        }
-        newData = this.typeRepository.create({
-          type: elem,
-        });
-        await this.typeRepository.save(newData);
-      } else {
-        findData = await this.modeRepository.findOneBy({mode: elem});
-        if (findData !== null) {
-          break;
-        }
-        newData = this.modeRepository.create({
-          mode: elem,
-        });
-        await this.modeRepository.save(newData);
-      }
-    }
-  }
-
   async afterInit() {
     this.logger.log('게임 서버 초기화');
 
     const gameTypes = ['normal', 'rank'];
     const gameModes = ['easy', 'hard'];
 
-    this.createData(gameTypes, 'type');
-    this.createData(gameModes, 'mode');
+    this.gameService.createData(gameTypes, 'type');
+    this.gameService.createData(gameModes, 'mode');
+    this.gameService.setDataID();
   }
 
   handleConnection(@ConnectedSocket() socket: Socket) {
@@ -152,13 +121,20 @@ export class GameGateway implements OnGatewayDisconnect {
     const typeMode = findTypeMode(joinGameInfo);
     const waitUsers: GameUser[] = waitUserList[typeMode];
     const user = this.getUserID(socket);
-    for (let i = 0; i <= ETypeMode.RANK_HARD; i++) {
-      if (waitUsers[i].user_id === user) {
-        waitUsers.splice(i, 1);
+    let isFound: boolean = false;
+    let index = -1;
+    waitUsers.forEach((value, key) => {
+      if (value.user_id === user) {
+        isFound = true;
+        index = key;
         return;
       }
+    });
+    if (isFound) {
+      waitUsers.splice(index, 1);
+    } else {
+      console.log('Socket not in waiting list');
     }
-    console.log('Socket not in waiting list');
   }
 
   @SubscribeMessage('join_game')
