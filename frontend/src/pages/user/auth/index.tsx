@@ -66,6 +66,10 @@ function AuthPage({
             openAlertSnackbar({
               message,
             });
+          } else if (error.code === 'ERR_NETWORK') {
+            openAlertSnackbar({
+              message: '서버에 문제가 발생했습니다. 잠시 후 다시 시도해주세요.',
+            });
           }
           router.push('/user/login');
         }
