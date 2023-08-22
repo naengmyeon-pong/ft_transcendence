@@ -69,8 +69,8 @@ export class GameGateway implements OnGatewayDisconnect {
     const gameTypes = ['normal', 'rank'];
     const gameModes = ['easy', 'hard'];
 
-    this.gameService.createData(gameTypes, 'type');
-    this.gameService.createData(gameModes, 'mode');
+    await this.gameService.createData(gameTypes, 'type');
+    await this.gameService.createData(gameModes, 'mode');
     this.gameService.setDataID();
     this.gameService.initWaitUserList(waitUserList);
   }
@@ -100,6 +100,7 @@ export class GameGateway implements OnGatewayDisconnect {
       game_info: gameInfo,
       type_mode: gameUsers[0].type_mode,
       interval: null,
+      user_number: 0,
     });
     return userId;
   }
@@ -168,7 +169,7 @@ export class GameGateway implements OnGatewayDisconnect {
     gameUsers.push(secondUser);
 
     const roomName = this.createGameRoom(firstUser.user_id, gameUsers);
-    this.joinRoom(firstUser.user_id, secondUser.user_id, roomName);
+    this.joinRoom(firstUser.user_id, secondUser.user_id, roomName, false);
 
     const [left_user, right_user] = await this.findUserName(
       firstUser.user_id,
@@ -199,11 +200,61 @@ export class GameGateway implements OnGatewayDisconnect {
     this.nsp.to(roomName).emit('game_info', {game_info: gameInfo});
   };
 
-  joinRoom = (firstID: string, secondID: string, roomName: string) => {
-    const firstSocketID = this.socketArray.getUserSocket(firstID).socket_id;
+  createInviteGameRoom = async (inviteGameInfo: InviteGameInfo) => {
+    const gameUsers: GameUser[] = [];
+    const keys: KeyData = {up: false, down: false};
+    const inviterSocketID = this.socketArray.getUserSocket(
+      inviteGameInfo.inviter_id
+    ).socket_id;
+    const type_mode = findInviteGameMode(inviteGameInfo);
+    const inviter: GameUser = {
+      user_id: inviteGameInfo.inviter_id,
+      socket_id: inviterSocketID,
+      keys,
+      type_mode,
+    };
+    const inviteeSocketID = this.socketArray.getUserSocket(
+      inviteGameInfo.invitee_id
+    ).socket_id;
+
+    const invitee: GameUser = {
+      user_id: inviteGameInfo.invitee_id,
+      socket_id: inviteeSocketID,
+      keys,
+      type_mode,
+    };
+    gameUsers.push(inviter);
+    gameUsers.push(invitee);
+
+    const roomName = this.createGameRoom(inviter.user_id, gameUsers);
+    this.joinRoom(inviter.socket_id, invitee.socket_id, roomName, true);
+
+    const roomInfo: RoomInfo = gameRooms.get(roomName);
+    const gameInfo: GameInfo = roomInfo.game_info;
+    if (
+      roomInfo.type_mode === ETypeMode.NORMAL_HARD ||
+      roomInfo.type_mode === ETypeMode.RANK_HARD
+    ) {
+      gameInfo.ball.speed *= 1.5;
+    }
+  };
+
+  joinRoom = (
+    firstID: string,
+    secondID: string,
+    roomName: string,
+    isSocketProvided: boolean
+  ) => {
+    let firstSocketID, secondSocketID;
+    if (isSocketProvided === true) {
+      firstSocketID = firstID;
+      secondSocketID = secondID;
+    } else {
+      firstSocketID = this.socketArray.getUserSocket(firstID).socket_id;
+      secondSocketID = this.socketArray.getUserSocket(secondID).socket_id;
+    }
     const firstSocket = this.nsp.sockets.get(firstSocketID);
     firstSocket.join(roomName);
-    const secondSocketID = this.socketArray.getUserSocket(secondID).socket_id;
     const secondSocket = this.nsp.sockets.get(secondSocketID);
     secondSocket.join(roomName);
   };
@@ -378,6 +429,9 @@ export class GameGateway implements OnGatewayDisconnect {
       inviteGameInfo.inviter_id
     ).socket_id;
 
+    if (inviteGameInfo.state === true) {
+      this.createInviteGameRoom(inviteGameInfo);
+    }
     inviteeSocket
       .to(`${targetSocketID}`)
       .emit('invite_response', inviteGameInfo);
@@ -400,7 +454,7 @@ export class GameGateway implements OnGatewayDisconnect {
   }
 }
 
-const findTypeMode = (joinGameInfo: JoinGameInfo): number => {
+const findTypeMode = (joinGameInfo: JoinGameInfo): ETypeMode => {
   const mode = joinGameInfo.mode;
   const type = joinGameInfo.type;
   let gameTypeMode = -1;
@@ -419,4 +473,15 @@ const findTypeMode = (joinGameInfo: JoinGameInfo): number => {
     }
   }
   return gameTypeMode;
+};
+
+const findInviteGameMode = (inviteGameInfo: InviteGameInfo): ETypeMode => {
+  const mode: string = inviteGameInfo.mode;
+  if (mode === 'easy') {
+    return ETypeMode.NORMAL_EASY;
+  } else if (mode === 'hard') {
+    return ETypeMode.NORMAL_HARD;
+  } else {
+    console.log('Mode not found');
+  }
 };
