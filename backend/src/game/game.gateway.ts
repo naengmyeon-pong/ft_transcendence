@@ -316,11 +316,6 @@ export class GameGateway implements OnGatewayDisconnect {
     @ConnectedSocket() socket: Socket,
     @MessageBody() room_name: string
   ) {
-    const user_id = socket.handshake.query.user_id as string;
-    console.log('user_id: ', user_id);
-    console.log('room_name: ', room_name);
-    console.log('socket_id: ', socket.id);
-
     const roomInfo: RoomInfo = gameRooms.get(room_name);
     const gameInfo: GameInfo = roomInfo.game_info;
     const leftUserKeyState: KeyData = roomInfo.users[EUserIndex.LEFT].keys;
@@ -488,7 +483,7 @@ export class GameGateway implements OnGatewayDisconnect {
 const findTypeMode = (joinGameInfo: JoinGameInfo): ETypeMode => {
   const mode = joinGameInfo.mode;
   const type = joinGameInfo.type;
-  let gameTypeMode = -1;
+  let gameTypeMode: ETypeMode;
 
   if (type === 'normal') {
     if (mode === 'easy') {
