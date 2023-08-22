@@ -1,6 +1,6 @@
 'use client';
 
-import {GameInfo} from '@/common/types/game';
+import {GameInfo, RoomUserInfo} from '@/common/types/game';
 import {useCallback, useContext, useEffect, useState} from 'react';
 import {UserContext} from '../layout/MainLayout/Context';
 import {useRecoilState} from 'recoil';
@@ -20,30 +20,56 @@ export default function InviteGame() {
     setGameInfo(null);
   };
 
-  const handleGameInfo = useCallback(({game_info}: {game_info: GameInfo}) => {
-    if (game_info === null) {
-      return;
-    }
-    setGameInfo(game_info);
-    if (game_info.leftScore === 5 || game_info.rightScore === 5) {
-      setIsGameOver(true);
-    }
+  const handleInviteGameInfo = useCallback(
+    ({game_info}: {game_info: GameInfo}) => {
+      if (game_info === null) {
+        return;
+      }
+      setGameInfo(game_info);
+      if (game_info.leftScore === 5 || game_info.rightScore === 5) {
+        setIsGameOver(true);
+      }
+    },
+    []
+  );
+
+  const handleInviteRoomName = useCallback((roomUserInfo: RoomUserInfo) => {
+    const {
+      room_name,
+      left_user,
+      right_user,
+    }: {room_name: string; left_user: string; right_user: string} =
+      roomUserInfo;
+
+    sessionStorage.setItem('room_name', room_name);
+    sessionStorage.setItem('left_user', left_user);
+    sessionStorage.setItem('right_user', right_user);
   }, []);
 
+  const sendGameStartEvent = useCallback(() => {
+    console.log('시작이벤트 받음');
+    chat_socket?.emit('update_frame', invite_game_state.inviter_id);
+  }, [chat_socket, invite_game_state.inviter_id]);
+
   useEffect(() => {
-    chat_socket?.emit('enter_game', {
-      user_id: user_id,
-      room_name: invite_game_state.inviter_id,
-    });
-    if (invite_game_state.inviter_id === user_id) {
-      chat_socket?.emit('update_frame', invite_game_state.inviter_id);
-    }
-    // 게임방에 대한 정보를 받아오는 이벤트(유저의 닉네임 등)
-    // chat_socket?.on('room_name', handleRoomname);
-    // 게임에 대한 업데이트를 받아오는 이벤트
-    chat_socket?.on('game_info', handleGameInfo);
-    return () => {};
-  }, [chat_socket, user_id, invite_game_state.inviter_id, handleGameInfo]);
+    chat_socket?.on('enter_game', sendGameStartEvent);
+    chat_socket?.on('game_info', handleInviteGameInfo);
+    chat_socket?.on('room_name', handleInviteRoomName);
+    chat_socket?.emit('enter_game', invite_game_state);
+    return () => {
+      chat_socket?.off('enter_game', sendGameStartEvent);
+      chat_socket?.off('game_info', handleInviteGameInfo);
+      chat_socket?.off('enter_game', sendGameStartEvent);
+    };
+  }, [
+    chat_socket,
+    user_id,
+    invite_game_state.inviter_id,
+    handleInviteRoomName,
+    handleInviteGameInfo,
+    sendGameStartEvent,
+    invite_game_state,
+  ]);
 
   return (
     <>

@@ -13,12 +13,13 @@ import {InviteGameUserType, inviteGameState} from '@/states/inviteGame';
 // 초대 상태에 따라 메세지를 나눠주는 컴포넌트
 
 function TitleGameAlarm({row}: {row: InviteGameInfoProps}) {
+  console.log('row: ', row);
   return (
     <Typography>
       {row.event_type === InviteGameEnum.INVITE &&
         `${row.invite_game_info.inviter_nickname}님이 게임을 초대하였습니다.`}
       {row.event_type === InviteGameEnum.INVITE_RESPON_TRUE &&
-        `${row.invite_game_info}님이 게임초대를 수락하였습니다. 이동하시겠습니까?`}
+        `${row.invite_game_info.invitee_nickname}님이 게임초대를 수락하였습니다. 이동하시겠습니까?`}
     </Typography>
   );
 }
@@ -45,20 +46,22 @@ function ActionGameAlarm({
   // B가 누르는 수락
   function inviteTrue() {
     removeGameNoti();
-    chat_socket?.emit('invite_response', row);
+    row.invite_game_info.state = true;
+    chat_socket?.emit('invite_response', row.invite_game_info);
     setInviteGameState(row.invite_game_info);
-    // room_id 저장
     router.push('/main/game');
   }
 
   // B가 누르는 거절
   function inViteFalse() {
     removeGameNoti();
-    chat_socket?.emit('invite_response', user_nickname);
+    row.invite_game_info.state = false;
+    chat_socket?.emit('invite_response', row.invite_game_info);
   }
 
   // A가 최종적으로 누르는 수락
   function inviteResponTrue() {
+    row.invite_game_info.state = true;
     setInviteGameState(row.invite_game_info);
     router.push('/main/game');
   }
