@@ -440,16 +440,34 @@ export class GameGateway implements OnGatewayDisconnect {
   @SubscribeMessage('cancel_game')
   handleCancelGame(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() {inviteGameInfo: InviteGameInfo, is_inviter: boolean}
+    @MessageBody()
+    {
+      inviteGameInfo,
+      is_inviter,
+    }: {inviteGameInfo: InviteGameInfo; is_inviter: boolean}
   ) {
     const user = this.getUserID(socket);
-    if (user !== InviteGameInfo.inviter_id) {
-      return false;
+    if (is_inviter === true) {
+      if (user !== inviteGameInfo.inviter_id) {
+        return false;
+      }
+      const gameRoom = gameRooms.get(user);
+
+      const inviteeSocketID = gameRoom.users[1].socket_id;
+      socket.to(inviteeSocketID).emit('cancel_game', {
+        user_nickname: inviteGameInfo.inviter_nickname,
+      });
+      gameRooms.delete(user);
+    } else {
+      if (user !== inviteGameInfo.invitee_id) {
+        return false;
+      }
+      const gameRoom = gameRooms.get(inviteGameInfo.inviter_id);
+      const inviterSocketID = gameRoom.users[0].socket_id;
+      socket
+        .to(inviterSocketID)
+        .emit('cancel_game', {user_nickname: inviteGameInfo.invitee_nickname});
     }
-    const gameRoom = gameRooms.get(user);
-    const inviteeSocketID = gameRoom.users[1].socket_id;
-    socket.to(inviteeSocketID).emit('cancel_game');
-    gameRooms.delete(user);
   }
 
   // 본인 아이디와 룸네임을 보내서, 서버에게 대기중이라는 상태를 보냅니다
