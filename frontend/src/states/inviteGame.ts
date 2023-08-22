@@ -1,11 +1,18 @@
 import {atom} from 'recoil';
+import {InviteGameInfo} from '@/common/types/game';
 
-export const inviteGameState = atom<string>({
-  key: 'inviteGameState',
+export const inviteGameModeState = atom<string>({
+  key: 'inviteGameModeState',
   default: 'easy',
 });
 
-export const inviteGameStateBool = atom<boolean>({
-  key: 'inviteGameStateBool',
-  default: false,
+export const InviteGameUserType = {
+  NOT_INVITE: 0,
+  INVITEE: 1,
+  INVITER: 2,
+};
+
+export const inviteGameState = atom<InviteGameInfo | null>({
+  key: 'inviteGameState',
+  default: null,
 });

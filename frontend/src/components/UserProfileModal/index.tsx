@@ -17,7 +17,6 @@ import {UserType} from '@/types/UserContext';
 import Block from '@/components/Block';
 import RecordSummary from '@/components/Record/RecordSummary';
 import {HandleAddDmList} from '@/components/UserProfileModal/DMButton';
-import {Test} from '@/components/UserProfileModal/Test';
 import ProfileGame from '@/components/UserProfileModal/Game';
 import DetailRecord from '../Record/DetailRecord';
 

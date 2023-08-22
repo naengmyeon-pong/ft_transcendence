@@ -40,6 +40,8 @@ import {ETypeMode} from './types/type-mode.enum';
 
 const waitUserList: GameUser[][] = [[], [], [], []];
 
+const inviteWaitList: InviteGameInfo[] = [];
+
 export const gameRooms: Map<string, RoomInfo> = new Map();
 
 @WebSocketGateway({
@@ -264,6 +266,11 @@ export class GameGateway implements OnGatewayDisconnect {
     @ConnectedSocket() socket: Socket,
     @MessageBody() room_name: string
   ) {
+    const user_id = socket.handshake.query.user_id as string;
+    console.log('user_id: ', user_id);
+    console.log('room_name: ', room_name);
+    console.log('socket_id: ', socket.id);
+
     const roomInfo: RoomInfo = gameRooms.get(room_name);
     const gameInfo: GameInfo = roomInfo.game_info;
     const leftUserKeyState: KeyData = roomInfo.users[EUserIndex.LEFT].keys;
@@ -315,43 +322,96 @@ export class GameGateway implements OnGatewayDisconnect {
     return decodedToken.user_id;
   };
 
-  // @SubscribeMessage('invite_game')
-  // handleInviteGame(
-  //   @ConnectedSocket() inviterSocket: Socket,
-  //   @MessageBody() inviteGameInfo: InviteGameInfo
-  // ) {
-  //   console.log(inviteGameInfo);
-  //   console.log('login users: ', this.socketArray);
-  //   const targetInfo = this.socketArray.getUserSocket(
-  //     inviteGameInfo.invitee_id
-  //   );
-  //   if (targetInfo === undefined) {
-  //     return '접속중인 유저가 아닙니다.';
-  //   } else if (targetInfo.is_gaming === true) {
-  //     return '게임중인 유저입니다.';
-  //   }
-  //   // 소켓에서 찾고 게임만들고 전달하는 과정 접속중이 아니면 false리턴
+  /*
+    알람을 데이터베이스에 저장하지 않아서 생기는 문제
+    1. 이미 초대받은 사용자가 초대를 보내려는 경우
+    2. 닉네임이 변경되는경우 갱신이 안됨
+    3. 
+  */
 
-  //   // if (
-  //   //   inviterSocket.id !==
-  //   //   this.socketArray.getUserSocket(inviteGameInfo.inviter_id)
-  //   // ) {
-  //   //   // 유저의 ID와 소켓이 매칭되지 않는 경우
-  //   //   throw new BadRequestException();
-  //   // }
-  //   // const inviteeSocket = this.socketArray.getUserSocket(
-  //   //   inviteGameInfo.invitee_id
-  //   // );
-  //   // if (!inviteeSocket) {
-  //   // 초대받은 유저가 로그인 상태가 아닌 경우
-  //   // inviterSocket.emit('invite_error', '유저가 로그인 상태가 아님');
-  //   // return;
-  //   // }
-  //   // console.log('invitee : ', inviteeSocket);
-  //   // inviterSocket.join(inviteGameInfo.inviter_id);
-  //   // inviterSocket.to(inviteeSocket).emit('invite_game', inviteGameInfo);
-  //   // inviterSocket.emit('test', 'hello');
-  // }
+  // 전역변수로 두 아이디, 모드 저장
+  @SubscribeMessage('invite_game')
+  async handleInviteGame(
+    @ConnectedSocket() inviterSocket: Socket,
+    @MessageBody() inviteGameInfo: InviteGameInfo
+  ) {
+    // console.log(inviteGameInfo);
+    const target = this.socketArray.getUserSocket(inviteGameInfo.invitee_id);
+    if (target === undefined) {
+      return false;
+    }
+    // console.log(target);
+    // 유저 아이디를 조회해서 타겟에 전송
+    try {
+      const B = await this.userRepository.findOneBy({
+        user_id: inviteGameInfo.invitee_id,
+      });
+      // 임시로 기존에 있으면 패스
+      inviteGameInfo.inviter_nickname = B.user_nickname;
+      const tmp = (item: InviteGameInfo) =>
+        item.invitee_id === inviteGameInfo.invitee_id;
+      if (!inviteWaitList.some(tmp)) {
+        inviteWaitList.push(inviteGameInfo);
+      }
+      inviterSocket.to(target.socket_id).emit('invite_game', inviteGameInfo);
+    } catch (error) {
+      console.log('handleInviteGame Error: ', error);
+    }
+
+    //
+    // 소켓에서 찾고 게임만들고 전달하는 과정 접속중이 아니면 false리턴
+
+    // if (
+    //   inviterSocket.id !==
+    //   this.socketArray.getUserSocket(inviteGameInfo.inviter_id)
+    // ) {
+    //   // 유저의 ID와 소켓이 매칭되지 않는 경우
+    //   throw new BadRequestException();
+    // }
+    // const inviteeSocket = this.socketArray.getUserSocket(
+    //   inviteGameInfo.invitee_id
+    // );
+    // if (!inviteeSocket) {
+    // 초대받은 유저가 로그인 상태가 아닌 경우
+    // inviterSocket.emit('invite_error', '유저가 로그인 상태가 아님');
+    // return;
+    // }
+    // console.log('invitee : ', inviteeSocket);
+    // inviterSocket.join(inviteGameInfo.inviter_id);
+    // inviterSocket.to(inviteeSocket).emit('invite_game', inviteGameInfo);
+    // inviterSocket.emit('test', 'hello');
+  }
+
+  @SubscribeMessage('invite_response')
+  handleInviteGameResponse(
+    @ConnectedSocket() inviterSocket: Socket,
+    @MessageBody() inviteGameInfo: InviteGameInfo | string
+  ) {
+    // 본인의 소켓이 아닌 다른 소켓으로 보내야함
+    const user_id = inviterSocket.handshake.query.user_id as string;
+    // inviteGameInfo 이 B의 닉네임일경우 A의 소켓을 찾을 수가 없음
+
+    // const target_id =
+    //   user_id === inviteGameInfo.inviter_id
+    //     ? inviteGameInfo.inviter_id
+    //     : (typeof inviteGameInfo.invitee_id === 'object' ? ;
+    // // inviterSocket.emit('invite_response', inviteGameInfo);
+    // const target_socket_id = this.socketArray.getUserSocket(target_id);
+    // inviterSocket
+    //   .to(`${target_socket_id}`)
+    //   .emit('invite_response', inviteGameInfo);
+    return;
+  }
+
+  // 본인 아이디와 룸네임을 보내서, 서버에게 대기중이라는 상태를 보냅니다
+  @SubscribeMessage('enter_game')
+  handleInviteGameWait(
+    @ConnectedSocket() inviterSocket: Socket,
+    @MessageBody() {user_id, room_name}
+  ) {
+    console.log(user_id, room_name);
+    return null;
+  }
 }
 
 const findTypeMode = (joinGameInfo: JoinGameInfo): number => {
