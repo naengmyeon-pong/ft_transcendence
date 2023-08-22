@@ -92,8 +92,17 @@ function LoginPage() {
       sessionStorage.setItem('accessToken', response.data);
       router.push('/main/game');
     } catch (error) {
-      console.log(error);
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        if (status === HTTP_STATUS.UNAUTHORIZED) {
+          openAlertSnackbar({message: 'OTP 인증에 실패했습니다.'});
+        }
+      }
     }
+  };
+
+  const handleCancelOtpLogin = () => {
+    setIs2faLogin(false);
   };
 
   return (
@@ -172,31 +181,36 @@ function LoginPage() {
           </Grid>
         </Box>
       ) : (
-        <Box
-          component="form"
-          onSubmit={handleOtpSubmit}
-          noValidate
-          sx={{mt: 1}}
-        >
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            id="otpPassword"
-            name="otpPassword"
-            label="OTP Password"
-            autoFocus
-            defaultValue=""
-          />
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            sx={{mt: 3, mb: 2}}
+        <>
+          <Box
+            component="form"
+            onSubmit={handleOtpSubmit}
+            noValidate
+            sx={{mt: 1}}
           >
-            OTP 인증하기
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="otpPassword"
+              name="otpPassword"
+              label="OTP Password"
+              autoFocus
+              defaultValue=""
+            />
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{mt: 3, mb: 2}}
+            >
+              OTP 인증하기
+            </Button>
+          </Box>
+          <Button fullWidth variant="outlined" onClick={handleCancelOtpLogin}>
+            로그인 취소하기
           </Button>
-        </Box>
+        </>
       )}
     </>
   );
