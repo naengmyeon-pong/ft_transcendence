@@ -1,10 +1,11 @@
 'use client';
 
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import {useRouter} from 'next/router';
 
 import axios from 'axios';
 import * as HTTP_STATUS from 'http-status';
+import * as jsonwebtoken from 'jsonwebtoken';
 
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
@@ -26,6 +27,19 @@ import {
   isValidPasswordRule,
 } from '@/utils/user';
 
+const getExpirationTimeInMilliseconds = () => {
+  const token = sessionStorage.getItem('accessToken');
+  if (token === null) {
+    return 0;
+  }
+  const decodedToken = jsonwebtoken.decode(token);
+  if (decodedToken === null) {
+    return 0;
+  }
+  const expirationTime = decodedToken.exp;
+  return expirationTime * 1000;
+};
+
 export default function Signup() {
   const router = useRouter();
   const {
@@ -37,6 +51,7 @@ export default function Signup() {
   const [nickname, setNickname] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [isUniqueNickname, setIsUniqueNickname] = useState<boolean>(false);
+  const [leftTime, setLeftTime] = useState<string>('');
 
   const handleNicknameInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNickname(e.target.value);
@@ -138,10 +153,28 @@ export default function Signup() {
     }
   };
 
+  useEffect(() => {
+    const expirationTime = getExpirationTimeInMilliseconds();
+    setInterval(() => {
+      const currentTime = Date.now();
+      const remainingTime = Math.max(0, expirationTime - currentTime);
+      const minutes = Math.floor(remainingTime / (1000 * 60));
+      const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+      const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds
+        .toString()
+        .padStart(2, '0')}`;
+      setLeftTime(formattedTime);
+    }, 1000);
+  }, []);
+
   return (
     <>
       <Typography component="h1" variant="h5">
         회원가입
+      </Typography>
+
+      <Typography sx={{mt: 2, mb: 2, color: 'grey'}}>
+        회원가입 만료 시간 {leftTime}
       </Typography>
 
       <Box component="form" onSubmit={handleSubmit} noValidate sx={{mt: 1}}>
@@ -300,6 +333,9 @@ export default function Signup() {
           회원가입
         </Button>
       </Box>
+      <Button fullWidth variant="outlined" href="/user/login">
+        메인으로 돌아가기
+      </Button>
     </>
   );
 }
