@@ -8,5 +8,4 @@ export interface RoomInfo {
   game_info: GameInfo;
   type_mode: ETypeMode;
   interval: NodeJS.Timer | null;
-  user_number: number;
 }

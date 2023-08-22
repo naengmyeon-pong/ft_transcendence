@@ -100,7 +100,6 @@ export class GameGateway implements OnGatewayDisconnect {
       game_info: gameInfo,
       type_mode: gameUsers[0].type_mode,
       interval: null,
-      user_number: 0,
     });
     return userId;
   }
@@ -473,17 +472,16 @@ export class GameGateway implements OnGatewayDisconnect {
   // 본인 아이디와 룸네임을 보내서, 서버에게 대기중이라는 상태를 보냅니다
   @SubscribeMessage('enter_game')
   handleEnterGame(
-    @ConnectedSocket() inviteeSocket: Socket,
+    @ConnectedSocket() socket: Socket,
     @MessageBody() inviteGameInfo: InviteGameInfo
   ) {
-    const roomInfo = gameRooms.get(inviteGameInfo.inviter_id);
-    roomInfo.user_number++;
-    if (roomInfo.user_number !== 2) {
-      return;
+    const roomInfo: RoomInfo = gameRooms.get(inviteGameInfo.inviter_id);
+    const user = this.getUserID(socket);
+    socket.emit('room_name', inviteGameInfo.inviter_id);
+    socket.emit('game_info', {game_info: roomInfo.game_info});
+    if (user === inviteGameInfo.inviter_id) {
+      socket.emit('enter_game');
     }
-    // this.nsp
-    //   .to(inviteGameInfo.inviter_id)
-    //   .emit('game_info', {game_info: gameInfo});
   }
 }
 
