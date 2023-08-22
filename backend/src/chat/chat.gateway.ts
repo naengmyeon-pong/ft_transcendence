@@ -160,6 +160,7 @@ export class ChatGateway implements OnGatewayInit {
         });
         return true;
       }
+      return false;
     } catch (e) {
       this.logger.log(e.message);
       if (e.status) {
@@ -167,7 +168,6 @@ export class ChatGateway implements OnGatewayInit {
       }
       // 토큰만료는 status가 undefined이다. 따라서 이때 socket끊고 로그인페이지로 옮겨버리기
     }
-    return false;
   }
 
   @SubscribeMessage('del-admin')
@@ -183,6 +183,7 @@ export class ChatGateway implements OnGatewayInit {
         });
         return true;
       }
+      return false;
     } catch (e) {
       this.logger.log(e.message);
       if (e.status) {
@@ -190,7 +191,6 @@ export class ChatGateway implements OnGatewayInit {
       }
       // 토큰만료는 status가 undefined이다. 따라서 이때 socket끊고 로그인페이지로 옮겨버리기
     }
-    return false;
   }
 
   @SubscribeMessage('mute-member')
@@ -209,13 +209,11 @@ export class ChatGateway implements OnGatewayInit {
         );
         const login_user = this.socketArray.getUserSocket(target_id);
         if (login_user) {
-          socket
-            .to(`${room_id}`)
-            .to(`${login_user.socket_id}`)
-            .emit('mute-member', mute_time);
+          socket.to(`${login_user.socket_id}`).emit('mute-member', mute_time);
         }
         return true;
       }
+      return false;
     } catch (e) {
       this.logger.log(e.message);
       if (e.status) {
@@ -223,7 +221,6 @@ export class ChatGateway implements OnGatewayInit {
       }
       // 토큰만료는 status가 undefined이다. 따라서 이때 socket끊고 로그인페이지로 옮겨버리기
     }
-    return false;
   }
 
   // true 면, front에서 leave_room 호출하게. false면 아무것도 안하고 무시 or kick 권한이 없다고 메세지 띄우기.
@@ -241,6 +238,7 @@ export class ChatGateway implements OnGatewayInit {
         }
         return true;
       }
+      return false;
     } catch (e) {
       this.logger.log(e.message);
       if (e.status) {
@@ -248,7 +246,6 @@ export class ChatGateway implements OnGatewayInit {
       }
       // 토큰만료는 status가 undefined이다. 따라서 이때 socket끊고 로그인페이지로 옮겨버리기
     }
-    return false;
   }
 
   @SubscribeMessage('ban-member')
@@ -263,6 +260,7 @@ export class ChatGateway implements OnGatewayInit {
           return true;
         }
       }
+      return false;
     } catch (e) {
       this.logger.log(e.message);
       if (e.status) {
@@ -270,7 +268,6 @@ export class ChatGateway implements OnGatewayInit {
       }
       // 토큰만료는 status가 undefined이다. 따라서 이때 socket끊고 로그인페이지로 옮겨버리기
     }
-    return false;
   }
 
   @SubscribeMessage('block-member')
