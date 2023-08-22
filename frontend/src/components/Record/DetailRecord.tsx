@@ -1,14 +1,11 @@
 'use client';
 
-import {useEffect, useState} from 'react';
-
-import {useInfiniteQuery} from 'react-query';
+import {useState} from 'react';
 
 import Box from '@mui/material/Box';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 
-import apiManager from '@/api/apiManager';
 import {UserType} from '@/types/UserContext';
 import RecordTable from '@/components/Record/RecordTable';
 import TabPanel from '@/components/Record/TabPanel';
@@ -20,47 +17,12 @@ function tabYprops(index: number) {
   };
 }
 
-interface FetchUserRecordProps {
-  pageParam: number;
-}
-
-const fetchUserRecord = async ({pageParam = 1}: FetchUserRecordProps) => {
-  try {
-    const response = await apiManager.get(
-      `/record/detail?id=user1&type=normal&page=${pageParam}&size=5`
-    );
-    console.log(response);
-    return response.data;
-  } catch (error) {
-    console.log(error);
-  }
-};
-
 function DetailRecord({user_info}: {user_info: UserType}) {
-  const [recentRecordState, setRecentRecordState] = useState<string[]>([]);
   const [tabValue, setTabValue] = useState<number>(0);
 
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
-
-  const {data, fetchNextPage, hasNextPage, isLoading, isError} =
-    //TODO: useQuery 로 변경하기
-    useInfiniteQuery(
-      ['getUserRecord'],
-      ({pageParam = 1}) => fetchUserRecord({pageParam}),
-      {
-        getNextPageParam: lastPage => {
-          const {pageNo, totalPage} = lastPage;
-
-          if (pageNo === totalPage) {
-            return false;
-          }
-
-          return pageNo + 1;
-        },
-      }
-    );
 
   return (
     <>
@@ -77,10 +39,10 @@ function DetailRecord({user_info}: {user_info: UserType}) {
           </Tabs>
         </Box>
         <TabPanel value={tabValue} index={0}>
-          <RecordTable />
+          <RecordTable intraId={user_info.id} type="normal" />
         </TabPanel>
         <TabPanel value={tabValue} index={1}>
-          <RecordTable />
+          <RecordTable intraId={user_info.id} type="rank" />
         </TabPanel>
       </Box>
     </>
