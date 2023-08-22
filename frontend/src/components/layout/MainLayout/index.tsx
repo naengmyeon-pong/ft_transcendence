@@ -84,7 +84,7 @@ function MainLayout({children}: MainLayoutProps) {
         console.log('rep_block_list: ', rep_block_list);
 
         init_setBlockUsers(rep_block_list.data);
-        const rep = await apiManager.get('chatroom/dm_list', {
+        const rep = await apiManager.get('dm/dm_list', {
           params: {
             user_id: response.data.user_id,
           },

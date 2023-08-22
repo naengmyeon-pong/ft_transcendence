@@ -116,7 +116,7 @@ export default function Dm() {
 
   const changeUser = useCallback(
     async (row: DmListData) => {
-      const rep = await apiManager.get('chatroom/dm', {
+      const rep = await apiManager.get('dm', {
         params: {
           user_id: row.user1,
           other_id: row.user2,

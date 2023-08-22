@@ -11,14 +11,12 @@ import {
   ChatBanRepository,
   ChatMemberRepository,
   ChatRoomRepository,
-  DMRepository,
-  FriendListRepository,
 } from './chat.repository';
 import {UserRepository} from 'src/user/user.repository';
 import {RoomDto} from './dto/room.dto';
 import {SocketArray} from '@/global-variable/global.socket';
 import {Block} from '@/global-variable/global.block';
-import {DataSource, IsNull, Not} from 'typeorm';
+import {DataSource} from 'typeorm';
 import {ChatMember, ChatRoom} from './chat.entity';
 
 export interface UserInfo {
@@ -35,8 +33,6 @@ export class ChatService {
     private chatBanRepository: ChatBanRepository,
     private userRepository: UserRepository,
     private blockRepository: BlockRepository,
-    private dmRepository: DMRepository,
-    private friendListRepository: FriendListRepository,
     private socketArray: SocketArray,
     private block: Block,
     private dataSource: DataSource
@@ -109,7 +105,6 @@ export class ChatService {
   }
 
   async createRoom(roomDto: RoomDto) {
-    // user_id 가 속해있는지. postman으로 날렸을 때 안되도록. jwt 사용하면 없어도 될수도..?
     const user = await this.userRepository.findOneBy({
       user_id: roomDto.user_id,
     });
@@ -165,8 +160,6 @@ export class ChatService {
     if (!room_id || !user_id) {
       throw new BadRequestException('empty parameter.');
     }
-    const user = await this.getUser(user_id);
-
     // ban_list에 등록되어 있는지 확인
     const ban_member = await this.chatBanRepository.findOneBy({
       chatroomId: room_id,
@@ -214,11 +207,9 @@ export class ChatService {
   }
 
   async leaveRoom(room_id: number, user_id: string) {
-    // throw new InternalServerErrorException();
     if (!room_id || !user_id) {
       throw new BadRequestException('empty parameter.');
     }
-    const user = await this.getUser(user_id);
     const room = await this.chatRoomRepository.findOneBy({id: room_id});
     if (!room) {
       return;
@@ -358,9 +349,27 @@ export class ChatService {
     }
     return room;
   }
+  async checkChatRoomPw(room_id: number, password: number): Promise<boolean> {
+    const room = await this.getRoom(room_id);
+    if (room.password === password) {
+      return true;
+    }
+    return false;
+  }
+
+  async updateChatRoomPw(room_id: number, password?: number) {
+    const room = await this.getRoom(room_id);
+    if (password) {
+      room.password = password;
+    } else {
+      room.password = null;
+      room.is_password = false;
+    }
+    await this.chatRoomRepository.save(room);
+  }
 
   //초대 검색할 때, 채팅방에 있는 사람 제외하고, 차단 유저 제외하고 비슷한 닉네임 다 조회.
-  async getLoginUser(user_nickname: string, user_id: string) {
+  async inviteChatRoom(user_nickname: string, user_id: string) {
     if (!user_nickname) {
       throw new BadRequestException('empty user_nickname param.');
     }
@@ -421,68 +430,6 @@ export class ChatService {
     return users;
   }
 
-  async getFriendList(user_id: string) {
-    const ret = await this.userRepository
-      .createQueryBuilder('users')
-      .select([
-        'users.user_id AS "id"',
-        'users.user_nickname AS "nickName"',
-        'users.user_image AS "image"',
-      ])
-      .innerJoin(
-        'users.friend',
-        'friend',
-        `
-      CASE 
-        WHEN friend.friendId=users.user_id THEN friend.userId = :user_id END
-      `,
-        {user_id}
-      )
-      .leftJoin(
-        'users.blocklist',
-        'bl',
-        `
-      CASE
-        WHEN bl.blockId = users.user_id THEN bl.userId = :user_id END`,
-        {user_id}
-      )
-      .where('bl.blockId is null')
-      .getRawMany();
-
-    ret.forEach(element => {
-      const state = this.socketArray.getUserSocket(element.id);
-      if (state) {
-        if (state.is_gaming) {
-          element.state = '게임 중';
-        }
-        element.state = '온라인';
-      } else {
-        element.state = '오프라인';
-      }
-    });
-    return ret;
-  }
-
-  async addFriend(user_id: string, friend_id: string) {
-    // const user = await this.getUser(user_id);
-    // const friend = await this.getUser(friend_id);
-
-    const new_friend = this.friendListRepository.create({
-      userId: user_id,
-      friendId: friend_id,
-    });
-    await this.friendListRepository.save(new_friend);
-  }
-
-  async delFriend(user_id: string, friend_id: string) {
-    // const user = await this.getUser(user_id);
-    // const friend = await this.getUser(friend_id);
-    await this.friendListRepository.delete({
-      userId: user_id,
-      friendId: friend_id,
-    });
-  }
-
   async getBlockList(user_id: string) {
     if (!user_id) {
       throw new BadRequestException('empty user_id param.');
@@ -500,118 +447,5 @@ export class ChatService {
       .getRawMany();
 
     return block_list;
-  }
-
-  async getDirectMessage(user_id: string, other_id: string) {
-    const directmessage = await this.dmRepository.find({
-      select: {
-        userId: true,
-        someoneId: true,
-        message: true,
-      },
-      where: [
-        {
-          userId: user_id,
-          someoneId: other_id,
-          blockId: Not(user_id),
-        },
-        {
-          userId: user_id,
-          someoneId: other_id,
-          blockId: IsNull(),
-        },
-        {
-          userId: other_id,
-          someoneId: user_id,
-          blockId: Not(user_id),
-        },
-        {
-          userId: other_id,
-          someoneId: user_id,
-          blockId: IsNull(),
-        },
-      ],
-      order: {
-        date: 'ASC',
-      },
-    });
-
-    return directmessage;
-  }
-
-  async saveDirectMessage(
-    user_id: string,
-    target_id: string,
-    message: string,
-    blockId?: string
-  ) {
-    const dm = this.dmRepository.create({
-      userId: user_id,
-      someoneId: target_id,
-      date: new Date(),
-      message,
-      blockId: blockId,
-    });
-    await this.dmRepository.save(dm);
-  }
-
-  async directMessageList(user_id: string) {
-    const ret = [];
-
-    const dm_list = await this.dmRepository
-      .createQueryBuilder('dm')
-      .select(['dm.userId', 'dm.someoneId', 'user_nickname'])
-      .innerJoin(
-        'users',
-        'users',
-        `
-      CASE
-        WHEN dm.userId = :user_id THEN dm.someoneId = users.user_id
-        WHEN dm.someoneId = :user_id THEN dm.userId = users.user_id
-      END
-    `,
-        {user_id}
-      )
-      .distinctOn(['user_nickname'])
-      .orderBy('user_nickname')
-      .getRawMany();
-
-    dm_list.forEach(e => {
-      const temp = {
-        user1: user_id,
-        user2: e.dm_userId === user_id ? e.dm_someoneId : e.dm_userId,
-        nickname: e.user_nickname,
-      };
-      ret.push(temp);
-    });
-    return ret;
-  }
-
-  async checkChatRoomPw(room_id: number, password: number): Promise<boolean> {
-    const room = await this.getRoom(room_id);
-    if (room.password === password) {
-      return true;
-    }
-    return false;
-  }
-
-  async updateChatRoomPw(room_id: number, password?: number) {
-    const room = await this.getRoom(room_id);
-    if (password) {
-      room.password = password;
-    } else {
-      room.password = null;
-      room.is_password = false;
-    }
-    await this.chatRoomRepository.save(room);
-  }
-
-  async getUsersAsFriend(user_id: string) {
-    const ret = await this.friendListRepository.find({
-      where: {
-        friendId: user_id,
-      },
-    });
-    return ret;
   }
 }

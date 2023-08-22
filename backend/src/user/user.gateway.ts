@@ -5,8 +5,6 @@ import {
   ConnectedSocket,
   OnGatewayConnection,
   OnGatewayDisconnect,
-  OnGatewayInit,
-  SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
@@ -37,6 +35,7 @@ export class UserGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
     } catch (e) {
       this.logger.log(e.message);
+      // 소켓끊고, 로그인페이지로 redirect 시키도록.
       // socket.disconnect();
     }
   }
