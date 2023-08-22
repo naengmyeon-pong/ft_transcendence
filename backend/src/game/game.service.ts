@@ -1,13 +1,14 @@
-import { Injectable } from '@nestjs/common';
-import { Socket } from 'socket.io';
-import { Coordinate, Ball, GameInfo, DEFAULT_BALL_SPEED } from '@/types/game';
-import { RoomInfo } from './types/room-info.interface';
-import { EUserIndex } from './types/user-index.enum';
-import { gameRooms } from './game.gateway';
-import { UserRepository } from 'src/user/user.repository';
-import { RecordRepository } from 'src/record/record.repository';
-import { ModeRepository } from 'src/record/mode/mode.repository';
-import { TypeRepository } from 'src/record/type/type.repository';
+import {Injectable} from '@nestjs/common';
+import {Socket} from 'socket.io';
+import {Coordinate, Ball, GameInfo, DEFAULT_BALL_SPEED} from '@/types/game';
+import {RoomInfo} from './types/room-info.interface';
+import {EUserIndex} from './types/user-index.enum';
+import {gameRooms} from './game.gateway';
+import {UserRepository} from 'src/user/user.repository';
+import {RecordRepository} from 'src/record/record.repository';
+import {ModeRepository} from 'src/record/mode/mode.repository';
+import {TypeRepository} from 'src/record/type/type.repository';
+import {ETypeMode} from './types/type-mode.enum';
 
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
@@ -28,7 +29,7 @@ export class GameService {
     private recordRepository: RecordRepository,
     private modeRepository: ModeRepository,
     private typeRepository: TypeRepository
-  ) { }
+  ) {}
 
   initGameInfo = (): GameInfo => {
     const leftPaddle: Coordinate = {
@@ -66,7 +67,6 @@ export class GameService {
   isForfeit = (userID: string): string | null => {
     let loserIdx: number;
     for (const [key, value] of gameRooms) {
-
       if (userID === value.users[0].user_id) {
         loserIdx = 0;
       } else if (userID === value.users[1].user_id) {
@@ -75,10 +75,7 @@ export class GameService {
         continue;
       }
       // 소켓이 gameRooms에 존재하는 경우
-      if (
-        value.game_info.leftScore === 5 ||
-        value.game_info.rightScore === 5
-      ) {
+      if (value.game_info.leftScore === 5 || value.game_info.rightScore === 5) {
         // 정상 종료된 경우
         return null;
       } else {
@@ -87,7 +84,6 @@ export class GameService {
         // const winnerID = value.users[(loserIdx + 1) % 2].user_id;
         this.saveRecord(value, true, userID);
         return key;
-
       }
     }
   };
@@ -144,7 +140,7 @@ export class GameService {
   };
 
   updateBallPosition = (gameInfo: GameInfo, currentTime: number): boolean => {
-    const { ball, leftPaddle, rightPaddle } = gameInfo;
+    const {ball, leftPaddle, rightPaddle} = gameInfo;
     const elapse = currentTime - gameInfo.timeStamp;
     ball.pos.x = ball.pos.x + (ball.speed * ball.vel.x * elapse) / 10;
     ball.pos.y = ball.pos.y + (ball.speed * ball.vel.y * elapse) / 10;
@@ -214,8 +210,7 @@ export class GameService {
       // 몰수패인 경우
       this.setRoomInfoScore(roomInfo, winner);
     }
-    const [type, mode] = this.getTypeModeName(roomInfo.type_mode);
-    const { game_type, game_mode } = this.getTypeModeID(type, mode);
+    const {game_type, game_mode} = this.getTypeModeID(roomInfo);
     const record = this.recordRepository.create({
       game_type,
       game_mode,
@@ -228,14 +223,17 @@ export class GameService {
       is_forfeit: isForfeit,
     });
     await this.recordRepository.save(record);
-    if (type === 'rank') {
+    if (
+      roomInfo.type_mode == ETypeMode.RANK_EASY ||
+      roomInfo.type_mode == ETypeMode.RANK_HARD
+    ) {
       await this.saveRankScore(winner, true);
       await this.saveRankScore(loser, false);
     }
   };
 
   saveRankScore = async (userId: string, isWinner: boolean) => {
-    const user = await this.userRepository.findOneBy({ user_id: userId });
+    const user = await this.userRepository.findOneBy({user_id: userId});
     if (user === null) {
       // user not found
       console.log('user not found');
@@ -286,8 +284,8 @@ export class GameService {
         loserID = roomInfo.users[1].user_id;
       }
     } else {
-      const { leftScore } = roomInfo.game_info;
-      const { rightScore } = roomInfo.game_info;
+      const {leftScore} = roomInfo.game_info;
+      const {rightScore} = roomInfo.game_info;
       if (leftScore === 5) {
         winnerID = roomInfo.users[0].user_id;
         loserID = roomInfo.users[1].user_id;
@@ -319,23 +317,33 @@ export class GameService {
     return false;
   };
 
+  // getTypeModeID = (
+  //   type: string,
+  //   mode: string
+  // ): { game_type: number; game_mode: number } => {
+  //   let typeID: number;
+  //   let modeID: number;
+  //   if (type === 'normal') {
+  //     typeID === 1;
+  //   } else {
+  //     typeID === 2;
+  //   }
+  //   if (mode === 'easy') {
+  //     modeID === 1;
+  //   } else {
+  //     modeID === 2;
+  //   }
+  //   return { game_type: typeID, game_mode: modeID }
+  // };
+
   getTypeModeID = (
-    type: string,
-    mode: string
-  ): { game_type: number; game_mode: number } => {
-    let typeID: number;
-    let modeID: number;
-    if (type === 'normal') {
-      typeID === 1;
-    } else {
-      typeID === 2;
-    }
-    if (mode === 'easy') {
-      modeID === 1;
-    } else {
-      modeID === 2;
-    }
-    return { game_type: typeID, game_mode: modeID }
+    roomInfo: RoomInfo
+  ): {game_type: number; game_mode: number} => {
+    const typeMode = roomInfo.type_mode;
+    return {
+      game_type: Math.floor(typeMode / 2) + 1,
+      game_mode: (typeMode % 2) + 1,
+    };
   };
 
   getTypeModeName = (type_mode: number): [string, string] => {
