@@ -40,6 +40,25 @@ const getExpirationTimeInMilliseconds = () => {
   return expirationTime * 1000;
 };
 
+const getRemainedTime = (start: number): string => {
+  const currentTime = Date.now();
+  const remainingTime = Math.max(0, start - currentTime);
+  const minutes = Math.floor(remainingTime / (1000 * 60));
+  const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+  const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds
+    .toString()
+    .padStart(2, '0')}`;
+  return formattedTime;
+};
+
+const isTokenExpired = (expirationTime: number): boolean => {
+  const currentTime = Date.now();
+  if (expirationTime <= currentTime) {
+    return true;
+  }
+  return false;
+};
+
 export default function Signup() {
   const router = useRouter();
   const {
@@ -51,7 +70,7 @@ export default function Signup() {
   const [nickname, setNickname] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [isUniqueNickname, setIsUniqueNickname] = useState<boolean>(false);
-  const [leftTime, setLeftTime] = useState<string>('');
+  const [remainedTime, setRemainedTime] = useState<string>('');
 
   const handleNicknameInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNickname(e.target.value);
@@ -128,7 +147,6 @@ export default function Signup() {
 
     console.log(formData);
     try {
-      // TODO: token 유효기간이 지나면 다시 회원가입 버튼 누르도록 리다이렉션 하기
       const response = await apiManager.post('/signup', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -155,16 +173,20 @@ export default function Signup() {
 
   useEffect(() => {
     const expirationTime = getExpirationTimeInMilliseconds();
-    setInterval(() => {
-      const currentTime = Date.now();
-      const remainingTime = Math.max(0, expirationTime - currentTime);
-      const minutes = Math.floor(remainingTime / (1000 * 60));
-      const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
-      const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds
-        .toString()
-        .padStart(2, '0')}`;
-      setLeftTime(formattedTime);
+    const intervalId = setInterval(() => {
+      if (isTokenExpired(expirationTime)) {
+        clearInterval(intervalId);
+        openAlertSnackbar({message: '회원가입 시간이 만료되었습니다.'});
+        router.push('/user/login');
+        return;
+      }
+      const formattedTime: string = getRemainedTime(expirationTime);
+      setRemainedTime(formattedTime);
     }, 1000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
   }, []);
 
   return (
@@ -174,7 +196,7 @@ export default function Signup() {
       </Typography>
 
       <Typography sx={{mt: 2, mb: 2, color: 'grey'}}>
-        회원가입 만료 시간 {leftTime}
+        회원가입 만료 시간 {remainedTime}
       </Typography>
 
       <Box component="form" onSubmit={handleSubmit} noValidate sx={{mt: 1}}>
