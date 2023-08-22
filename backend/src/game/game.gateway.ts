@@ -70,6 +70,7 @@ export class GameGateway implements OnGatewayDisconnect {
     this.gameService.createData(gameTypes, 'type');
     this.gameService.createData(gameModes, 'mode');
     this.gameService.setDataID();
+    this.gameService.initWaitUserList(waitUserList);
   }
 
   handleConnection(@ConnectedSocket() socket: Socket) {
