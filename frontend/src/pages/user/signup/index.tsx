@@ -4,7 +4,7 @@ import {useState} from 'react';
 import {useRouter} from 'next/router';
 
 import axios from 'axios';
-const HTTP_STATUS = require('http-status');
+import * as HTTP_STATUS from 'http-status';
 
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
@@ -40,6 +40,7 @@ export default function Signup() {
 
   const handleNicknameInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNickname(e.target.value);
+    setIsUniqueNickname(false);
   };
 
   const handlePassword = (e: React.ChangeEvent<HTMLInputElement>) => {
