@@ -93,7 +93,12 @@ export class RecordController {
     @Query('type') type: string,
     @Query('page') pageNo: number,
     @Query('size') pageSize: number
-  ): Promise<{records: Record[]; pageNo: number; totalPage: number}> {
+  ): Promise<{
+    records: Record[];
+    pageNo: number;
+    totalPage: number;
+    count: number;
+  }> {
     return await this.recordService.getDetailRecord(
       userID,
       type,

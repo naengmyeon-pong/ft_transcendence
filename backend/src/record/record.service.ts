@@ -100,7 +100,12 @@ export class RecordService {
     type: string,
     pageNo: number,
     pageSize: number
-  ): Promise<{records: Record[]; pageNo: number; totalPage: number}> => {
+  ): Promise<{
+    records: Record[];
+    pageNo: number;
+    totalPage: number;
+    count: number;
+  }> => {
     if (!userID || typeof userID !== 'string' || isNaN(pageNo)) {
       throw new BadRequestException('Invalid request format');
     }
@@ -119,7 +124,7 @@ export class RecordService {
         skip
       );
     const totalPage = Math.ceil(count / pageSize);
-    return {records, pageNo, totalPage};
+    return {records, pageNo, totalPage, count};
   };
 
   getSave(winner: string, loser: string) {
