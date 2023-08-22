@@ -5,7 +5,6 @@ import {useRouter} from 'next/router';
 
 import axios from 'axios';
 import * as HTTP_STATUS from 'http-status';
-import * as jsonwebtoken from 'jsonwebtoken';
 
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
@@ -26,38 +25,11 @@ import {
   isValidPasswordLength,
   isValidPasswordRule,
 } from '@/utils/user';
-
-const getExpirationTimeInMilliseconds = () => {
-  const token = sessionStorage.getItem('accessToken');
-  if (token === null) {
-    return 0;
-  }
-  const decodedToken = jsonwebtoken.decode(token);
-  if (decodedToken === null) {
-    return 0;
-  }
-  const expirationTime = decodedToken.exp;
-  return expirationTime * 1000;
-};
-
-const getRemainedTime = (start: number): string => {
-  const currentTime = Date.now();
-  const remainingTime = Math.max(0, start - currentTime);
-  const minutes = Math.floor(remainingTime / (1000 * 60));
-  const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
-  const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds
-    .toString()
-    .padStart(2, '0')}`;
-  return formattedTime;
-};
-
-const isTokenExpired = (expirationTime: number): boolean => {
-  const currentTime = Date.now();
-  if (expirationTime <= currentTime) {
-    return true;
-  }
-  return false;
-};
+import {
+  isTokenExpired,
+  getExpirationTimeInMilliseconds,
+  getRemainedTime,
+} from '@/utils/token';
 
 export default function Signup() {
   const router = useRouter();
