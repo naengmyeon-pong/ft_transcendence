@@ -1,9 +1,11 @@
 'use client';
 
 import {useRouter} from 'next/navigation';
-import React, {useState} from 'react';
+import {useState} from 'react';
 
 import {useRecoilState} from 'recoil';
+import axios from 'axios';
+import * as HTTP_STATUS from 'http-status';
 
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
@@ -18,12 +20,12 @@ import logo from '@/public/logo.jpeg';
 import withAuth from '@/components/hoc/withAuth';
 import Svg42Logo from '@/components/Svg42Logo';
 import {passwordResetState} from '@/states/passwordReset';
-
-import * as HTTP_STATUS from 'http-status';
+import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
 
 function LoginPage() {
   const router = useRouter();
   const [_, setPasswordResetDataState] = useRecoilState(passwordResetState);
+  const {openAlertSnackbar} = useAlertSnackbar();
 
   const [intraId, setIntraId] = useState<string>('');
   const [is2faLogin, setIs2faLogin] = useState<boolean>(false);
@@ -54,6 +56,27 @@ function LoginPage() {
       }
     } catch (error) {
       console.log(error);
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        switch (status) {
+          case HTTP_STATUS.BAD_REQUEST: {
+            openAlertSnackbar({message: 'Intra ID 를 입력해주세요.'});
+            break;
+          }
+          case HTTP_STATUS.NOT_FOUND: {
+            openAlertSnackbar({message: '존재하지 않는 유저입니다.'});
+            break;
+          }
+          case HTTP_STATUS.UNAUTHORIZED: {
+            openAlertSnackbar({message: '비밀번호가 일치하지 않습니다.'});
+            break;
+          }
+          default: {
+            openAlertSnackbar({message: '오류가 발생했습니다.'});
+            break;
+          }
+        }
+      }
     }
   };
 
