@@ -25,10 +25,10 @@ function Action({user_info}: {user_info: UserType}) {
         invitee_id: user_info.id,
         mode: mode,
       },
-      (rep: boolean) => {
-        console.log(rep);
-        if (rep === false) {
-          alert('접속중인 유저가 아닙니다');
+      (rep: boolean | string) => {
+        console.log('rep :',  rep);
+        if (typeof rep !== 'boolean') {
+          alert(rep);
           setState(false);
         }
       }

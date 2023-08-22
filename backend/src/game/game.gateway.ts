@@ -1,4 +1,9 @@
-import {InternalServerErrorException, Logger, UseGuards} from '@nestjs/common';
+import {
+  BadRequestException,
+  InternalServerErrorException,
+  Logger,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -31,20 +36,11 @@ import {GlobalVariableModule} from '@/global-variable/global-variable.module';
 import {Type} from '@/record/type/type.entity';
 import {Mode} from '@/record/mode/mode.entity';
 import {SocketArray} from '@/global-variable/global.socket';
-
-const NORMAL_EASY = 0;
-const NORMAL_HARD = 1;
-const RANK_EASY = 2;
-const RANK_HARD = 3;
+import {ETypeMode} from './types/type-mode.enum';
 
 const waitUserList: GameUser[][] = [[], [], [], []];
 
 export const gameRooms: Map<string, RoomInfo> = new Map();
-
-interface GameSocketInfo {
-  socket: Socket;
-  is_gaming: boolean;
-}
 
 @WebSocketGateway({
   namespace: 'pong',
@@ -63,43 +59,18 @@ export class GameGateway implements OnGatewayDisconnect {
     private jwtService: JwtService,
     private socketArray: SocketArray
   ) {}
-
-  async createData(arr: string[], arg: string) {
-    for (const elem of arr) {
-      let findData: Type | Mode;
-      let newData: Type | Mode;
-
-      if (arg === 'type') {
-        findData = await this.typeRepository.findOneBy({type: elem});
-        if (findData !== null) {
-          break;
-        }
-        newData = this.typeRepository.create({
-          type: elem,
-        });
-        await this.typeRepository.save(newData);
-      } else {
-        findData = await this.modeRepository.findOneBy({mode: elem});
-        if (findData !== null) {
-          break;
-        }
-        newData = this.modeRepository.create({
-          mode: elem,
-        });
-        await this.modeRepository.save(newData);
-      }
-    }
-  }
-
   @WebSocketServer() nsp: Namespace;
+
   async afterInit() {
     this.logger.log('게임 서버 초기화');
 
     const gameTypes = ['normal', 'rank'];
     const gameModes = ['easy', 'hard'];
 
-    this.createData(gameTypes, 'type');
-    this.createData(gameModes, 'mode');
+    this.gameService.createData(gameTypes, 'type');
+    this.gameService.createData(gameModes, 'mode');
+    this.gameService.setDataID();
+    this.gameService.initWaitUserList(waitUserList);
   }
 
   handleConnection(@ConnectedSocket() socket: Socket) {
@@ -107,7 +78,8 @@ export class GameGateway implements OnGatewayDisconnect {
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
-    const roomName: string | null = this.gameService.isForfeit(socket);
+    const userID = this.getUserID(socket);
+    const roomName: string | null = this.gameService.isForfeit(userID);
     if (roomName) {
       const roomInfo = gameRooms.get(roomName);
       this.sendGameInfo(roomInfo);
@@ -117,17 +89,29 @@ export class GameGateway implements OnGatewayDisconnect {
     this.logger.log('게임 소켓 연결 해제');
   }
 
-  createGameRoom(userId: string, gameUserSockets: GameUser[]): string {
+  createGameRoom(userId: string, gameUsers: GameUser[]): string {
     const gameInfo = this.gameService.initGameInfo();
 
     gameRooms.set(userId, {
       room_name: userId,
-      users: gameUserSockets,
+      users: gameUsers,
       game_info: gameInfo,
-      type_mode: gameUserSockets[0].type_mode,
+      type_mode: gameUsers[0].type_mode,
       interval: null,
     });
     return userId;
+  }
+
+  @SubscribeMessage('exit_game') // 유저가 페이지를 이탈한 경우 (임시 이벤트)
+  handleExitGame(@ConnectedSocket() socket: Socket) {
+    const userID = this.getUserID(socket);
+    const roomName: string | null = this.gameService.isForfeit(userID);
+    if (roomName) {
+      const roomInfo = gameRooms.get(roomName);
+      this.sendGameInfo(roomInfo);
+      clearInterval(roomInfo.interval);
+      gameRooms.delete(roomName);
+    }
   }
 
   @SubscribeMessage('cancel_waiting')
@@ -137,13 +121,21 @@ export class GameGateway implements OnGatewayDisconnect {
   ) {
     const typeMode = findTypeMode(joinGameInfo);
     const waitUsers: GameUser[] = waitUserList[typeMode];
-    for (let i = 0; i <= RANK_HARD; i++) {
-      if (waitUsers[i].socket.id === socket.id) {
-        waitUsers.splice(i, 1);
+    const user = this.getUserID(socket);
+    let isFound: boolean = false;
+    let index = -1;
+    waitUsers.forEach((value, key) => {
+      if (value.user_id === user) {
+        isFound = true;
+        index = key;
         return;
       }
+    });
+    if (isFound) {
+      waitUsers.splice(index, 1);
+    } else {
+      console.log('Socket not in waiting list');
     }
-    console.log('Socket not in waiting list');
   }
 
   @SubscribeMessage('join_game')
@@ -151,49 +143,40 @@ export class GameGateway implements OnGatewayDisconnect {
     @ConnectedSocket() socket: Socket,
     @MessageBody() joinGameInfo: JoinGameInfo
   ) {
-    let user_id: string;
-    try {
-      const decodedToken = this.jwtService.verify(joinGameInfo.jwt, {
-        secret: process.env.SIGNIN_JWT_SECRET_KEY,
-      });
-      user_id = decodedToken.user_id;
-      const keys: KeyData = {up: false, down: false};
-      const userSocket: GameUser = {
-        user_id,
-        socket,
-        keys,
-        type_mode: -1,
-      };
-      console.log(userSocket);
-      if (this.isGameMatched(joinGameInfo, userSocket) === false) {
-        return;
-      } else {
-        this.createRoom(userSocket);
-      }
-    } catch (err) {
-      console.error('JWT verification error: ', err.message);
-      // client에 이벤트 전송
+    const user_id = this.getUserID(socket);
+    const keys: KeyData = {up: false, down: false};
+    const waitingUser: GameUser = {
+      user_id,
+      socket_id: socket.id,
+      keys,
+      type_mode: -1,
+    };
+    if (this.isGameMatched(joinGameInfo, waitingUser) === false) {
+      return;
+    } else {
+      this.createRoom(waitingUser);
     }
   }
 
   createRoom = async (userSocket: GameUser) => {
-    const gameUserSockets: GameUser[] = [];
+    const gameUsers: GameUser[] = [];
     const firstUser = waitUserList[userSocket.type_mode].shift();
     const secondUser = userSocket;
-    gameUserSockets.push(firstUser);
-    gameUserSockets.push(secondUser);
+    gameUsers.push(firstUser);
+    gameUsers.push(secondUser);
 
-    const roomName = this.createGameRoom(firstUser.user_id, gameUserSockets);
-
-    firstUser.socket.join(roomName);
-    secondUser.socket.join(roomName);
+    const roomName = this.createGameRoom(firstUser.user_id, gameUsers);
+    this.joinRoom(firstUser.user_id, secondUser.user_id, roomName);
 
     const [left_user, right_user] = await this.findUserName(
       firstUser.user_id,
       secondUser.user_id
     );
-    secondUser.socket
-      .to(roomName)
+    const firstSocketID = this.socketArray.getUserSocket(
+      firstUser.user_id
+    ).socket_id;
+    this.nsp
+      .to(firstSocketID)
       .emit('notice', {notice: `${right_user}이 입장했습니다.`});
 
     const roomInfo: RoomInfo = gameRooms.get(roomName);
@@ -204,14 +187,23 @@ export class GameGateway implements OnGatewayDisconnect {
       right_user,
     };
     if (
-      roomInfo.type_mode === NORMAL_HARD ||
-      roomInfo.type_mode === RANK_HARD
+      roomInfo.type_mode === ETypeMode.NORMAL_HARD ||
+      roomInfo.type_mode === ETypeMode.RANK_HARD
     ) {
       gameInfo.ball.speed *= 1.5;
     }
 
     this.nsp.to(roomName).emit('room_name', roomUserInfo);
     this.nsp.to(roomName).emit('game_info', {game_info: gameInfo});
+  };
+
+  joinRoom = (firstID: string, secondID: string, roomName: string) => {
+    const firstSocketID = this.socketArray.getUserSocket(firstID).socket_id;
+    const firstSocket = this.nsp.sockets.get(firstSocketID);
+    firstSocket.join(roomName);
+    const secondSocketID = this.socketArray.getUserSocket(secondID).socket_id;
+    const secondSocket = this.nsp.sockets.get(secondSocketID);
+    secondSocket.join(roomName);
   };
 
   findUserName = async (
@@ -233,16 +225,16 @@ export class GameGateway implements OnGatewayDisconnect {
 
   isGameMatched = (
     joinGameInfo: JoinGameInfo,
-    userSocket: GameUser
+    waitingUser: GameUser
   ): boolean => {
-    userSocket.type_mode = findTypeMode(joinGameInfo);
-    const gameTypeMode = userSocket.type_mode;
+    waitingUser.type_mode = findTypeMode(joinGameInfo);
+    const gameTypeMode = waitingUser.type_mode;
     if (gameTypeMode === -1) {
-      // type & mode not found
+      throw new BadRequestException();
     }
     if (waitUserList[gameTypeMode].length === 0) {
       console.log('wait');
-      waitUserList[gameTypeMode].push(userSocket);
+      waitUserList[gameTypeMode].push(waitingUser);
       return false;
     } else {
       console.log('join');
@@ -258,7 +250,7 @@ export class GameGateway implements OnGatewayDisconnect {
   ) {
     const roomInfo: RoomInfo = gameRooms.get(room_name);
 
-    if (this.gameService.isLeftUser(roomInfo, socket) === true) {
+    if (this.gameService.isLeftUser(roomInfo, socket.id) === true) {
       roomInfo.users[EUserIndex.LEFT].keys.up = up;
       roomInfo.users[EUserIndex.LEFT].keys.down = down;
     } else {
@@ -323,40 +315,43 @@ export class GameGateway implements OnGatewayDisconnect {
     return decodedToken.user_id;
   };
 
-  @SubscribeMessage('invite_game')
-  handleInviteGame(
-    @ConnectedSocket() inviterSocket: Socket,
-    @MessageBody() inviteGameInfo: InviteGameInfo
-  ) {
-    console.log(inviteGameInfo);
-    const target_socket_id = this.socketArray.getUserSocket(
-      inviteGameInfo.invitee_id
-    );
-    if (target_socket_id === undefined) {
-      return false;
-    }
-    // 소켓에서 찾고 게임만들고 전달하는 과정 접속중이 아니면 false리턴
+  // @SubscribeMessage('invite_game')
+  // handleInviteGame(
+  //   @ConnectedSocket() inviterSocket: Socket,
+  //   @MessageBody() inviteGameInfo: InviteGameInfo
+  // ) {
+  //   console.log(inviteGameInfo);
+  //   console.log('login users: ', this.socketArray);
+  //   const targetInfo = this.socketArray.getUserSocket(
+  //     inviteGameInfo.invitee_id
+  //   );
+  //   if (targetInfo === undefined) {
+  //     return '접속중인 유저가 아닙니다.';
+  //   } else if (targetInfo.is_gaming === true) {
+  //     return '게임중인 유저입니다.';
+  //   }
+  //   // 소켓에서 찾고 게임만들고 전달하는 과정 접속중이 아니면 false리턴
 
-    // if (
-    //   inviterSocket.id !==
-    //   this.socketArray.getUserSocket(inviteGameInfo.inviter_id)
-    // ) {
-    //   // 유저의 ID와 소켓이 매칭되지 않는 경우
-    //   throw new BadRequestException();
-    // }
-    // const inviteeSocket = this.socketArray.getUserSocket(
-    //   inviteGameInfo.invitee_id
-    // );
-    // if (!inviteeSocket) {
-    // 초대받은 유저가 로그인 상태가 아닌 경우
-    // inviterSocket.emit('invite_error', '유저가 로그인 상태가 아님');
-    // return;
-    // }
-    // console.log('invitee : ', inviteeSocket);
-    // inviterSocket.join(inviteGameInfo.inviter_id);
-    // inviterSocket.to(inviteeSocket).emit('invite_game', inviteGameInfo);
-    // inviterSocket.emit('test', 'hello');
-  }
+  //   // if (
+  //   //   inviterSocket.id !==
+  //   //   this.socketArray.getUserSocket(inviteGameInfo.inviter_id)
+  //   // ) {
+  //   //   // 유저의 ID와 소켓이 매칭되지 않는 경우
+  //   //   throw new BadRequestException();
+  //   // }
+  //   // const inviteeSocket = this.socketArray.getUserSocket(
+  //   //   inviteGameInfo.invitee_id
+  //   // );
+  //   // if (!inviteeSocket) {
+  //   // 초대받은 유저가 로그인 상태가 아닌 경우
+  //   // inviterSocket.emit('invite_error', '유저가 로그인 상태가 아님');
+  //   // return;
+  //   // }
+  //   // console.log('invitee : ', inviteeSocket);
+  //   // inviterSocket.join(inviteGameInfo.inviter_id);
+  //   // inviterSocket.to(inviteeSocket).emit('invite_game', inviteGameInfo);
+  //   // inviterSocket.emit('test', 'hello');
+  // }
 }
 
 const findTypeMode = (joinGameInfo: JoinGameInfo): number => {
@@ -366,15 +361,15 @@ const findTypeMode = (joinGameInfo: JoinGameInfo): number => {
 
   if (type === 'normal') {
     if (mode === 'easy') {
-      gameTypeMode = NORMAL_EASY;
+      gameTypeMode = ETypeMode.NORMAL_EASY;
     } else if (mode === 'hard') {
-      gameTypeMode = NORMAL_HARD;
+      gameTypeMode = ETypeMode.NORMAL_HARD;
     }
   } else if (type === 'rank') {
     if (mode === 'easy') {
-      gameTypeMode = RANK_EASY;
+      gameTypeMode = ETypeMode.RANK_EASY;
     } else if (mode === 'hard') {
-      gameTypeMode = RANK_HARD;
+      gameTypeMode = ETypeMode.RANK_HARD;
     }
   }
   return gameTypeMode;

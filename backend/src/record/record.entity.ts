@@ -37,11 +37,11 @@ export class Record {
   @Column({default: false})
   is_forfeit: boolean;
 
-  @ManyToOne(() => Mode, mode_id => mode_id.records, {eager: false})
-  game_mode: number;
-
   @ManyToOne(() => Type, type_id => type_id.records, {eager: false})
   game_type: number;
+
+  @ManyToOne(() => Mode, mode_id => mode_id.records, {eager: false})
+  game_mode: number;
 
   @Column({type: 'timestamp', default: () => 'CURRENT_TIMESTAMP'})
   date: Date;
