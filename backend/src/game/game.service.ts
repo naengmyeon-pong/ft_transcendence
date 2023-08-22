@@ -9,6 +9,8 @@ import {RecordRepository} from 'src/record/record.repository';
 import {ModeRepository} from 'src/record/mode/mode.repository';
 import {TypeRepository} from 'src/record/type/type.repository';
 import {ETypeMode} from './types/type-mode.enum';
+import {Type} from '@/record/type/type.entity';
+import {Mode} from '@/record/mode/mode.entity';
 
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
@@ -22,6 +24,9 @@ const BALL_RADIUS = 10;
 const MIN_Y = 0;
 const MAX_Y = CANVAS_HEIGHT - PADDLE_HEIGHT;
 
+let TYPE_ID = 1;
+let MODE_ID = 1;
+
 @Injectable()
 export class GameService {
   constructor(
@@ -30,6 +35,44 @@ export class GameService {
     private modeRepository: ModeRepository,
     private typeRepository: TypeRepository
   ) {}
+
+  async createData(arr: string[], arg: string) {
+    for (const elem of arr) {
+      let findData: Type | Mode;
+      let newData: Type | Mode;
+
+      if (arg === 'type') {
+        findData = await this.typeRepository.findOneBy({type: elem});
+        if (findData !== null) {
+          break;
+        }
+        newData = this.typeRepository.create({
+          type: elem,
+        });
+        await this.typeRepository.save(newData);
+      } else {
+        findData = await this.modeRepository.findOneBy({mode: elem});
+        if (findData !== null) {
+          break;
+        }
+        newData = this.modeRepository.create({
+          mode: elem,
+        });
+        await this.modeRepository.save(newData);
+      }
+    }
+  }
+
+  setDataID = async () => {
+    const type = await this.typeRepository.findOneBy({type: 'normal'});
+    if (type.id !== 1) {
+      TYPE_ID = type.id;
+    }
+    const mode = await this.modeRepository.findOneBy({mode: 'easy'});
+    if (mode.id !== 1) {
+      MODE_ID = mode.id;
+    }
+  };
 
   initGameInfo = (): GameInfo => {
     const leftPaddle: Coordinate = {
@@ -224,8 +267,8 @@ export class GameService {
     });
     await this.recordRepository.save(record);
     if (
-      roomInfo.type_mode == ETypeMode.RANK_EASY ||
-      roomInfo.type_mode == ETypeMode.RANK_HARD
+      roomInfo.type_mode === ETypeMode.RANK_EASY ||
+      roomInfo.type_mode === ETypeMode.RANK_HARD
     ) {
       await this.saveRankScore(winner, true);
       await this.saveRankScore(loser, false);
@@ -341,8 +384,8 @@ export class GameService {
   ): {game_type: number; game_mode: number} => {
     const typeMode = roomInfo.type_mode;
     return {
-      game_type: Math.floor(typeMode / 2) + 1,
-      game_mode: (typeMode % 2) + 1,
+      game_type: Math.floor(typeMode / 2) + TYPE_ID,
+      game_mode: (typeMode % 2) + MODE_ID,
     };
   };
 
