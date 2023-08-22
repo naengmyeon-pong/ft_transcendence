@@ -11,6 +11,7 @@ import {TypeRepository} from 'src/record/type/type.repository';
 import {ETypeMode} from './types/type-mode.enum';
 import {Type} from '@/record/type/type.entity';
 import {Mode} from '@/record/mode/mode.entity';
+import {GameUser} from './types/game-user.interface';
 
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
@@ -35,6 +36,12 @@ export class GameService {
     private modeRepository: ModeRepository,
     private typeRepository: TypeRepository
   ) {}
+
+  initWaitUserList(waitUserList: GameUser[][]) {
+    for (let i = 0; i <= ETypeMode.RANK_HARD; i++) {
+      waitUserList[i].length = 0;
+    }
+  }
 
   async createData(arr: string[], arg: string) {
     for (const elem of arr) {
