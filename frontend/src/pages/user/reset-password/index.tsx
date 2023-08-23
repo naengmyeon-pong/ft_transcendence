@@ -1,15 +1,15 @@
 'use client';
 
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 import {useRouter} from 'next/router';
 
 import axios from 'axios';
+import {useRecoilValue} from 'recoil';
 import * as HTTP_STATUS from 'http-status';
 
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
 import {List, ListItem, ListItemIcon, ListItemText} from '@mui/material';
@@ -17,18 +17,25 @@ import CheckIcon from '@mui/icons-material/Check';
 
 import apiManager from '@/api/apiManager';
 import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
-import ImageUpload from '@/components/signup/ImageUpload';
+import {useProfileImage} from '@/hooks/useProfileImage';
+import {passwordResetState} from '@/states/passwordReset';
+import {isValidPasswordLength, isValidPasswordRule} from '@/utils/user';
 import {
-  isValidNicknameLength,
-  isValidPasswordLength,
-  isValidPasswordRule,
-} from '@/utils/user';
+  isTokenExpired,
+  getExpirationTimeInMilliseconds,
+  getRemainedTime,
+} from '@/utils/token';
 
 function PasswordReset() {
   const router = useRouter();
   const {openAlertSnackbar} = useAlertSnackbar();
+  const {
+    profileImageDataState: {userId},
+  } = useProfileImage();
+  const passwordReset = useRecoilValue(passwordResetState);
   const [password, setPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
+  const [remainedTime, setRemainedTime] = useState<string>('');
 
   const handlePassword = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
@@ -41,53 +48,75 @@ function PasswordReset() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const formData = new FormData();
-
-    formData.append('user_pw', password);
-
-    console.log(formData);
     try {
-      // TODO: token 유효기간이 지나면 다시 회원가입 버튼 누르도록 리다이렉션 하기
-      const response = await apiManager.post('/signup', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      console.log(response);
-      if (HTTP_STATUS.OK) {
+      let endpoint = '';
+      if (passwordReset === true) {
+        endpoint = '/signup/changePw';
+      } else {
+        endpoint = '/user/changePw';
+      }
+      const response = await apiManager.post(endpoint, {user_pw: password});
+      if (response.status === HTTP_STATUS.CREATED) {
         openAlertSnackbar({
           message: '비밀번호 수정이 완료되었습니다.',
           severity: 'success',
         });
-        router.back();
+        if (passwordReset === true) {
+          router.push('/user/login');
+        } else {
+          router.push('/user/setting');
+        }
       }
     } catch (error) {
       console.log(error);
       if (axios.isAxiosError(error)) {
-        if (error.response?.status === 401) {
-          console.log('401');
-        }
         openAlertSnackbar({message: error.response?.data.message});
       }
     }
   };
 
   const handleCancel = () => {
-    router.back();
+    if (passwordReset) {
+      router.push('/user/login');
+    } else {
+      router.back();
+    }
   };
+
+  useEffect(() => {
+    const expirationTime = getExpirationTimeInMilliseconds();
+    const intervalId = setInterval(() => {
+      if (isTokenExpired(expirationTime)) {
+        clearInterval(intervalId);
+        openAlertSnackbar({message: '비밀번호 재설정 시간이 만료되었습니다.'});
+        if (passwordReset === true) {
+          router.push('/user/login');
+        } else {
+          router.push('/user/setting');
+        }
+        return;
+      }
+      const formattedTime: string = getRemainedTime(expirationTime);
+      setRemainedTime(formattedTime);
+    }, 1000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, []);
 
   return (
     <>
       <Typography component="h1" variant="h5">
-        회원정보 수정
+        비밀번호 재설정
+      </Typography>
+
+      <Typography sx={{mt: 2, mb: 2, color: 'grey'}}>
+        비밀번호 재설정 만료 시간 {remainedTime}
       </Typography>
 
       <Box component="form" onSubmit={handleSubmit} noValidate sx={{mt: 1}}>
         <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <ImageUpload />
-          </Grid>
-
           <Grid item xs={12}>
             <TextField
               disabled
@@ -99,28 +128,6 @@ function PasswordReset() {
               value={userId}
               variant="filled"
             />
-          </Grid>
-
-          <Grid item xs={9}>
-            <TextField
-              error={
-                nickname !== '' && isValidNicknameLength(nickname) === false
-              }
-              autoComplete="given-name"
-              name="nickanme"
-              required
-              fullWidth
-              id="nickanme"
-              label="닉네임"
-              helperText="2 ~ 8자 이내로 설정"
-              onChange={handleNicknameInput}
-              autoFocus
-            />
-          </Grid>
-          <Grid item xs={3} container justifyContent="flex-end">
-            <Button variant="text" onClick={handleDuplicatedNickname}>
-              중복 확인
-            </Button>
           </Grid>
 
           <Grid item xs={12}>
@@ -221,28 +228,22 @@ function PasswordReset() {
               </ListItem>
             </List>
           </Grid>
-
-          <Grid item xs={10}>
-            <Typography variant="body1" component="div">
-              2차 인증 활성화
-            </Typography>
-            <Typography sx={{mb: 1.5}} color="text.secondary">
-              Google Authenticator 로 추가 인증합니다.
-            </Typography>
-          </Grid>
-          <Grid item xs={2} container>
-            <Checkbox onChange={handle2FA} checked={is2faEnabled} />
-          </Grid>
         </Grid>
 
         <Button
-          disabled={isUniqueNickname === false}
+          disabled={
+            isValidPasswordLength(password) === false ||
+            isValidPasswordRule(password) === false ||
+            password !== confirmPassword ||
+            confirmPassword === '' ||
+            password === ''
+          }
           fullWidth
           type="submit"
           variant="contained"
           sx={{mt: 3, mb: 2}}
         >
-          회원정보 수정
+          비밀번호 재설정
         </Button>
       </Box>
       <Button fullWidth variant="outlined" onClick={handleCancel}>
