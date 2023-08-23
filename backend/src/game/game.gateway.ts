@@ -454,20 +454,20 @@ export class GameGateway implements OnGatewayDisconnect {
   ) {
     const userID = this.getUserID(socket);
     if (is_inviter === true) {
+      // 초대자가 게임을 취소한 경우
       const gameRoom = gameRooms.get(userID);
       const inviteeSocketID = gameRoom.users[1].socket_id;
       const user = await this.userRepository.findOneBy({user_id: userID});
       socket.to(inviteeSocketID).emit('cancel_game', user.user_nickname);
       gameRooms.delete(userID);
     } else if (inviteGameInfo !== undefined) {
+      // 피초대자가 게임방에서 나간 경우
       if (userID !== inviteGameInfo.invitee_id) {
         return false;
       }
       const gameRoom = gameRooms.get(inviteGameInfo.inviter_id);
       const inviterSocketID = gameRoom.users[0].socket_id;
-      socket
-        .to(inviterSocketID)
-        .emit('cancel_game', inviteGameInfo.invitee_nickname);
+      socket.to(inviterSocketID).emit('cancel_game_alarm', inviteGameInfo);
     }
   }
 
