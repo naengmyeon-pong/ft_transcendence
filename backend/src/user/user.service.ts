@@ -97,14 +97,6 @@ export class UserService {
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
-    if (userDto.user_pw) {
-      await this.userRepository.update(
-        {user_id: userID},
-        {
-          user_pw: userDto.user_pw,
-        }
-      );
-    }
     if (userDto.user_nickname) {
       await this.userRepository.update(
         {user_id: userID},
