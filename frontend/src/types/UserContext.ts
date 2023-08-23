@@ -71,8 +71,3 @@ export interface DmChat {
   // 보낸이
   nickname: string;
 }
-
-export interface Notificate {
-  user_id: string;
-  room_id: string;
-}

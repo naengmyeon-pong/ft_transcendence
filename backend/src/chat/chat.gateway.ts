@@ -369,7 +369,7 @@ export class ChatGateway
     const user_id = socket.handshake.query.user_id as string;
     const target_socket_id = this.socketArray.getUserSocket(target_id);
     socket
-      .to(`${target_socket_id}`)
+      .to(`${target_socket_id.socket_id}`)
       .emit('chatroom-notification', {room_id, user_id});
     return true;
   }

@@ -9,7 +9,7 @@ import {useRecoilState, useSetRecoilState} from 'recoil';
 import {Box, Grid, Toolbar} from '@mui/material';
 
 import apiManager from '@/api/apiManager';
-import CustomAppBar from '@/components/layout/MainLayout/CustomAppBar';
+import CustomAppBar from '@/components/layout/MainLayout/AppBar';
 import SideBar from '@/components/layout/MainLayout/SideBar';
 import {UserContext} from '@/components/layout/MainLayout/Context';
 import {UserType} from '@/types/UserContext';
@@ -92,16 +92,14 @@ function MainLayout({children}: MainLayoutProps) {
         setDmList(rep.data);
         setInitMainLayout(true);
         // console.log('dmList: ', rep);
-
         socketIo.on('disconnect', reason => {
+          console.log('reason: ', reason);
+          // 서버가 연결을 끊은 경우 (ex, JWT 만료)
           if (reason === 'io server disconnect') {
             sessionStorage.clear();
             router.push('/');
           }
-          socketIo.connect();
-          setChatSocket(socketIo);
         });
-
       } catch (error) {
         router.push('/');
         console.log('MainLayout error: ', error);
