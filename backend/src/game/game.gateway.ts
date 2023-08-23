@@ -201,7 +201,8 @@ export class GameGateway implements OnGatewayDisconnect {
 
   createInviteGameRoom = async (inviteGameInfo: InviteGameInfo) => {
     const gameUsers: GameUser[] = [];
-    const keys: KeyData = {up: false, down: false};
+    const leftKeys: KeyData = {up: false, down: false};
+    const rightKeys: KeyData = {up: false, down: false};
     const inviterSocketID = this.socketArray.getUserSocket(
       inviteGameInfo.inviter_id
     ).socket_id;
@@ -209,7 +210,7 @@ export class GameGateway implements OnGatewayDisconnect {
     const inviter: GameUser = {
       user_id: inviteGameInfo.inviter_id,
       socket_id: inviterSocketID,
-      keys,
+      keys: leftKeys,
       type_mode,
     };
     const inviteeSocketID = this.socketArray.getUserSocket(
@@ -219,7 +220,7 @@ export class GameGateway implements OnGatewayDisconnect {
     const invitee: GameUser = {
       user_id: inviteGameInfo.invitee_id,
       socket_id: inviteeSocketID,
-      keys,
+      keys: rightKeys,
       type_mode,
     };
     gameUsers.push(inviter);
@@ -301,13 +302,10 @@ export class GameGateway implements OnGatewayDisconnect {
     {room_name, up, down}: {room_name: string; up: boolean; down: boolean}
   ) {
     const roomInfo: RoomInfo = gameRooms.get(room_name);
-    console.log('roomInfo: ', roomInfo);
     if (this.gameService.isLeftUser(roomInfo, socket.id) === true) {
-      console.log('left');
       roomInfo.users[EUserIndex.LEFT].keys.up = up;
       roomInfo.users[EUserIndex.LEFT].keys.down = down;
     } else {
-      console.log('right');
       roomInfo.users[EUserIndex.RIGHT].keys.up = up;
       roomInfo.users[EUserIndex.RIGHT].keys.down = down;
     }
