@@ -11,6 +11,7 @@ import {
   UseGuards,
   UploadedFile,
   Query,
+  Req,
 } from '@nestjs/common';
 import {AuthGuard} from '@nestjs/passport';
 import {ApiTags, ApiOperation, ApiQuery, ApiResponse} from '@nestjs/swagger';
@@ -50,8 +51,9 @@ export class UserController {
     status: 404,
     description: '유저 정보가 존재하지 않는 경우',
   })
-  remove(@Param('user_id') user_id: string): Promise<void> {
-    return this.userService.remove(user_id);
+  @UseGuards(AuthGuard('jwt'))
+  remove(@Request() req: any): Promise<void> {
+    return this.userService.remove(req.user.user_id);
   }
 
   @Post('/changePw')

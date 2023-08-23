@@ -32,7 +32,7 @@ export class ChatRoom {
   is_password: boolean;
 
   @Column({nullable: true})
-  password: number;
+  password: string;
 
   @OneToMany(() => ChatMember, chatmember => chatmember.chatroom)
   chatmembers: ChatMember[];

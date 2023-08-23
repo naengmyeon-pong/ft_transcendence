@@ -1,4 +1,4 @@
-import {Logger, UseGuards} from '@nestjs/common';
+import {Logger} from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -201,17 +201,20 @@ export class ChatGateway implements OnGatewayInit {
     try {
       const user_id = this.getUserID(socket);
       if (mute_time) {
-        await this.chatService.muteMember(
-          room_id,
-          user_id,
-          target_id,
-          mute_time
-        );
-        const login_user = this.socketArray.getUserSocket(target_id);
-        if (login_user) {
-          socket.to(`${login_user.socket_id}`).emit('mute-member', mute_time);
+        if (
+          await this.chatService.muteMember(
+            room_id,
+            user_id,
+            target_id,
+            mute_time
+          )
+        ) {
+          const login_user = this.socketArray.getUserSocket(target_id);
+          if (login_user) {
+            socket.to(`${login_user.socket_id}`).emit('mute-member', mute_time);
+          }
+          return true;
         }
-        return true;
       }
       return false;
     } catch (e) {
@@ -324,21 +327,22 @@ export class ChatGateway implements OnGatewayInit {
     }
   }
 
-  @SubscribeMessage('update-user-info')
-  async handleUpdateUserInfo(@ConnectedSocket() socket: Socket) {
-    try {
-      const user_id = this.getUserID(socket);
-      const user = await this.chatService.getUser(user_id);
-      socket.handshake.query.nickname = user.user_nickname;
-      socket.handshake.query.image = user.user_image;
-    } catch (e) {
-      this.logger.log(e.message);
-      if (e.status) {
-        return false;
-      }
-      // 토큰만료는 status가 undefined이다. 따라서 이때 socket끊고 로그인페이지로 옮겨버리기
-    }
-  }
+  // user 프로필 바꿨을 때, socket qurey 업데이트. 유지할지 token에 다 담아서 사용할지 체크.
+  // @SubscribeMessage('update-user-info')
+  // async handleUpdateUserInfo(@ConnectedSocket() socket: Socket) {
+  //   try {
+  //     const user_id = this.getUserID(socket);
+  //     const user = await this.chatService.getUser(user_id);
+  //     socket.handshake.query.nickname = user.user_nickname;
+  //     socket.handshake.query.image = user.user_image;
+  //   } catch (e) {
+  //     this.logger.log(e.message);
+  //     if (e.status) {
+  //       return false;
+  //     }
+  //     // 토큰만료는 status가 undefined이다. 따라서 이때 socket끊고 로그인페이지로 옮겨버리기
+  //   }
+  // }
 
   getUserID = (socket: Socket): string => {
     const jwt: string = socket.handshake.auth.token;

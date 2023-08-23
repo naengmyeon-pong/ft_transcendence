@@ -18,6 +18,7 @@ import {SocketArray} from '@/global-variable/global.socket';
 import {Block} from '@/global-variable/global.block';
 import {DataSource} from 'typeorm';
 import {ChatMember, ChatRoom} from './chat.entity';
+import * as bcrypt from 'bcryptjs';
 
 export interface UserInfo {
   id: string;
@@ -39,38 +40,32 @@ export class ChatService {
   ) {}
 
   async getRoomList() {
-    const room_list = [];
-    const chatrooms = this.chatRoomRepository
+    const chatrooms = await this.chatRoomRepository
       .createQueryBuilder('chatRoom')
       .select([
-        'chatRoom.id',
-        'chatRoom.name',
-        'chatRoom.current_nums',
-        'chatRoom.max_nums',
-        'chatRoom.is_public',
-        'chatRoom.is_password',
-        'chatMember.permission',
-        'chatMember.userId',
+        'chatRoom.id AS "id"',
+        'chatRoom.name AS "name"',
+        'chatRoom.current_nums AS "current_nums"',
+        'chatRoom.max_nums AS "max_nums"',
+        'chatRoom.is_public AS "is_public"',
+        'chatRoom.is_password AS "is_password"',
+        'users.user_nickname AS "owner"',
       ])
-      .innerJoinAndSelect('chatRoom.chatmembers', 'chatMember')
-      .innerJoinAndSelect('chatMember.user', 'users')
+      .innerJoin(
+        'chatRoom.chatmembers',
+        'chatMember',
+        'chatMember.chatroomId = chatRoom.id'
+      )
+      .innerJoin(
+        'chatMember.user',
+        'users',
+        'chatMember.userId = users.user_id'
+      )
       .where('chatRoom.is_public = :is_public', {is_public: true})
-      .andWhere('chatMember.permission = :permission', {permission: 2});
+      .andWhere('chatMember.permission = :permission', {permission: 2})
+      .getRawMany();
 
-    const ret = await chatrooms.getMany();
-    ret.forEach(element => {
-      const temp = {
-        id: element.id,
-        name: element.name,
-        current_nums: element.current_nums,
-        max_nums: element.max_nums,
-        is_public: element.is_public,
-        is_password: element.is_password,
-        owner: element.chatmembers[0].user.user_nickname,
-      };
-      room_list.push(temp);
-    });
-    return room_list;
+    return chatrooms;
   }
 
   async getRoomMembers(room_id: number) {
@@ -123,19 +118,23 @@ export class ChatService {
         `${roomDto.user_id} is already owner ${already[0].chatroomId}`
       );
     }
-
     const query_runner = this.dataSource.createQueryRunner();
     await query_runner.connect();
     await query_runner.startTransaction();
 
     try {
+      let hashedPassword;
+      if (roomDto.password) {
+        const salt = await bcrypt.genSalt();
+        hashedPassword = await bcrypt.hash(roomDto.password.toString(), salt);
+      }
       const room = this.chatRoomRepository.create({
         name: roomDto.room_name,
         current_nums: 1,
         max_nums: roomDto.max_nums,
         is_public: roomDto.is_public,
         is_password: roomDto.is_password,
-        password: roomDto.password,
+        password: roomDto.password ? hashedPassword : roomDto.password,
       });
       await query_runner.manager.getRepository(ChatRoom).save(room);
       const room_member = this.chatMemberRepository.create({
@@ -222,7 +221,7 @@ export class ChatService {
     if (!member) {
       return;
     } else if (member.permission === 2) {
-      //owner 일 때 방 전체가 터지게. // 여기에서 다 처리해야될듯 front한테 부르는게 아니라.
+      //owner 일 때 방 전체가 터지게.
       await this.chatRoomRepository.delete({id: room_id});
       return member;
     } else {
@@ -238,7 +237,7 @@ export class ChatService {
 
   async addToAdmin(room_id: number, user_id: string, target_id: string) {
     if (this.isOwner(room_id, user_id)) {
-      const member = await this.isChatMember(target_id);
+      const member = await this.isChatMember(room_id, target_id);
       member.permission = 1;
       await this.chatMemberRepository.save(member);
       return true;
@@ -248,7 +247,7 @@ export class ChatService {
 
   async delAdmin(room_id: number, user_id: string, target_id: string) {
     if (this.isOwner(room_id, user_id)) {
-      const member = await this.isChatMember(target_id);
+      const member = await this.isChatMember(room_id, target_id);
       member.permission = 0;
       await this.chatMemberRepository.save(member);
       return true;
@@ -257,8 +256,8 @@ export class ChatService {
   }
 
   async kickMember(room_id: number, user_id: string, target_id: string) {
-    const admin = await this.isChatMember(user_id);
-    const member = await this.isChatMember(target_id);
+    const admin = await this.isChatMember(room_id, user_id);
+    const member = await this.isChatMember(room_id, target_id);
 
     if (admin.permission > member.permission) {
       return true;
@@ -272,18 +271,20 @@ export class ChatService {
     target_id: string,
     mute_time: string
   ) {
-    const admin = await this.isChatMember(user_id);
-    const member = await this.isChatMember(target_id);
+    const admin = await this.isChatMember(room_id, user_id);
+    const member = await this.isChatMember(room_id, target_id);
 
     if (admin.permission > member.permission) {
       member.mute = mute_time;
       this.chatMemberRepository.save(member);
+      return true;
     }
+    return false;
   }
 
   async banMember(room_id: number, user_id: string, target_id: string) {
-    const admin = await this.isChatMember(user_id);
-    const member = await this.isChatMember(target_id);
+    const admin = await this.isChatMember(room_id, user_id);
+    const member = await this.isChatMember(room_id, target_id);
 
     if (admin.permission > member.permission) {
       const ban_member = this.chatBanRepository.create({
@@ -314,19 +315,20 @@ export class ChatService {
   }
 
   async isOwner(room_id: number, user_id: string) {
-    const member = await this.isChatMember(user_id);
+    const member = await this.isChatMember(room_id, user_id);
     if (member.permission === 2) {
       return true;
     }
     return false;
   }
 
-  async isChatMember(user_id: string) {
+  async isChatMember(room_id: number, user_id: string) {
     if (!user_id) {
       throw new BadRequestException('empty parameter.');
     }
     const member = await this.chatMemberRepository.findOneBy({
       userId: user_id,
+      chatroomId: room_id,
     });
     if (!member) {
       throw new NotFoundException(`${user_id} is not member of this chat.`);
@@ -334,13 +336,13 @@ export class ChatService {
     return member;
   }
 
-  async getUser(user_id: string) {
-    const user = await this.userRepository.findOneBy({user_id});
-    if (!user) {
-      throw new NotFoundException(`${user_id} is not a user.`);
-    }
-    return user;
-  }
+  // async getUser(user_id: string) {
+  //   const user = await this.userRepository.findOneBy({user_id});
+  //   if (!user) {
+  //     throw new NotFoundException(`${user_id} is not a user.`);
+  //   }
+  //   return user;
+  // }
 
   async getRoom(room_id: number) {
     const room = await this.chatRoomRepository.findOneBy({id: room_id});
@@ -349,9 +351,10 @@ export class ChatService {
     }
     return room;
   }
+
   async checkChatRoomPw(room_id: number, password: number): Promise<boolean> {
     const room = await this.getRoom(room_id);
-    if (room.password === password) {
+    if (room && (await bcrypt.compare(password.toString(), room.password))) {
       return true;
     }
     return false;
@@ -360,7 +363,10 @@ export class ChatService {
   async updateChatRoomPw(room_id: number, password?: number) {
     const room = await this.getRoom(room_id);
     if (password) {
-      room.password = password;
+      const salt = await bcrypt.genSalt();
+      const hashedPassword = await bcrypt.hash(password.toString(), salt);
+      room.password = hashedPassword;
+      room.is_password = true;
     } else {
       room.password = null;
       room.is_password = false;
