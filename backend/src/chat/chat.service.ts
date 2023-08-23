@@ -19,6 +19,7 @@ import {Block} from '@/global-variable/global.block';
 import {DataSource} from 'typeorm';
 import {ChatMember, ChatRoom} from './chat.entity';
 import * as bcrypt from 'bcryptjs';
+import {PartialRoomDto} from './dto/partial-room.dto';
 
 export interface UserInfo {
   id: string;
@@ -352,19 +353,28 @@ export class ChatService {
     return room;
   }
 
-  async checkChatRoomPw(room_id: number, password: number): Promise<boolean> {
+  async checkChatRoomPw(
+    room_id: number,
+    userDto: PartialRoomDto
+  ): Promise<boolean> {
     const room = await this.getRoom(room_id);
-    if (room && (await bcrypt.compare(password.toString(), room.password))) {
+    if (
+      room &&
+      (await bcrypt.compare(userDto.password.toString(), room.password))
+    ) {
       return true;
     }
     return false;
   }
 
-  async updateChatRoomPw(room_id: number, password?: number) {
+  async updateChatRoomPw(room_id: number, userDto?: PartialRoomDto) {
     const room = await this.getRoom(room_id);
-    if (password) {
+    if (userDto && userDto.password) {
       const salt = await bcrypt.genSalt();
-      const hashedPassword = await bcrypt.hash(password.toString(), salt);
+      const hashedPassword = await bcrypt.hash(
+        userDto.password.toString(),
+        salt
+      );
       room.password = hashedPassword;
       room.is_password = true;
     } else {

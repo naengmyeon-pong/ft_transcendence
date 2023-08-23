@@ -1,4 +1,13 @@
-import {Body, Controller, Get, Param, Post, Query} from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+  ValidationPipe,
+} from '@nestjs/common';
 import {ChatService} from './chat.service';
 import {RoomDto} from './dto/room.dto';
 import {
@@ -10,8 +19,12 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import {AuthGuard} from '@nestjs/passport';
+import {PartialRoomDto} from './dto/partial-room.dto';
+import {UserDto} from '@/user/dto/user.dto';
 
 @Controller('chatroom')
+// @UseGuards(AuthGuard('jwt'))
 @ApiTags('Chat Room')
 export class ChatController {
   constructor(private chatService: ChatService) {}
@@ -201,10 +214,16 @@ export class ChatController {
   @Post('chatroom_pw')
   async checkChatRoomPw(
     @Body('room_id') room_id: number,
-    @Body('password') password: number
+    @Body(ValidationPipe) userDto: PartialRoomDto
   ): Promise<boolean> {
-    return await this.chatService.checkChatRoomPw(room_id, password);
+    return await this.chatService.checkChatRoomPw(room_id, userDto);
   }
+  // async checkChatRoomPw(
+  //   @Body('room_id') room_id: number,
+  //   @Body('password') password: number
+  // ): Promise<boolean> {
+  //   return await this.chatService.checkChatRoomPw(room_id, password);
+  // }
 
   @ApiOperation({
     summary: '채팅방 pw를 변경하는 API',
@@ -233,9 +252,9 @@ export class ChatController {
   @Post('update_chatroom_pw')
   async updateChatRoomPw(
     @Body('room_id') room_id: number,
-    @Body('password') password?: number
+    @Body(ValidationPipe) UserDto?: PartialRoomDto
   ) {
-    return await this.chatService.updateChatRoomPw(room_id, password);
+    return await this.chatService.updateChatRoomPw(room_id, UserDto);
   }
 
   @ApiOperation({
