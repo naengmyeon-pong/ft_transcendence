@@ -63,14 +63,41 @@ export default function AlarmEvent() {
     [setReadNotificate, setGameAlarm]
   );
 
+  const cancelGameAlarm = useCallback((rep: InviteGameInfo) => {
+    // 이전 알람에서 제거하고 거절했다는 메세지 추가
+    setGameAlarm(prev => {
+      // 몇 번째의 prev안에 invite_game_info인지 체크해야함
+      const foundIndex = prev.findIndex(
+        item => item.invite_game_info.invitee_id === rep.invitee_id
+      );
+      console.log('foundIndex: ', foundIndex);
+
+      if (foundIndex === -1) {
+        return prev;
+      }
+
+      const updatedNode = {...prev[foundIndex]};
+      updatedNode.event_type = InviteGameEnum.INVITE_RESPON_FALSE;
+
+      const updatedAlarmList = [
+        ...prev.slice(0, foundIndex),
+        updatedNode,
+        ...prev.slice(foundIndex + 1),
+      ];
+      return updatedAlarmList;
+    });
+  }, []);
+
   useEffect(() => {
     chat_socket?.on('invite_game', inviteGameEvent);
     chat_socket?.on('invite_response', inviteGameMoveEvent);
+    chat_socket?.on('cancel_game_alarm', cancelGameAlarm);
     return () => {
       chat_socket?.off('invite_game', inviteGameEvent);
       chat_socket?.off('invite_response', inviteGameMoveEvent);
+      chat_socket?.off('cancel_game_alarm', cancelGameAlarm);
     };
-  }, [chat_socket, inviteGameEvent, inviteGameMoveEvent]);
+  }, [chat_socket, inviteGameEvent, inviteGameMoveEvent, cancelGameAlarm]);
 
   const handleChatAlarm = useCallback(
     (rep: Chatnotificate) => {
