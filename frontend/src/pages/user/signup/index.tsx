@@ -316,8 +316,8 @@ export default function Signup() {
           disabled={
             password !== confirmPassword ||
             isUniqueNickname === false ||
-            (isValidPasswordLength(password) === false &&
-              isValidPasswordRule(password) === false)
+            isValidPasswordLength(password) === false ||
+            isValidPasswordRule(password) === false
           }
           fullWidth
           type="submit"
