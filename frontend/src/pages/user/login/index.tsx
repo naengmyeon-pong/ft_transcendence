@@ -1,9 +1,9 @@
 'use client';
 
 import {useRouter} from 'next/navigation';
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 
-import {useRecoilState} from 'recoil';
+import {useSetRecoilState} from 'recoil';
 import axios from 'axios';
 import * as HTTP_STATUS from 'http-status';
 
@@ -24,15 +24,14 @@ import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
 
 function LoginPage() {
   const router = useRouter();
-  const [_, setPasswordResetDataState] = useRecoilState(passwordResetState);
+  const setPasswordReset = useSetRecoilState(passwordResetState);
   const {openAlertSnackbar} = useAlertSnackbar();
 
   const [intraId, setIntraId] = useState<string>('');
   const [is2faLogin, setIs2faLogin] = useState<boolean>(false);
 
-  // TODO: recoil persist 로 상태 관리하기
   const handleResetLinkClick = () => {
-    setPasswordResetDataState(true);
+    setPasswordReset(true);
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -104,6 +103,10 @@ function LoginPage() {
   const handleCancelOtpLogin = () => {
     setIs2faLogin(false);
   };
+
+  useEffect(() => {
+    setPasswordReset(false);
+  }, []);
 
   return (
     <>

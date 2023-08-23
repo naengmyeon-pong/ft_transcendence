@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Body,
+  Request,
   Query,
   ValidationPipe,
   UseGuards,
@@ -11,6 +12,7 @@ import {
 } from '@nestjs/common';
 import {SignUpService} from './signup.service';
 import {UserDto} from 'src/user/dto/user.dto';
+import {UserAuthDto} from '@/user/dto/userAuth.dto';
 import {AuthGuard} from '@nestjs/passport';
 import {FileInterceptor} from '@nestjs/platform-express';
 import {
@@ -114,5 +116,14 @@ export class SignUpController {
     @UploadedFile() file?: Express.Multer.File
   ): Promise<void> {
     return await this.signUpService.create(userinfo, file);
+  }
+
+  @Post('/changePw')
+  @UseGuards(AuthGuard('signup'))
+  async changePW(
+    @Body('user_pw') user_pw: string,
+    @Request() req: any
+  ): Promise<void> {
+    return await this.signUpService.changePW(req.user.user_id, user_pw);
   }
 }
