@@ -72,7 +72,6 @@ export class GameService {
 
   setDataID = async () => {
     const type = await this.typeRepository.findOneBy({type: 'normal'});
-    console.log(type);
     if (type.id !== 1) {
       TYPE_ID = type.id;
     }
