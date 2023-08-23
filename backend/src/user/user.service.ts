@@ -45,12 +45,18 @@ export class UserService {
     }
   }
 
-  async changePW(userAuthDto: UserAuthDto): Promise<User> {
-    const user = await this.findUser(userAuthDto.user_id);
-
-    user.user_pw = userAuthDto.user_pw;
-    await this.userRepository.save(user);
-    return user;
+  async changePW(user_id: string, userDto: UpdateUserDto): Promise<void> {
+    const user = await this.findUser(user_id);
+    if (user) {
+      //TODO: 주석 제거하기
+      // const salt = await bcrypt.genSalt();
+      // const hashedPassword = await bcrypt.hash(userAuthDto.user_pw, salt);
+      // user.user_pw = hashedPassword;
+      user.user_pw = userDto.user_pw;
+      await this.userRepository.save(user);
+    } else {
+      throw new NotFoundException(`${user_id} is not our member.`);
+    }
   }
 
   // 로그인할 때 user pw 암호화 하지않게
@@ -108,11 +114,16 @@ export class UserService {
       );
     }
     if (file) {
-      if (user.user_image === '/images/logo.jpeg') {
+      if (
+        user.user_image ===
+        `${process.env.NEXT_PUBLIC_BACKEND_SERVER}/images/logo.jpeg`
+      ) {
         await this.userRepository.update(
           {user_id: userID},
           {
-            user_image: file.path.substr(11),
+            user_image:
+              `${process.env.NEXT_PUBLIC_BACKEND_SERVER}` +
+              file.path.substr(11),
           }
         );
       }

@@ -153,7 +153,7 @@ export class SignUpService {
         // user_pw: hashedPassword,
         user_nickname,
         user_image: file
-          ? file.path.substr(11)
+          ? `${process.env.NEXT_PUBLIC_BACKEND_SERVER}` + file.path.substr(11)
           : `${process.env.NEXT_PUBLIC_BACKEND_SERVER}/images/logo.jpeg`,
       });
       await this.userRepository.save(user);
