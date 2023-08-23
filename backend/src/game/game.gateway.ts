@@ -247,7 +247,7 @@ export class GameGateway implements OnGatewayDisconnect {
     this.nsp.to(roomName).emit('game_info', {game_info: gameInfo});
   };
 
-  createInviteGameRoom = async (inviteGameInfo: InviteGameInfo) => {
+  createInviteGameRoom = (inviteGameInfo: InviteGameInfo) => {
     const gameUsers: GameUser[] = [];
     const leftKeys: KeyData = {up: false, down: false};
     const rightKeys: KeyData = {up: false, down: false};
@@ -530,11 +530,30 @@ export class GameGateway implements OnGatewayDisconnect {
       this.socketArray.getUserSocket(inviteGameInfo.invitee_id).is_gaming =
         true;
       this.removeUserInWaitlist(userID);
-      const idx = inviteWaitList.indexOf(inviteGameInfo);
-      inviteWaitList.splice(idx, 1);
+      this.removeUserInInviteWaitlist(userID, true);
       this.nsp.to(roomInfo.room_name).emit('start_game');
     }
   }
+
+  removeUserInInviteWaitlist = (userID: string, is_inviter: boolean) => {
+    let idx = -1;
+    if (is_inviter === true) {
+      inviteWaitList.forEach((value, key) => {
+        if (value.inviter_id === userID) {
+          idx = key;
+        }
+      });
+    } else if (is_inviter === false) {
+      inviteWaitList.forEach((value, key) => {
+        if (value.inviter_id === userID || value.invitee_id === userID) {
+          idx = key;
+        }
+      });
+    }
+    if (idx !== -1) {
+      inviteWaitList.splice(idx, 1);
+    }
+  };
 
   removeUserInWaitlist = (userID: string): boolean => {
     let user_idx = -1;
