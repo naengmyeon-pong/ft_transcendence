@@ -1,6 +1,6 @@
 'use client';
 
-import {GameInfo, RoomUserInfo} from '@/common/types/game';
+import {GameInfo} from '@/common/types/game';
 import {useCallback, useContext, useEffect, useState} from 'react';
 import {UserContext} from '../layout/MainLayout/Context';
 import {useRecoilState} from 'recoil';
@@ -35,8 +35,6 @@ export default function InviteGame() {
   );
 
   const sendGameStartEvent = useCallback(() => {
-    console.log('시작이벤트 받음');
-    console.log(invite_game_state.inviter_id);
     chat_socket?.emit('update_frame', invite_game_state.inviter_id);
   }, [chat_socket, invite_game_state.inviter_id]);
 
@@ -59,7 +57,10 @@ export default function InviteGame() {
     };
 
     function handleUnload() {
-      chat_socket?.emit('cancel_game', {is_inviter: false});
+      chat_socket?.emit('cancel_game', {
+        inviteGameInfo: invite_game_state,
+        is_inviter: false,
+      });
     }
 
     window.addEventListener('unload', handleUnload);
@@ -74,6 +75,9 @@ export default function InviteGame() {
     chat_socket?.on('enter_game', sendGameStartEvent);
     chat_socket?.on('game_info', handleInviteGameInfo);
     chat_socket?.on('cancel_game', exitCancelGame);
+    chat_socket?.on('start_game', () => {
+      chat_socket?.off('cancel_game', exitCancelGame);
+    });
     chat_socket?.emit('enter_game', invite_game_state);
     return () => {
       chat_socket?.off('enter_game', sendGameStartEvent);

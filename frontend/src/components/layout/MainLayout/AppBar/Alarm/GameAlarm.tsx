@@ -1,4 +1,4 @@
-import {useCallback, useContext, useEffect} from 'react';
+import {useContext} from 'react';
 import {
   AlarmGameProps,
   InviteGameEnum,
@@ -7,8 +7,8 @@ import {
 import {UserContext} from '../../Context';
 import {useRouter} from 'next/router';
 import {Box, Button, Typography} from '@mui/material';
-import {useSetRecoilState} from 'recoil';
-import {InviteGameUserType, inviteGameState} from '@/states/inviteGame';
+import {useRecoilState} from 'recoil';
+import {inviteGameState} from '@/states/inviteGame';
 
 // 초대 상태에 따라 메세지를 나눠주는 컴포넌트
 
@@ -35,12 +35,16 @@ function ActionGameAlarm({
   game_noti: InviteGameInfoProps[];
   setGameAlarm: React.Dispatch<React.SetStateAction<InviteGameInfoProps[]>>;
 }) {
-  const {chat_socket, user_nickname} = useContext(UserContext);
+  const {chat_socket} = useContext(UserContext);
   const router = useRouter();
-  const setInviteGameState = useSetRecoilState(inviteGameState);
+  const [invite_game_state, setInviteGameState] =
+    useRecoilState(inviteGameState);
 
   function removeGameNoti() {
-    game_noti.splice(index, 1);
+    setGameAlarm(prev => {
+      prev.splice(index, 1);
+      return prev;
+    });
   }
 
   // B가 누르는 수락
@@ -62,13 +66,18 @@ function ActionGameAlarm({
   // A가 최종적으로 누르는 수락
   function inviteResponTrue() {
     row.invite_game_info.state = true;
+    removeGameNoti();
     setInviteGameState(row.invite_game_info);
     router.push('/main/game');
   }
 
   // A가 최종적으로 누르는 거절
   function inviteResponFalse() {
-    chat_socket?.emit('cancel_game', {is_inviter: true});
+    removeGameNoti();
+    chat_socket?.emit('cancel_game', {
+      inviteGameInfo: invite_game_state,
+      is_inviter: true,
+    });
   }
 
   return (
