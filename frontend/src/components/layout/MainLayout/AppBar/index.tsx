@@ -20,7 +20,7 @@ import {
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import MenuIcon from '@mui/icons-material/Menu';
 import {Notificate} from '@/types/UserContext';
-import {UserContext} from './Context';
+import {UserContext} from '../Context';
 import {useRouter} from 'next/router';
 
 const customTheme = createTheme({
@@ -263,7 +263,7 @@ function CustomAppBar() {
                 ))}
               </Menu>
             )}
-            <Button>마이페이지</Button>
+            <Button href="/user/se">마이페이지</Button>
             <Button onClick={logOut}>로그아웃</Button>
           </Box>
         </Toolbar>
