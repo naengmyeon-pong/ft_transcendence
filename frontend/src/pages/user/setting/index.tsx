@@ -138,6 +138,7 @@ function Setting() {
 
     const formData = new FormData();
 
+    formData.append('user_id', userId);
     formData.append('user_nickname', nickname);
     if (uploadFile !== null) {
       formData.append('user_image', uploadFile);
@@ -191,8 +192,6 @@ function Setting() {
 
     fetchUser();
   }, []);
-
-  console.log(isSameWithInitialNickname, isUniqueNickname);
 
   return (
     <>
