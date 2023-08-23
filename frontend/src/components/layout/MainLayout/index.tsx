@@ -52,9 +52,9 @@ function MainLayout({children}: MainLayoutProps) {
           nickname: user_nickname,
           is_2fa_enabled,
         });
-        setUserId(response.data.user_id);
-        setUserNickName(response.data.user_nickname);
-        setUserImage(`${response.data.user_image}`);
+        setUserId(user_id);
+        setUserNickName(user_nickname);
+        setUserImage(user_image);
         const accessToken = sessionStorage.getItem('accessToken');
         if (accessToken === null) {
           router.push('/');

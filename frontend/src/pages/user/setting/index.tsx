@@ -29,19 +29,26 @@ const HTTP_STATUS = require('http-status');
 
 function Setting() {
   const router = useRouter();
-  const {
-    profileImageDataState: {userId, uploadFile},
-  } = useProfileImage();
+  const {profileImageDataState, setProfileImageDataState} = useProfileImage();
   const [profileDataState, setProfileDataState] = useRecoilState(profileState);
   const {openGlobalDialog, closeGlobalDialog} = useGlobalDialog();
   const {openAlertSnackbar} = useAlertSnackbar();
-  const [nickname, setNickname] = useState<string>('');
   const [isUniqueNickname, setIsUniqueNickname] = useState<boolean>(false);
-
-  const {is_2fa_enabled} = profileDataState;
+  const [isSameWithInitialNickname, setIsSameWithInitialNickname] =
+    useState<boolean>(true);
+  const {is_2fa_enabled, nickname} = profileDataState;
+  const {userId, uploadFile, isUploadImage} = profileImageDataState;
+  const initialNickname = profileDataState.nickname;
 
   const handleNicknameInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNickname(e.target.value);
+    const changedNickname = e.target.value;
+    setProfileDataState({...profileDataState, nickname: changedNickname});
+    setIsUniqueNickname(false);
+    if (initialNickname === changedNickname) {
+      setIsSameWithInitialNickname(true);
+    } else {
+      setIsSameWithInitialNickname(false);
+    }
   };
 
   const handleDuplicatedNickname = async () => {
@@ -110,6 +117,22 @@ function Setting() {
     }
   };
 
+  const handleDeleteUser = async () => {
+    // openGlobalDialog({
+
+    // })
+    try {
+      const response = await apiManager.delete('/user/delete');
+      const {status} = response;
+      console.log(response);
+      if (status) {
+        router.push('/user/login');
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -133,6 +156,10 @@ function Setting() {
           message: '회원정보 수정이 완료되었습니다.',
           severity: 'success',
         });
+        setProfileImageDataState({
+          ...profileImageDataState,
+          isUploadImage: false,
+        });
         router.push('/main/game');
       }
     } catch (error) {
@@ -143,9 +170,29 @@ function Setting() {
     }
   };
 
-  const handleCancel = () => {
-    router.push('/main/game');
-  };
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await apiManager.get('/user');
+        const {user_id, is_2fa_enabled, user_nickname, user_image} =
+          response.data;
+        setProfileDataState({
+          ...profileDataState,
+          user_id,
+          nickname: user_nickname,
+          image: user_image,
+          is_2fa_enabled,
+        });
+      } catch (error) {
+        openAlertSnackbar({message: '에러가 발생했습니다. 다시 시도해주세요.'});
+        console.log(error);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
+  console.log(isSameWithInitialNickname, isUniqueNickname);
 
   return (
     <>
@@ -183,6 +230,7 @@ function Setting() {
               fullWidth
               id="nickanme"
               label="닉네임"
+              value={nickname}
               helperText="2 ~ 8자 이내로 설정"
               onChange={handleNicknameInput}
               autoFocus
@@ -214,7 +262,12 @@ function Setting() {
           <Grid item xs={10}>
             <Typography variant="body1" component="div">
               2차 인증 활성화
-              <Typography style={{color: is_2fa_enabled ? 'green' : 'grey'}}>
+              <Typography
+                variant="body2"
+                component="span"
+                style={{color: is_2fa_enabled ? 'green' : 'grey'}}
+              >
+                {' '}
                 ({is_2fa_enabled ? 'ON' : 'OFF'})
               </Typography>
             </Typography>
@@ -234,7 +287,10 @@ function Setting() {
         </Grid>
 
         <Button
-          disabled={isUniqueNickname === false}
+          disabled={
+            isUploadImage === false &&
+            (isSameWithInitialNickname || isUniqueNickname === false)
+          }
           fullWidth
           type="submit"
           variant="contained"
@@ -242,10 +298,23 @@ function Setting() {
         >
           회원정보 수정
         </Button>
+
+        <Button
+          onClick={handleDeleteUser}
+          fullWidth
+          color="error"
+          variant="outlined"
+          sx={{mb: 2}}
+        >
+          회원탈퇴
+        </Button>
+
+        <Link href="/main/game">
+          <Button fullWidth variant="outlined">
+            메인 페이지로 돌아가기
+          </Button>
+        </Link>
       </Box>
-      <Button fullWidth variant="outlined" onClick={handleCancel}>
-        이전 페이지로 돌아가기
-      </Button>
     </>
   );
 }
