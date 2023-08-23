@@ -20,7 +20,7 @@ import {
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import MenuIcon from '@mui/icons-material/Menu';
 import {Notificate} from '@/types/UserContext';
-import {UserContext} from './Context';
+import {UserContext} from '../Context';
 import {useRouter} from 'next/router';
 
 const customTheme = createTheme({
