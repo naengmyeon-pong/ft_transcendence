@@ -80,8 +80,10 @@ export class GameGateway implements OnGatewayDisconnect {
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
+    let inviteGameInfo: InviteGameInfo | null;
     const userID = this.getUserID(socket);
     if (this.isUserGaming(userID)) {
+      // 유저가 게임중인 경우
       const roomName: string | null = this.gameService.isForfeit(userID);
       if (roomName) {
         const roomInfo = gameRooms.get(roomName);
@@ -89,6 +91,28 @@ export class GameGateway implements OnGatewayDisconnect {
         clearInterval(roomInfo.interval);
         gameRooms.delete(roomName);
       }
+    } else if ((inviteGameInfo = this.isUserInvited(userID))) {
+      // 유저가 게임 초대중인 경우
+      let targetNickname: string;
+      if (userID === inviteGameInfo.inviter_id) {
+        const targetSocketID = this.socketArray.getUserSocket(
+          inviteGameInfo.inviter_id
+        ).socket_id;
+        targetNickname = inviteGameInfo.inviter_nickname;
+        socket
+          .to(targetSocketID)
+          .emit('inviter_cancel_game_refresh', targetNickname);
+      } else {
+        const targetSocketID = this.socketArray.getUserSocket(
+          inviteGameInfo.invitee_id
+        ).socket_id;
+        targetNickname = inviteGameInfo.invitee_nickname;
+        socket
+          .to(targetSocketID)
+          .emit('invitee_cancel_game_refresh', targetNickname);
+      }
+      const idx = inviteWaitList.indexOf(inviteGameInfo);
+      inviteWaitList.splice(idx, 1);
     }
     try {
       this.socketArray.removeSocketArray(userID);
@@ -97,6 +121,15 @@ export class GameGateway implements OnGatewayDisconnect {
       this.logger.log(e.message);
     }
   }
+
+  isUserInvited = (userID: string): InviteGameInfo | null => {
+    inviteWaitList.forEach((value, key) => {
+      if (value.inviter_id || value.invitee_id) {
+        return value;
+      }
+    });
+    return null;
+  };
 
   isUserGaming(userID: string): boolean {
     if (this.socketArray.getUserSocket(userID).is_gaming === true) {
@@ -165,7 +198,7 @@ export class GameGateway implements OnGatewayDisconnect {
       user_id,
       socket_id: socket.id,
       keys,
-      type_mode: -1,
+      type_mode: ETypeMode.NONE,
     };
     if (this.isGameMatched(joinGameInfo, waitingUser) === false) {
       return;
@@ -297,7 +330,7 @@ export class GameGateway implements OnGatewayDisconnect {
   ): boolean => {
     waitingUser.type_mode = findTypeMode(joinGameInfo);
     const gameTypeMode = waitingUser.type_mode;
-    if (gameTypeMode === -1) {
+    if (gameTypeMode === ETypeMode.NONE) {
       throw new BadRequestException();
     }
     if (waitUserList[gameTypeMode].length === 0) {
@@ -451,7 +484,7 @@ export class GameGateway implements OnGatewayDisconnect {
   }
 
   @SubscribeMessage('cancel_game')
-  async handleCancelGame(
+  handleCancelGame(
     @ConnectedSocket() socket: Socket,
     @MessageBody()
     {
@@ -461,20 +494,23 @@ export class GameGateway implements OnGatewayDisconnect {
   ) {
     const userID = this.getUserID(socket);
     if (is_inviter === true) {
-      // 초대자가 게임을 취소한 경우
+      // 초대자가 최종 거절해서 게임을 취소한 경우
       const gameRoom = gameRooms.get(userID);
       const inviteeSocketID = gameRoom.users[1].socket_id;
-      const user = await this.userRepository.findOneBy({user_id: userID});
-      socket.to(inviteeSocketID).emit('cancel_game', user.user_nickname);
+      socket
+        .to(inviteeSocketID)
+        .emit('inviter_cancel_game', inviteGameInfo.invitee_nickname);
       gameRooms.delete(userID);
-    } else if (inviteGameInfo !== undefined) {
-      // 피초대자가 게임방에서 나간 경우
+    } else if (inviteGameInfo !== undefined && is_inviter === false) {
+      // 피초대자가 수락한 뒤에 게임방에서 나간 경우
       if (userID !== inviteGameInfo.invitee_id) {
         return false;
       }
       const gameRoom = gameRooms.get(inviteGameInfo.inviter_id);
       const inviterSocketID = gameRoom.users[0].socket_id;
-      socket.to(inviterSocketID).emit('cancel_game_alarm', inviteGameInfo);
+      socket
+        .to(inviterSocketID)
+        .emit('invitee_cancel_game_out', inviteGameInfo);
     }
   }
 
