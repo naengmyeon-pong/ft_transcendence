@@ -260,7 +260,7 @@ export class GameGateway implements OnGatewayDisconnect {
     roomName: string,
     isSocketProvided: boolean
   ) => {
-    let firstSocketID, secondSocketID;
+    let firstSocketID: string, secondSocketID: string;
     if (isSocketProvided === true) {
       firstSocketID = firstID;
       secondSocketID = secondID;
@@ -493,6 +493,8 @@ export class GameGateway implements OnGatewayDisconnect {
         true;
       this.socketArray.getUserSocket(inviteGameInfo.invitee_id).is_gaming =
         true;
+      const idx = inviteWaitList.indexOf(inviteGameInfo);
+      inviteWaitList.splice(idx, 1);
       this.nsp.to(roomInfo.room_name).emit('start_game');
     }
   }
