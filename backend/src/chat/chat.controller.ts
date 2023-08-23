@@ -1,4 +1,13 @@
-import {Body, Controller, Get, Param, Post, Query} from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+  ValidationPipe,
+} from '@nestjs/common';
 import {ChatService} from './chat.service';
 import {RoomDto} from './dto/room.dto';
 import {
@@ -10,8 +19,12 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import {AuthGuard} from '@nestjs/passport';
+import {PartialRoomDto} from './dto/partial-room.dto';
+import {UserDto} from '@/user/dto/user.dto';
 
 @Controller('chatroom')
+// @UseGuards(AuthGuard('jwt'))
 @ApiTags('Chat Room')
 export class ChatController {
   constructor(private chatService: ChatService) {}
@@ -103,7 +116,6 @@ export class ChatController {
     return await this.chatService.getRoom(room_id);
   }
 
-  // 함수 이름 변경 필요함.
   @ApiOperation({
     summary: '채팅방 초대를 위한 유저 검색 API',
     description: `채팅방에 유저를 초대하기 위해 검색합니다.
@@ -132,65 +144,15 @@ export class ChatController {
     description: '검색하는 유저의 id',
   })
   @Get('user/:user_nickname/:user_id')
-  async getLoginUser(
+  async inviteChatRoom(
     @Param('user_nickname') user_nickname: string,
     @Param('user_id') user_id: string
   ) {
-    const member = await this.chatService.getLoginUser(user_nickname, user_id);
+    const member = await this.chatService.inviteChatRoom(
+      user_nickname,
+      user_id
+    );
     return member;
-  }
-
-  @ApiOperation({
-    summary: '저장되어있는 dm을 불러오는 API',
-    description: '특정 유저와의 dm데이터를 불러옵니다.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'dm데이터를 정상적으로 불러온 경우',
-  })
-  @ApiResponse({
-    status: 500,
-    description: 'db 조회에 오류가 발생한 경우',
-  })
-  @ApiQuery({
-    name: 'user_id',
-    required: true,
-    description: '현재 유저의 id',
-  })
-  @ApiQuery({
-    name: 'other_id',
-    required: true,
-    description: 'dm상대방의 id',
-  })
-  @Get('dm')
-  async getDirectMessage(
-    @Query('user_id') user_id: string,
-    @Query('other_id') other_id: string
-  ) {
-    const dm = await this.chatService.getDirectMessage(user_id, other_id);
-    return dm;
-  }
-
-  @ApiOperation({
-    summary: 'dm 목록을 불러오는 API',
-    description: '해당 유저가 dm을 보냈던 유저들의 목록을 불러옵니다.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'dm목록을 정상적으로 불러온 경우',
-  })
-  @ApiResponse({
-    status: 500,
-    description: 'db 조회에 오류가 발생한 경우',
-  })
-  @ApiQuery({
-    name: 'user_id',
-    required: true,
-    description: '현재 유저의 id',
-  })
-  @Get('dm_list')
-  async getDMList(@Query('user_id') user_id: string) {
-    return await this.chatService.directMessageList(user_id);
   }
 
   @ApiOperation({
@@ -252,10 +214,16 @@ export class ChatController {
   @Post('chatroom_pw')
   async checkChatRoomPw(
     @Body('room_id') room_id: number,
-    @Body('password') password: number
+    @Body(ValidationPipe) userDto: PartialRoomDto
   ): Promise<boolean> {
-    return await this.chatService.checkChatRoomPw(room_id, password);
+    return await this.chatService.checkChatRoomPw(room_id, userDto);
   }
+  // async checkChatRoomPw(
+  //   @Body('room_id') room_id: number,
+  //   @Body('password') password: number
+  // ): Promise<boolean> {
+  //   return await this.chatService.checkChatRoomPw(room_id, password);
+  // }
 
   @ApiOperation({
     summary: '채팅방 pw를 변경하는 API',
@@ -284,9 +252,9 @@ export class ChatController {
   @Post('update_chatroom_pw')
   async updateChatRoomPw(
     @Body('room_id') room_id: number,
-    @Body('password') password?: number
+    @Body(ValidationPipe) UserDto?: PartialRoomDto
   ) {
-    return await this.chatService.updateChatRoomPw(room_id, password);
+    return await this.chatService.updateChatRoomPw(room_id, UserDto);
   }
 
   @ApiOperation({
@@ -323,27 +291,5 @@ export class ChatController {
     @Query('user_nickname') user_nickname: string
   ) {
     return await this.chatService.searchUser(user_id, user_nickname);
-  }
-
-  @ApiOperation({
-    summary: '친구목록을 불러오는 API',
-    description: '현재 유저가 추가한 친구목록을 불러옵니다.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: `친구목록을 정상적으로 불러온 경우`,
-  })
-  @ApiResponse({
-    status: 500,
-    description: 'db 조회에 오류가 발생한 경우',
-  })
-  @ApiQuery({
-    name: 'user_id',
-    required: true,
-    description: '검색하는 현재유저의 id',
-  })
-  @Get('friend_list')
-  async getFriendList(@Query('user_id') user_id: string) {
-    return await this.chatService.getFriendList(user_id);
   }
 }

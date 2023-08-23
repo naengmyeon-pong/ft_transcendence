@@ -32,7 +32,7 @@ export class ChatRoom {
   is_password: boolean;
 
   @Column({nullable: true})
-  password: number;
+  password: string;
 
   @OneToMany(() => ChatMember, chatmember => chatmember.chatroom)
   chatmembers: ChatMember[];
@@ -61,6 +61,7 @@ export class ChatMember {
   @ManyToOne(() => ChatRoom, chatroom => chatroom.chatmembers, {
     nullable: false,
     onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
   })
   @JoinColumn({name: 'chatroomId'})
   chatroom: ChatRoom;
@@ -68,6 +69,7 @@ export class ChatMember {
   @ManyToOne(() => User, user => user.chatmembers, {
     nullable: false,
     onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
   })
   @JoinColumn({name: 'userId'})
   user: User;
@@ -87,12 +89,14 @@ export class ChatBan {
   @ManyToOne(() => ChatRoom, chatroom => chatroom.chatbans, {
     nullable: false,
     onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
   })
   chatroom: ChatRoom;
 
   @ManyToOne(() => User, user => user.chatbans, {
     nullable: false,
     onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
   })
   @JoinColumn({name: 'userId'})
   user: User;
@@ -106,11 +110,19 @@ export class BlockList {
   @PrimaryColumn()
   blockId: string;
 
-  @ManyToOne(() => User, {onDelete: 'CASCADE'})
+  @ManyToOne(() => User, {
+    nullable: false,
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
   @JoinColumn({name: 'userId'})
   user: User;
 
-  @ManyToOne(() => User, {onDelete: 'CASCADE'})
+  @ManyToOne(() => User, {
+    nullable: false,
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
   @JoinColumn({name: 'blockId'})
   blockUser: User;
 }
@@ -135,11 +147,17 @@ export class DirectMessage {
   @Column({nullable: true})
   blockId: string;
 
-  @ManyToOne(() => User, {onDelete: 'CASCADE'})
+  @ManyToOne(() => User, {
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
   @JoinColumn({name: 'userId'})
   user: User;
 
-  @ManyToOne(() => User, {onDelete: 'CASCADE'})
+  @ManyToOne(() => User, {
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
   @JoinColumn({name: 'someoneId'})
   someoneUser: User;
 }
@@ -152,11 +170,19 @@ export class FriendList {
   @PrimaryColumn()
   friendId: string;
 
-  @ManyToOne(() => User, {onDelete: 'CASCADE'})
+  @ManyToOne(() => User, {
+    nullable: false,
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
   @JoinColumn({name: 'userId'})
   user: User;
 
-  @ManyToOne(() => User, {onDelete: 'CASCADE'})
+  @ManyToOne(() => User, {
+    nullable: false,
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
   @JoinColumn({name: 'friendId'})
   FriendUser: User;
 }

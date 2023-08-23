@@ -1,9 +1,7 @@
-import {Logger, UseGuards} from '@nestjs/common';
+import {Logger} from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
-  OnGatewayConnection,
-  OnGatewayDisconnect,
   OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
@@ -13,7 +11,6 @@ import {Socket, Namespace} from 'socket.io';
 import {ChatService} from './chat.service';
 import {SocketArray} from '@/global-variable/global.socket';
 import {Block} from '@/global-variable/global.block';
-import {AuthGuard} from '@nestjs/passport';
 import {JwtService} from '@nestjs/jwt';
 
 interface MessagePayload {
@@ -38,9 +35,7 @@ interface MutePayload {
     origin: '*',
   },
 })
-export class ChatGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+export class ChatGateway implements OnGatewayInit {
   constructor(
     private chatService: ChatService,
     private socketArray: SocketArray,
@@ -56,73 +51,39 @@ export class ChatGateway
     this.logger.log('웹소켓 서버 초기화');
   }
 
-  async handleConnection(@ConnectedSocket() socket: Socket) {
-    try {
-      const user_id = this.getUserID(socket);
-      const friends = await this.chatService.getUsersAsFriend(user_id);
-      friends.forEach(friend => {
-        const login_user = this.socketArray.getUserSocket(friend.userId);
-        if (login_user) {
-          // console.log(`login ${user_id}`);
-          socket
-            .to(login_user.socket_id)
-            .emit('update-friend-state', {userId: user_id, state: '온라인'});
-        }
-      });
-    } catch (e) {
-      this.logger.log(e.message);
-    }
-  }
-
-  async handleDisconnect(@ConnectedSocket() socket: Socket) {
-    try {
-      const user_id = this.getUserID(socket);
-      const friends = await this.chatService.getUsersAsFriend(user_id);
-      friends.forEach(friend => {
-        const login_user = this.socketArray.getUserSocket(friend.userId);
-        if (login_user) {
-          // console.log(`logout ${user_id}`);
-          socket
-            .to(login_user.socket_id)
-            .emit('update-friend-state', {userId: user_id, state: '오프라인'});
-        }
-      });
-    } catch (e) {
-      this.logger.log(e.message);
-    }
-  }
-
   @SubscribeMessage('message')
   handleMessage(
     @ConnectedSocket() socket: Socket,
     @MessageBody() {room_id, message}: MessagePayload
   ) {
     try {
-      this.jwtService.verify(socket.handshake.auth.token);
-    } catch (e) {
-      // front한테 socket 이벤트 줄거임. 그러면 토큰 삭제하고 로그인페이지로 이동시키기.
-      return;
-    }
-    const user_id = socket.handshake.query.user_id as string;
-    const user_nickname = socket.handshake.query.nickname as string;
-    const user_image = socket.handshake.query.user_image as string;
-    const block_members: Set<string> = this.block.getBlockUsers(user_id);
-    const except_member: string[] = [];
+      const user_id = this.getUserID(socket);
 
-    if (block_members) {
-      block_members.forEach(e => {
-        const login_user = this.socketArray.getUserSocket(e);
-        if (login_user) {
-          except_member.push(login_user.socket_id);
-        }
-      });
+      // 토큰안에 nickname, image도 넣을까?
+      // const user_id = socket.handshake.query.user_id as string;
+      const user_nickname = socket.handshake.query.nickname as string;
+      const user_image = socket.handshake.query.user_image as string;
+      const block_members: Set<string> = this.block.getBlockUsers(user_id);
+      const except_member: string[] = [];
+
+      if (block_members) {
+        block_members.forEach(e => {
+          const login_user = this.socketArray.getUserSocket(e);
+          if (login_user) {
+            except_member.push(login_user.socket_id);
+          }
+        });
+      }
+      socket
+        .except(except_member)
+        .to(`${room_id}`)
+        .emit('message', {message, user_id, user_nickname, user_image});
+      this.logger.log(`들어온 메세지: ${message}.`);
+      return {message, user_id, user_nickname, user_image};
+    } catch (e) {
+      this.logger.log(e.message);
+      // 토큰만료라서 socket끊고 로그인페이지로 옮겨버리기
     }
-    socket
-      .except(except_member)
-      .to(`${room_id}`)
-      .emit('message', {message, user_id, user_nickname, user_image});
-    this.logger.log(`들어온 메세지: ${message}.`);
-    return {message, user_id, user_nickname, user_image};
   }
 
   @SubscribeMessage('join-room')
@@ -130,8 +91,8 @@ export class ChatGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody() room_id: number
   ): Promise<boolean> {
-    const user_id = socket.handshake.query.user_id as string;
     try {
+      const user_id = this.getUserID(socket);
       if (await this.chatService.joinRoom(room_id, user_id)) {
         socket.join(`${room_id}`);
         socket.to(`${room_id}`).emit('message', {
@@ -148,8 +109,11 @@ export class ChatGateway
         });
       }
     } catch (e) {
-      console.log('join error: ', e.message);
-      return false;
+      this.logger.log(e.message);
+      if (e.status) {
+        return false;
+      }
+      // 토큰만료는 status가 undefined이다. 따라서 이때 socket끊고 로그인페이지로 옮겨버리기
     }
   }
 
@@ -158,8 +122,8 @@ export class ChatGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody('room_id') room_id: number
   ) {
-    const user_id = socket.handshake.query.user_id as string;
     try {
+      const user_id = this.getUserID(socket);
       const leave = await this.chatService.leaveRoom(room_id, user_id);
       socket.leave(`${room_id}`);
 
@@ -175,8 +139,11 @@ export class ChatGateway
       }
       return true;
     } catch (e) {
-      console.log(e.message);
-      return false;
+      this.logger.log(e.message);
+      if (e.status) {
+        return false;
+      }
+      // 토큰만료는 status가 undefined이다. 따라서 이때 socket끊고 로그인페이지로 옮겨버리기
     }
   }
 
@@ -185,18 +152,22 @@ export class ChatGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody() {room_id, target_id}: ExecPayload
   ) {
-    const user_id = socket.handshake.query.user_id as string;
     try {
+      const user_id = this.getUserID(socket);
       if (await this.chatService.addToAdmin(room_id, user_id, target_id)) {
         this.nsp.to(`${room_id}`).emit('room-member', {
           members: await this.chatService.getRoomMembers(room_id),
         });
         return true;
       }
+      return false;
     } catch (e) {
-      console.log(e.message);
+      this.logger.log(e.message);
+      if (e.status) {
+        return false;
+      }
+      // 토큰만료는 status가 undefined이다. 따라서 이때 socket끊고 로그인페이지로 옮겨버리기
     }
-    return false;
   }
 
   @SubscribeMessage('del-admin')
@@ -204,18 +175,22 @@ export class ChatGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody() {room_id, target_id}: ExecPayload
   ) {
-    const user_id = socket.handshake.query.user_id as string;
     try {
+      const user_id = this.getUserID(socket);
       if (await this.chatService.delAdmin(room_id, user_id, target_id)) {
         this.nsp.to(`${room_id}`).emit('room-member', {
           members: await this.chatService.getRoomMembers(room_id),
         });
         return true;
       }
+      return false;
     } catch (e) {
-      console.log(e.message);
+      this.logger.log(e.message);
+      if (e.status) {
+        return false;
+      }
+      // 토큰만료는 status가 undefined이다. 따라서 이때 socket끊고 로그인페이지로 옮겨버리기
     }
-    return false;
   }
 
   @SubscribeMessage('mute-member')
@@ -223,28 +198,32 @@ export class ChatGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody() {room_id, target_id, mute_time}: MutePayload
   ) {
-    const user_id = socket.handshake.query.user_id as string;
     try {
+      const user_id = this.getUserID(socket);
       if (mute_time) {
-        await this.chatService.muteMember(
-          room_id,
-          user_id,
-          target_id,
-          mute_time
-        );
-        const login_user = this.socketArray.getUserSocket(target_id);
-        if (login_user) {
-          socket
-            .to(`${room_id}`)
-            .to(`${login_user.socket_id}`)
-            .emit('mute-member', mute_time);
+        if (
+          await this.chatService.muteMember(
+            room_id,
+            user_id,
+            target_id,
+            mute_time
+          )
+        ) {
+          const login_user = this.socketArray.getUserSocket(target_id);
+          if (login_user) {
+            socket.to(`${login_user.socket_id}`).emit('mute-member', mute_time);
+          }
+          return true;
         }
-        return true;
       }
+      return false;
     } catch (e) {
-      console.log(e.message);
+      this.logger.log(e.message);
+      if (e.status) {
+        return false;
+      }
+      // 토큰만료는 status가 undefined이다. 따라서 이때 socket끊고 로그인페이지로 옮겨버리기
     }
-    return false;
   }
 
   // true 면, front에서 leave_room 호출하게. false면 아무것도 안하고 무시 or kick 권한이 없다고 메세지 띄우기.
@@ -253,8 +232,8 @@ export class ChatGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody() {room_id, target_id}: ExecPayload
   ) {
-    const user_id = socket.handshake.query.user_id as string;
     try {
+      const user_id = this.getUserID(socket);
       if (await this.chatService.kickMember(room_id, user_id, target_id)) {
         const login_user = this.socketArray.getUserSocket(target_id);
         if (login_user) {
@@ -262,10 +241,14 @@ export class ChatGateway
         }
         return true;
       }
+      return false;
     } catch (e) {
-      console.log(e.message);
+      this.logger.log(e.message);
+      if (e.status) {
+        return false;
+      }
+      // 토큰만료는 status가 undefined이다. 따라서 이때 socket끊고 로그인페이지로 옮겨버리기
     }
-    return false;
   }
 
   @SubscribeMessage('ban-member')
@@ -273,17 +256,21 @@ export class ChatGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody() {room_id, target_id}: ExecPayload
   ) {
-    const user_id = socket.handshake.query.user_id as string;
     try {
+      const user_id = this.getUserID(socket);
       if (await this.handleKickMember(socket, {room_id, target_id})) {
         if (await this.chatService.banMember(room_id, user_id, target_id)) {
           return true;
         }
       }
+      return false;
     } catch (e) {
-      console.log(e.message);
+      this.logger.log(e.message);
+      if (e.status) {
+        return false;
+      }
+      // 토큰만료는 status가 undefined이다. 따라서 이때 socket끊고 로그인페이지로 옮겨버리기
     }
-    return false;
   }
 
   @SubscribeMessage('block-member')
@@ -291,12 +278,16 @@ export class ChatGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody() target_id: string
   ) {
-    const user_id = socket.handshake.query.user_id as string;
     try {
+      const user_id = this.getUserID(socket);
       await this.chatService.blockMember(user_id, target_id);
       socket.emit('block-list');
     } catch (e) {
-      console.log(e.message);
+      this.logger.log(e.message);
+      if (e.status) {
+        return false;
+      }
+      // 토큰만료는 status가 undefined이다. 따라서 이때 socket끊고 로그인페이지로 옮겨버리기
     }
   }
 
@@ -305,60 +296,17 @@ export class ChatGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody() target_id: string
   ) {
-    const user_id = socket.handshake.query.user_id as string;
     try {
+      const user_id = this.getUserID(socket);
       await this.chatService.unBlockMember(user_id, target_id);
       socket.emit('block-list');
     } catch (e) {
-      console.log(e.message);
-    }
-  }
-
-  @SubscribeMessage('update-user-info')
-  async handleUpdateUserInfo(@ConnectedSocket() socket: Socket) {
-    const user_id = socket.handshake.query.user_id as string;
-    try {
-      const user = await this.chatService.getUser(user_id);
-      socket.handshake.query.nickname = user.user_nickname;
-      socket.handshake.query.image = user.user_image;
-    } catch (e) {
-      console.log(e.message);
-    }
-  }
-
-  @SubscribeMessage('dm-message')
-  async handleDmMessage(
-    @ConnectedSocket() socket: Socket,
-    @MessageBody() {target_id, message}: {target_id: string; message: string}
-  ) {
-    const user_id = socket.handshake.query.user_id as string;
-    const nickname = socket.handshake.query.nickname as string;
-
-    try {
-      const ban_members = this.block.getBlockUsers(user_id);
-      if (ban_members && ban_members.has(target_id)) {
-        this.chatService.saveDirectMessage(
-          user_id,
-          target_id,
-          message,
-          target_id
-        );
-      } else {
-        const login_user = this.socketArray.getUserSocket(target_id);
-        if (login_user) {
-          socket.to(`${login_user.socket_id}`).emit('dm-message', {
-            message,
-            userId: user_id,
-            someoneId: target_id,
-            nickname,
-          });
-        }
-        this.chatService.saveDirectMessage(user_id, target_id, message);
+      this.logger.log(e.message);
+      if (e.status) {
+        return false;
       }
-    } catch (e) {
-      console.log(e.message);
+      // 토큰만료는 status가 undefined이다. 따라서 이때 socket끊고 로그인페이지로 옮겨버리기
     }
-    return {message, userId: user_id, someoneId: target_id, nickname};
   }
 
   @SubscribeMessage('chatroom-notification')
@@ -366,57 +314,35 @@ export class ChatGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody() {room_id, target_id}: ExecPayload
   ) {
-    const user_id = socket.handshake.query.user_id as string;
-    const target_socket_id = this.socketArray.getUserSocket(target_id);
-    socket
-      .to(`${target_socket_id.socket_id}`)
-      .emit('chatroom-notification', {room_id, user_id});
-    return true;
-  }
-
-  // state 0 = 오프라인, 1 = 온라인, 2 = 게임중
-  @SubscribeMessage('friend-list')
-  async handleFriendList(@ConnectedSocket() socket: Socket) {
-    const user_id = socket.handshake.query.user_id as string;
     try {
-      const friend_list = await this.chatService.getFriendList(user_id);
-      socket.emit('friend-list', friend_list);
+      const user_id = this.getUserID(socket);
+      const login_user = this.socketArray.getUserSocket(target_id);
+      socket
+        .to(`${login_user.socket_id}`)
+        .emit('chatroom-notification', {room_id, user_id});
       return true;
     } catch (e) {
-      console.log(e.message);
-      return false;
+      this.logger.log(e.message);
+      // 토큰만료는 status가 undefined이다. 따라서 이때 socket끊고 로그인페이지로 옮겨버리기
     }
   }
 
-  @SubscribeMessage('add-friend')
-  async handleAddFriend(
-    @ConnectedSocket() socket: Socket,
-    @MessageBody() friend_id: string
-  ) {
-    const user_id = socket.handshake.query.user_id as string;
-    try {
-      await this.chatService.addFriend(user_id, friend_id);
-      return await this.handleFriendList(socket);
-    } catch (e) {
-      console.log(e.message);
-      return false;
-    }
-  }
-
-  @SubscribeMessage('del-friend')
-  async handleDelFriend(
-    @ConnectedSocket() socket: Socket,
-    @MessageBody() friend_id: string
-  ) {
-    const user_id = socket.handshake.query.user_id as string;
-    try {
-      await this.chatService.delFriend(user_id, friend_id);
-      return await this.handleFriendList(socket);
-    } catch (e) {
-      console.log(e.message);
-      return false;
-    }
-  }
+  // user 프로필 바꿨을 때, socket qurey 업데이트. 유지할지 token에 다 담아서 사용할지 체크.
+  // @SubscribeMessage('update-user-info')
+  // async handleUpdateUserInfo(@ConnectedSocket() socket: Socket) {
+  //   try {
+  //     const user_id = this.getUserID(socket);
+  //     const user = await this.chatService.getUser(user_id);
+  //     socket.handshake.query.nickname = user.user_nickname;
+  //     socket.handshake.query.image = user.user_image;
+  //   } catch (e) {
+  //     this.logger.log(e.message);
+  //     if (e.status) {
+  //       return false;
+  //     }
+  //     // 토큰만료는 status가 undefined이다. 따라서 이때 socket끊고 로그인페이지로 옮겨버리기
+  //   }
+  // }
 
   getUserID = (socket: Socket): string => {
     const jwt: string = socket.handshake.auth.token;
