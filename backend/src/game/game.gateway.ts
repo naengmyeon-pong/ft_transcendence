@@ -521,19 +521,37 @@ export class GameGateway implements OnGatewayDisconnect {
     @MessageBody() inviteGameInfo: InviteGameInfo
   ) {
     const roomInfo: RoomInfo = gameRooms.get(inviteGameInfo.inviter_id);
-    const user = this.getUserID(socket);
+    const userID = this.getUserID(socket);
     socket.emit('game_info', {game_info: roomInfo.game_info});
-    if (user === inviteGameInfo.inviter_id) {
+    if (userID === inviteGameInfo.inviter_id) {
       socket.emit('enter_game');
       this.socketArray.getUserSocket(inviteGameInfo.inviter_id).is_gaming =
         true;
       this.socketArray.getUserSocket(inviteGameInfo.invitee_id).is_gaming =
         true;
+      this.removeUserInWaitlist(userID);
       const idx = inviteWaitList.indexOf(inviteGameInfo);
       inviteWaitList.splice(idx, 1);
       this.nsp.to(roomInfo.room_name).emit('start_game');
     }
   }
+
+  removeUserInWaitlist = (userID: string): boolean => {
+    let user_idx = -1;
+    for (let i = 0; i < ETypeMode.RANK_HARD; i++) {
+      waitUserList[i].forEach((value, key) => {
+        if (value.user_id === userID) {
+          user_idx = key;
+          return;
+        }
+      });
+      if (user_idx !== -1) {
+        waitUserList[i].splice(user_idx, 1);
+        return true;
+      }
+      return false;
+    }
+  };
 }
 
 const findTypeMode = (joinGameInfo: JoinGameInfo): ETypeMode => {
