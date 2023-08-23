@@ -44,8 +44,6 @@ const inviteWaitList: InviteGameInfo[] = [];
 
 export const gameRooms: Map<string, RoomInfo> = new Map();
 
-const gamingUsers: Set<string> = new Set<string>();
-
 @WebSocketGateway({
   namespace: 'pong',
   cors: {
@@ -92,11 +90,16 @@ export class GameGateway implements OnGatewayDisconnect {
         gameRooms.delete(roomName);
       }
     }
-    this.logger.log('게임 소켓 연결 해제');
+    try {
+      this.socketArray.removeSocketArray(userID);
+      this.logger.log(`${socket.id} 게임 소켓 연결 해제`);
+    } catch (e) {
+      this.logger.log(e.message);
+    }
   }
 
   isUserGaming(userID: string): boolean {
-    if (gamingUsers.has(userID)) {
+    if (this.socketArray.getUserSocket(userID).is_gaming === true) {
       return true;
     }
     return false;
@@ -115,7 +118,7 @@ export class GameGateway implements OnGatewayDisconnect {
     return userId;
   }
 
-  @SubscribeMessage('exit_game') // 유저가 페이지를 이탈한 경우 (임시 이벤트)
+  @SubscribeMessage('exit_game') // 유저가 게임중에 페이지를 이탈한 경우 (임시 이벤트)
   handleExitGame(@ConnectedSocket() socket: Socket) {
     const userID = this.getUserID(socket);
     const roomName: string | null = this.gameService.isForfeit(userID);
@@ -205,8 +208,8 @@ export class GameGateway implements OnGatewayDisconnect {
     ) {
       gameInfo.ball.speed *= 1.5;
     }
-    gamingUsers.add(firstUser.user_id);
-    gamingUsers.add(secondUser.user_id);
+    this.socketArray.getUserSocket(left_user).is_gaming = true;
+    this.socketArray.getUserSocket(right_user).is_gaming = true;
     this.nsp.to(roomName).emit('room_name', roomUserInfo);
     this.nsp.to(roomName).emit('game_info', {game_info: gameInfo});
   };
@@ -360,6 +363,10 @@ export class GameGateway implements OnGatewayDisconnect {
         clearInterval(roomInfo.interval);
         console.log('game over!');
         this.gameService.saveRecord(roomInfo, false, null);
+        this.socketArray.getUserSocket(roomInfo.users[0].user_id).is_gaming =
+          false;
+        this.socketArray.getUserSocket(roomInfo.users[1].user_id).is_gaming =
+          false;
         gameRooms.delete(roomInfo.room_name);
       }
     }, 1000 / 120);
@@ -479,10 +486,13 @@ export class GameGateway implements OnGatewayDisconnect {
   ) {
     const roomInfo: RoomInfo = gameRooms.get(inviteGameInfo.inviter_id);
     const user = this.getUserID(socket);
-    // socket.emit('room_name', inviteGameInfo.inviter_id);
     socket.emit('game_info', {game_info: roomInfo.game_info});
     if (user === inviteGameInfo.inviter_id) {
       socket.emit('enter_game');
+      this.socketArray.getUserSocket(inviteGameInfo.inviter_id).is_gaming =
+        true;
+      this.socketArray.getUserSocket(inviteGameInfo.invitee_id).is_gaming =
+        true;
       this.nsp.to(roomInfo.room_name).emit('start_game');
     }
   }
