@@ -16,7 +16,6 @@ import Typography from '@mui/material/Typography';
 import apiManager from '@/api/apiManager';
 import {profileState} from '@/states/profile';
 import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
-import {useProfileImage} from '@/hooks/useProfileImage';
 
 function TwoFactorAuth() {
   const router = useRouter();
@@ -50,7 +49,10 @@ function TwoFactorAuth() {
     } catch (error) {
       console.log(error);
       if (axios.isAxiosError(error)) {
-        openAlertSnackbar({message: error.response?.data.message});
+        const status = error.response?.status;
+        if (status === HTTP_STATUS.UNAUTHORIZED) {
+          openAlertSnackbar({message: '인증 번호가 일치하지 않습니다.'});
+        }
       }
     }
   };

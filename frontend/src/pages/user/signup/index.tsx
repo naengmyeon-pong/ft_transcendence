@@ -1,10 +1,10 @@
 'use client';
 
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import {useRouter} from 'next/router';
 
 import axios from 'axios';
-const HTTP_STATUS = require('http-status');
+import * as HTTP_STATUS from 'http-status';
 
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
@@ -25,6 +25,11 @@ import {
   isValidPasswordLength,
   isValidPasswordRule,
 } from '@/utils/user';
+import {
+  isTokenExpired,
+  getExpirationTimeInMilliseconds,
+  getRemainedTime,
+} from '@/utils/token';
 
 export default function Signup() {
   const router = useRouter();
@@ -37,9 +42,11 @@ export default function Signup() {
   const [nickname, setNickname] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [isUniqueNickname, setIsUniqueNickname] = useState<boolean>(false);
+  const [remainedTime, setRemainedTime] = useState<string>('');
 
   const handleNicknameInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNickname(e.target.value);
+    setIsUniqueNickname(false);
   };
 
   const handlePassword = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -112,7 +119,6 @@ export default function Signup() {
 
     console.log(formData);
     try {
-      // TODO: token 유효기간이 지나면 다시 회원가입 버튼 누르도록 리다이렉션 하기
       const response = await apiManager.post('/signup', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -137,10 +143,32 @@ export default function Signup() {
     }
   };
 
+  useEffect(() => {
+    const expirationTime = getExpirationTimeInMilliseconds();
+    const intervalId = setInterval(() => {
+      if (isTokenExpired(expirationTime)) {
+        clearInterval(intervalId);
+        openAlertSnackbar({message: '회원가입 시간이 만료되었습니다.'});
+        router.push('/user/login');
+        return;
+      }
+      const formattedTime: string = getRemainedTime(expirationTime);
+      setRemainedTime(formattedTime);
+    }, 1000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, []);
+
   return (
     <>
       <Typography component="h1" variant="h5">
         회원가입
+      </Typography>
+
+      <Typography sx={{mt: 2, mb: 2, color: 'grey'}}>
+        회원가입 만료 시간 {remainedTime}
       </Typography>
 
       <Box component="form" onSubmit={handleSubmit} noValidate sx={{mt: 1}}>
@@ -288,8 +316,8 @@ export default function Signup() {
           disabled={
             password !== confirmPassword ||
             isUniqueNickname === false ||
-            (isValidPasswordLength(password) === false &&
-              isValidPasswordRule(password) === false)
+            isValidPasswordLength(password) === false ||
+            isValidPasswordRule(password) === false
           }
           fullWidth
           type="submit"
@@ -299,6 +327,9 @@ export default function Signup() {
           회원가입
         </Button>
       </Box>
+      <Button fullWidth variant="outlined" href="/user/login">
+        메인으로 돌아가기
+      </Button>
     </>
   );
 }

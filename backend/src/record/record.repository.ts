@@ -25,7 +25,12 @@ export class RecordRepository extends Repository<Record> {
       .getMany();
   }
 
-  async getDetailGames(userID: string, pageSize: number, skip: number) {
+  async getDetailGames(
+    userID: string,
+    typeID: number,
+    pageSize: number,
+    skip: number
+  ) {
     return this.createQueryBuilder('record')
       .addSelect([
         'winner.user_id',
@@ -39,7 +44,10 @@ export class RecordRepository extends Repository<Record> {
       ])
       .leftJoin('record.winner', 'winner')
       .leftJoin('record.loser', 'loser')
-      .where('record.winnerId = :userID OR record.loserId = :userID', {userID})
+      .where(
+        'record.gameTypeId = :typeID AND (record.winnerId = :userID OR record.loserId = :userID)',
+        {userID, typeID}
+      )
       .orderBy('record.id', 'DESC')
       .take(pageSize)
       .skip(skip)

@@ -1,8 +1,10 @@
 'use client';
 
 import {useRouter} from 'next/router';
-import React, {ComponentType, useState, useEffect} from 'react';
+import {ComponentType, useEffect} from 'react';
+
 import {isValidJwtToken} from '@/api/auth';
+import {getJwtToken} from '@/utils/token';
 
 interface WithAuthProps {
   token: string | null;
@@ -16,7 +18,9 @@ const withAuth = <P extends WithAuthProps>(
 
     useEffect(() => {
       const verifyToken = async () => {
-        if (await isValidJwtToken()) {
+        if (getJwtToken() === null) {
+          router.push('/user/login');
+        } else if (await isValidJwtToken()) {
           router.push('/main/game');
         } else {
           sessionStorage.removeItem('accessToken');

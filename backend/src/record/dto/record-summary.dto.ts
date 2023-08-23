@@ -1,4 +1,4 @@
-export class SimpleRecordDto {
+export class RecordSummaryDto {
   win: number;
   lose: number;
   rank_score: number;

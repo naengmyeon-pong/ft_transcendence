@@ -20,11 +20,11 @@ export class Record {
   @Column()
   loserId: string;
 
-  @ManyToOne(() => User, user_id => user_id.win_records)
+  @ManyToOne(() => User, user_id => user_id.win_records, {onDelete: 'CASCADE'})
   @JoinColumn({name: 'winnerId'})
   winner: string;
 
-  @ManyToOne(() => User, user_id => user_id.lose_records)
+  @ManyToOne(() => User, user_id => user_id.lose_records, {onDelete: 'CASCADE'})
   @JoinColumn({name: 'loserId'})
   loser: string;
 
@@ -37,11 +37,11 @@ export class Record {
   @Column({default: false})
   is_forfeit: boolean;
 
-  @ManyToOne(() => Mode, mode_id => mode_id.records, {eager: false})
-  game_mode: number;
-
   @ManyToOne(() => Type, type_id => type_id.records, {eager: false})
   game_type: number;
+
+  @ManyToOne(() => Mode, mode_id => mode_id.records, {eager: false})
+  game_mode: number;
 
   @Column({type: 'timestamp', default: () => 'CURRENT_TIMESTAMP'})
   date: Date;

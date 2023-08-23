@@ -5,7 +5,7 @@ import {useRouter} from 'next/router';
 import type {InferGetServerSidePropsType, GetServerSideProps} from 'next';
 
 import axios from 'axios';
-import {useRecoilState} from 'recoil';
+import {useRecoilValue} from 'recoil';
 import * as HTTP_STATUS from 'http-status';
 
 import CircularProgress from '@mui/material/CircularProgress';
@@ -27,7 +27,7 @@ function AuthPage({
   const router = useRouter();
   const {openAlertSnackbar} = useAlertSnackbar();
   const {setUserId} = useProfileImage();
-  const [passwordResetDataState, _] = useRecoilState(passwordResetState);
+  const passwordReset = useRecoilValue(passwordResetState);
 
   useEffect(() => {
     (async () => {
@@ -37,26 +37,34 @@ function AuthPage({
         return;
       }
 
-      console.log(passwordResetDataState);
+      console.log(passwordReset);
       try {
         const response = await apiManager.get(`/signup/auth?code=${code}`);
 
         if (response.status === HTTP_STATUS.OK) {
           const {is_already_signup, signup_jwt, user_id} = response.data;
+          setUserId(user_id);
           if (is_already_signup) {
-            if (passwordResetDataState === false) {
+            if (passwordReset === true) {
+              sessionStorage.setItem('accessToken', signup_jwt);
+              router.push('/user/reset-password');
+            } else {
               openAlertSnackbar({
                 severity: 'info',
                 message: '이미 회원가입이 되어있습니다.',
               });
               router.push('/user/login');
-            } else {
-              router.push('/user/reset-password');
             }
           } else {
-            sessionStorage.setItem('accessToken', signup_jwt);
-            setUserId(user_id);
-            router.push('/user/signup');
+            if (passwordReset === true) {
+              openAlertSnackbar({
+                message: '회원가입이 되어있지 않습니다.',
+              });
+              router.push('/user/login');
+            } else {
+              sessionStorage.setItem('accessToken', signup_jwt);
+              router.push('/user/signup');
+            }
           }
         }
       } catch (error) {
@@ -65,6 +73,10 @@ function AuthPage({
             const {message} = error.response.data;
             openAlertSnackbar({
               message,
+            });
+          } else if (error.code === 'ERR_NETWORK') {
+            openAlertSnackbar({
+              message: '서버에 문제가 발생했습니다. 잠시 후 다시 시도해주세요.',
             });
           }
           router.push('/user/login');

@@ -1,5 +1,5 @@
-import {Injectable} from '@nestjs/common';
-import {Socket} from 'socket.io';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { Socket } from 'socket.io';
 
 interface UserSocket {
   user_id: string;
@@ -37,4 +37,13 @@ export class SocketArray {
     };
     this.socketArray.set(userSocket.user_id, userInfo);
   }
+
+  getUser = (socket: Socket): string => {
+    this.socketArray.forEach((value, key) => {
+      if (value.socket_id === socket.id) {
+        return key;
+      }
+    });
+    throw new BadRequestException('Socket not found in User list.');
+  };
 }

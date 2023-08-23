@@ -1,5 +1,5 @@
 import axios, {AxiosInstance} from 'axios';
-import {getJwtToken} from '@/api/auth';
+import {getJwtToken} from '@/utils/token';
 
 const apiManager: AxiosInstance = axios.create({
   baseURL: `${process.env.NEXT_PUBLIC_BACKEND_SERVER}`,

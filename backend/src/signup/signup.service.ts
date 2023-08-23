@@ -3,6 +3,8 @@ import {
   InternalServerErrorException,
   BadRequestException,
   UnauthorizedException,
+  NotFoundException,
+  HttpStatus,
 } from '@nestjs/common';
 import axios from 'axios';
 import {InjectRepository} from '@nestjs/typeorm';
@@ -60,7 +62,6 @@ export class SignUpService {
           user_id: response.data.login,
         });
         await this.userAuthRepository.save(userAuth);
-
         const payload: Payload = {
           user_id: userAuth.user_id,
         };
@@ -77,11 +78,18 @@ export class SignUpService {
         throw new InternalServerErrorException();
       }
     } else {
+      const userAuth: IsUserAuth = await this.userAuthRepository.findOneBy({
+        user_id: response.data.login,
+      });
+      const payload: Payload = {
+        user_id: userAuth.user_id,
+      };
+      const signupJwt = this.jwtService.sign(payload);
       const ret = {
         user_id: response.data.login,
         user_image: response.data.image.link,
         is_already_signup: true,
-        signup_jwt: null,
+        signup_jwt: signupJwt,
       };
       return JSON.stringify(ret);
     }
@@ -145,11 +153,11 @@ export class SignUpService {
         // user_pw: hashedPassword,
         user_nickname,
         user_image: file
-          ? file.path.substr(11)
+          ? `${process.env.NEXT_PUBLIC_BACKEND_SERVER}` + file.path.substr(11)
           : `${process.env.NEXT_PUBLIC_BACKEND_SERVER}/images/logo.jpeg`,
       });
       await this.userRepository.save(user);
-      await this.userAuthRepository.delete({user_id: user.user_id});
+      // await this.userAuthRepository.delete({user_id: user.user_id});
     } catch (error) {
       throw new InternalServerErrorException();
     }
@@ -188,4 +196,18 @@ export class SignUpService {
   //     throw new InternalServerErrorException();
   //   }
   // }
+
+  async changePW(user_id: string, user_pw: string): Promise<void> {
+    const user = await this.userRepository.findOneBy({user_id});
+    if (user) {
+      //TODO: 주석 제거하기
+      // const salt = await bcrypt.genSalt();
+      // const hashedPassword = await bcrypt.hash(userAuthDto.user_pw, salt);
+      // user.user_pw = hashedPassword;
+      user.user_pw = user_pw;
+      await this.userRepository.save(user);
+    } else {
+      throw new NotFoundException(`${user_id} is not our member.`);
+    }
+  }
 }

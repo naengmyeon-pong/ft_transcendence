@@ -25,6 +25,7 @@ export class UserDto {
   })
   @IsNotEmpty()
   @IsString()
+  // TODO: 나중에 주석 풀기
   // @MinLength(8)
   // @MaxLength(20)
   // @Matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^\d\sa-zA-Z])[\S]{8,}$/, {

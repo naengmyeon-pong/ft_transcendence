@@ -57,6 +57,7 @@ export class UserController {
   }
 
   @Post('/changePw')
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({
     summary: '비밀번호 변경 API',
     description: '기존 암호를 사용자로부터 전달받은 새로운 암호로 변경한다.',
@@ -73,8 +74,11 @@ export class UserController {
     status: 404,
     description: '유저 정보가 존재하지 않는 경우',
   })
-  changeUserPw(@Body(ValidationPipe) userAuthDto: UserAuthDto): Promise<User> {
-    return this.userService.changePW(userAuthDto);
+  changeUserPw(
+    @Request() req: any,
+    @Body(ValidationPipe) userDto: UpdateUserDto
+  ): Promise<void> {
+    return this.userService.changePW(req.user.user_id, userDto);
   }
 
   @Post('/signin')
