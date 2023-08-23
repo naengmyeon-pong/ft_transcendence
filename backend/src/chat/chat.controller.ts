@@ -24,7 +24,7 @@ import {PartialRoomDto} from './dto/partial-room.dto';
 import {UserDto} from '@/user/dto/user.dto';
 
 @Controller('chatroom')
-// @UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'))
 @ApiTags('Chat Room')
 export class ChatController {
   constructor(private chatService: ChatService) {}

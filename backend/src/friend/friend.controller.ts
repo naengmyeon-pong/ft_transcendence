@@ -1,8 +1,10 @@
-import {Controller, Get, Query} from '@nestjs/common';
+import {Controller, Get, Query, UseGuards} from '@nestjs/common';
 import {FriendService} from './friend.service';
 import {ApiOperation, ApiQuery, ApiResponse} from '@nestjs/swagger';
+import {AuthGuard} from '@nestjs/passport';
 
 @Controller('friend')
+@UseGuards(AuthGuard('jwt'))
 export class FriendController {
   constructor(private friendService: FriendService) {}
 

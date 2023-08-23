@@ -92,13 +92,12 @@ function MainLayout({children}: MainLayoutProps) {
         setDmList(rep.data);
         setInitMainLayout(true);
         // console.log('dmList: ', rep);
-        socketIo.on('disconnect', reason => {
+        socketIo.on('token-expire', reason => {
           console.log('reason: ', reason);
           // 서버가 연결을 끊은 경우 (ex, JWT 만료)
-          if (reason === 'io server disconnect') {
-            sessionStorage.clear();
-            router.push('/');
-          }
+          sessionStorage.clear();
+          router.push('/');
+          socketIo.disconnect();
         });
       } catch (error) {
         router.push('/');

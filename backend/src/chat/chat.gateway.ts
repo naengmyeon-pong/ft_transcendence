@@ -56,9 +56,8 @@ export class ChatGateway implements OnGatewayInit {
     @ConnectedSocket() socket: Socket,
     @MessageBody() {room_id, message}: MessagePayload
   ) {
+    const user_id = this.getUserID(socket);
     try {
-      const user_id = this.getUserID(socket);
-
       // 토큰안에 nickname, image도 넣을까?
       // const user_id = socket.handshake.query.user_id as string;
       const user_nickname = socket.handshake.query.nickname as string;
@@ -91,8 +90,8 @@ export class ChatGateway implements OnGatewayInit {
     @ConnectedSocket() socket: Socket,
     @MessageBody() room_id: number
   ): Promise<boolean> {
+    const user_id = this.getUserID(socket);
     try {
-      const user_id = this.getUserID(socket);
       if (await this.chatService.joinRoom(room_id, user_id)) {
         socket.join(`${room_id}`);
         socket.to(`${room_id}`).emit('message', {
@@ -110,10 +109,7 @@ export class ChatGateway implements OnGatewayInit {
       }
     } catch (e) {
       this.logger.log(e.message);
-      if (e.status) {
-        return false;
-      }
-      // 토큰만료는 status가 undefined이다. 따라서 이때 socket끊고 로그인페이지로 옮겨버리기
+      return false;
     }
   }
 
@@ -122,8 +118,8 @@ export class ChatGateway implements OnGatewayInit {
     @ConnectedSocket() socket: Socket,
     @MessageBody('room_id') room_id: number
   ) {
+    const user_id = this.getUserID(socket);
     try {
-      const user_id = this.getUserID(socket);
       const leave = await this.chatService.leaveRoom(room_id, user_id);
       socket.leave(`${room_id}`);
 
@@ -140,10 +136,7 @@ export class ChatGateway implements OnGatewayInit {
       return true;
     } catch (e) {
       this.logger.log(e.message);
-      if (e.status) {
-        return false;
-      }
-      // 토큰만료는 status가 undefined이다. 따라서 이때 socket끊고 로그인페이지로 옮겨버리기
+      return false;
     }
   }
 
@@ -152,8 +145,8 @@ export class ChatGateway implements OnGatewayInit {
     @ConnectedSocket() socket: Socket,
     @MessageBody() {room_id, target_id}: ExecPayload
   ) {
+    const user_id = this.getUserID(socket);
     try {
-      const user_id = this.getUserID(socket);
       if (await this.chatService.addToAdmin(room_id, user_id, target_id)) {
         this.nsp.to(`${room_id}`).emit('room-member', {
           members: await this.chatService.getRoomMembers(room_id),
@@ -163,10 +156,7 @@ export class ChatGateway implements OnGatewayInit {
       return false;
     } catch (e) {
       this.logger.log(e.message);
-      if (e.status) {
-        return false;
-      }
-      // 토큰만료는 status가 undefined이다. 따라서 이때 socket끊고 로그인페이지로 옮겨버리기
+      return false;
     }
   }
 
@@ -175,8 +165,8 @@ export class ChatGateway implements OnGatewayInit {
     @ConnectedSocket() socket: Socket,
     @MessageBody() {room_id, target_id}: ExecPayload
   ) {
+    const user_id = this.getUserID(socket);
     try {
-      const user_id = this.getUserID(socket);
       if (await this.chatService.delAdmin(room_id, user_id, target_id)) {
         this.nsp.to(`${room_id}`).emit('room-member', {
           members: await this.chatService.getRoomMembers(room_id),
@@ -186,10 +176,7 @@ export class ChatGateway implements OnGatewayInit {
       return false;
     } catch (e) {
       this.logger.log(e.message);
-      if (e.status) {
-        return false;
-      }
-      // 토큰만료는 status가 undefined이다. 따라서 이때 socket끊고 로그인페이지로 옮겨버리기
+      return false;
     }
   }
 
@@ -198,8 +185,8 @@ export class ChatGateway implements OnGatewayInit {
     @ConnectedSocket() socket: Socket,
     @MessageBody() {room_id, target_id, mute_time}: MutePayload
   ) {
+    const user_id = this.getUserID(socket);
     try {
-      const user_id = this.getUserID(socket);
       if (mute_time) {
         if (
           await this.chatService.muteMember(
@@ -219,10 +206,7 @@ export class ChatGateway implements OnGatewayInit {
       return false;
     } catch (e) {
       this.logger.log(e.message);
-      if (e.status) {
-        return false;
-      }
-      // 토큰만료는 status가 undefined이다. 따라서 이때 socket끊고 로그인페이지로 옮겨버리기
+      return false;
     }
   }
 
@@ -232,8 +216,8 @@ export class ChatGateway implements OnGatewayInit {
     @ConnectedSocket() socket: Socket,
     @MessageBody() {room_id, target_id}: ExecPayload
   ) {
+    const user_id = this.getUserID(socket);
     try {
-      const user_id = this.getUserID(socket);
       if (await this.chatService.kickMember(room_id, user_id, target_id)) {
         const login_user = this.socketArray.getUserSocket(target_id);
         if (login_user) {
@@ -244,10 +228,7 @@ export class ChatGateway implements OnGatewayInit {
       return false;
     } catch (e) {
       this.logger.log(e.message);
-      if (e.status) {
-        return false;
-      }
-      // 토큰만료는 status가 undefined이다. 따라서 이때 socket끊고 로그인페이지로 옮겨버리기
+      return false;
     }
   }
 
@@ -256,8 +237,8 @@ export class ChatGateway implements OnGatewayInit {
     @ConnectedSocket() socket: Socket,
     @MessageBody() {room_id, target_id}: ExecPayload
   ) {
+    const user_id = this.getUserID(socket);
     try {
-      const user_id = this.getUserID(socket);
       if (await this.handleKickMember(socket, {room_id, target_id})) {
         if (await this.chatService.banMember(room_id, user_id, target_id)) {
           return true;
@@ -266,10 +247,7 @@ export class ChatGateway implements OnGatewayInit {
       return false;
     } catch (e) {
       this.logger.log(e.message);
-      if (e.status) {
-        return false;
-      }
-      // 토큰만료는 status가 undefined이다. 따라서 이때 socket끊고 로그인페이지로 옮겨버리기
+      return false;
     }
   }
 
@@ -278,16 +256,13 @@ export class ChatGateway implements OnGatewayInit {
     @ConnectedSocket() socket: Socket,
     @MessageBody() target_id: string
   ) {
+    const user_id = this.getUserID(socket);
     try {
-      const user_id = this.getUserID(socket);
       await this.chatService.blockMember(user_id, target_id);
       socket.emit('block-list');
     } catch (e) {
       this.logger.log(e.message);
-      if (e.status) {
-        return false;
-      }
-      // 토큰만료는 status가 undefined이다. 따라서 이때 socket끊고 로그인페이지로 옮겨버리기
+      return false;
     }
   }
 
@@ -296,16 +271,13 @@ export class ChatGateway implements OnGatewayInit {
     @ConnectedSocket() socket: Socket,
     @MessageBody() target_id: string
   ) {
+    const user_id = this.getUserID(socket);
     try {
-      const user_id = this.getUserID(socket);
       await this.chatService.unBlockMember(user_id, target_id);
       socket.emit('block-list');
     } catch (e) {
       this.logger.log(e.message);
-      if (e.status) {
-        return false;
-      }
-      // 토큰만료는 status가 undefined이다. 따라서 이때 socket끊고 로그인페이지로 옮겨버리기
+      return false;
     }
   }
 
@@ -314,17 +286,12 @@ export class ChatGateway implements OnGatewayInit {
     @ConnectedSocket() socket: Socket,
     @MessageBody() {room_id, target_id}: ExecPayload
   ) {
-    try {
-      const user_id = this.getUserID(socket);
-      const login_user = this.socketArray.getUserSocket(target_id);
-      socket
-        .to(`${login_user.socket_id}`)
-        .emit('chatroom-notification', {room_id, user_id});
-      return true;
-    } catch (e) {
-      this.logger.log(e.message);
-      // 토큰만료는 status가 undefined이다. 따라서 이때 socket끊고 로그인페이지로 옮겨버리기
-    }
+    const user_id = this.getUserID(socket);
+    const login_user = this.socketArray.getUserSocket(target_id);
+    socket
+      .to(`${login_user.socket_id}`)
+      .emit('chatroom-notification', {room_id, user_id});
+    return true;
   }
 
   // user 프로필 바꿨을 때, socket qurey 업데이트. 유지할지 token에 다 담아서 사용할지 체크.
@@ -345,10 +312,15 @@ export class ChatGateway implements OnGatewayInit {
   // }
 
   getUserID = (socket: Socket): string => {
-    const jwt: string = socket.handshake.auth.token;
-    const decodedToken = this.jwtService.verify(jwt, {
-      secret: process.env.SIGNIN_JWT_SECRET_KEY,
-    });
-    return decodedToken.user_id;
+    try {
+      const jwt: string = socket.handshake.auth.token;
+      const decodedToken = this.jwtService.verify(jwt, {
+        secret: process.env.SIGNIN_JWT_SECRET_KEY,
+      });
+      return decodedToken.user_id;
+    } catch (e) {
+      this.logger.log('token expire');
+      socket.emit('token-expire');
+    }
   };
 }

@@ -1,5 +1,5 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { Socket } from 'socket.io';
+import {BadRequestException, Injectable} from '@nestjs/common';
+import {Socket} from 'socket.io';
 
 interface UserSocket {
   user_id: string;

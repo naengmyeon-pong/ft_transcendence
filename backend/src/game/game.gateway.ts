@@ -80,7 +80,7 @@ export class GameGateway implements OnGatewayDisconnect {
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
-    const userID = this.getUserID(socket);
+    const userID = socket.handshake.query.user_id as string;
     const roomName: string | null = this.gameService.isForfeit(userID);
     if (roomName) {
       const roomInfo = gameRooms.get(roomName);
@@ -315,11 +315,16 @@ export class GameGateway implements OnGatewayDisconnect {
   };
 
   getUserID = (socket: Socket): string => {
-    const jwt: string = socket.handshake.auth.token;
-    const decodedToken = this.jwtService.verify(jwt, {
-      secret: process.env.SIGNIN_JWT_SECRET_KEY,
-    });
-    return decodedToken.user_id;
+    try {
+      const jwt: string = socket.handshake.auth.token;
+      const decodedToken = this.jwtService.verify(jwt, {
+        secret: process.env.SIGNIN_JWT_SECRET_KEY,
+      });
+      return decodedToken.user_id;
+    } catch (e) {
+      this.logger.log('token expire');
+      socket.emit('token-expire');
+    }
   };
 
   /*

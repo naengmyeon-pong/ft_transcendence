@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   HttpCode,
   HttpStatus,
   Injectable,
@@ -17,6 +18,7 @@ import * as bcrypt from 'bcryptjs';
 import {Payload} from './payload';
 import {UpdateUserDto} from './dto/update-user.dto';
 import * as fs from 'fs';
+import {SocketArray} from '@/global-variable/global.socket';
 
 @Injectable()
 export class UserService {
@@ -24,7 +26,8 @@ export class UserService {
     // @InjectRepository(UserRepository)
     private userRepository: UserRepository,
     private userAuthRepository: IsUserAuthRepository,
-    private jwtService: JwtService
+    private jwtService: JwtService,
+    private socketArray: SocketArray
   ) {}
 
   async findUser(user_id: string): Promise<User> {
@@ -61,6 +64,9 @@ export class UserService {
 
   // 로그인할 때 user pw 암호화 하지않게
   async signIn(userAuthDto: UserAuthDto): Promise<string | number> {
+    if (this.socketArray.getUserSocket(userAuthDto.user_id)) {
+      throw new ConflictException('Already login user!');
+    }
     const user = await this.findUser(userAuthDto.user_id);
     if (user && userAuthDto.user_pw === user.user_pw) {
       // if (user && (await bcrypt.compare(userAuthDto.user_pw, user.user_pw))) {
