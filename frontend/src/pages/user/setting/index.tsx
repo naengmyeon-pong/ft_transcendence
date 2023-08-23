@@ -23,6 +23,7 @@ import {useProfileImage} from '@/hooks/useProfileImage';
 import {useGlobalDialog} from '@/hooks/useGlobalDialog';
 import ImageUpload from '@/components/signup/ImageUpload';
 import {isValidNicknameLength} from '@/utils/user';
+import Link from 'next/link';
 
 const HTTP_STATUS = require('http-status');
 
@@ -32,7 +33,6 @@ function Setting() {
     profileImageDataState: {userId, uploadFile},
   } = useProfileImage();
   const [profileDataState, setProfileDataState] = useRecoilState(profileState);
-
   const {openGlobalDialog, closeGlobalDialog} = useGlobalDialog();
   const {openAlertSnackbar} = useAlertSnackbar();
   const [nickname, setNickname] = useState<string>('');
@@ -62,7 +62,7 @@ function Setting() {
       } else {
         setIsUniqueNickname(false);
       }
-      console.log(response.data);
+
       openGlobalDialog({
         title: '중복 확인',
         content: (
@@ -122,19 +122,18 @@ function Setting() {
 
     console.log(formData);
     try {
-      const response = await apiManager.post('/signup', formData, {
+      const response = await apiManager.patch('/user/update', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
       console.log(response);
       if (HTTP_STATUS.CREATED) {
-        router.push('/user/2fa');
         openAlertSnackbar({
-          message: '회원가입이 정상적으로 완료되었습니다.',
+          message: '회원정보 수정이 완료되었습니다.',
           severity: 'success',
         });
-        router.push('/user/login');
+        router.push('/main/game');
       }
     } catch (error) {
       console.log(error);
@@ -147,20 +146,6 @@ function Setting() {
   const handleCancel = () => {
     router.push('/main/game');
   };
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await apiManager.get('/user');
-        setProfileDataState(response.data);
-      } catch (error) {
-        openAlertSnackbar({message: '에러가 발생했습니다. 다시 시도해주세요.'});
-        console.log(error);
-      }
-    };
-
-    fetchUser();
-  }, []);
 
   return (
     <>
@@ -241,7 +226,9 @@ function Setting() {
             {is_2fa_enabled ? (
               <Button onClick={handle2FAoff}>제거</Button>
             ) : (
-              <Button href="/user/2fa">설정</Button>
+              <Link href="/user/2fa">
+                <Button>설정</Button>
+              </Link>
             )}
           </Grid>
         </Grid>
