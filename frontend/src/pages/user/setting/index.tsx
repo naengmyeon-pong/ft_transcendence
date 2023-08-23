@@ -11,8 +11,9 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
-import {List, ListItem, ListItemIcon, ListItemText} from '@mui/material';
-import CheckIcon from '@mui/icons-material/Check';
+import ArrowRightIcon from '@mui/icons-material/ArrowRight';
+import IconButton from '@mui/material/IconButton';
+import LockIcon from '@mui/icons-material/Lock';
 import DialogContentText from '@mui/material/DialogContentText';
 
 import apiManager from '@/api/apiManager';
@@ -21,11 +22,7 @@ import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
 import {useProfileImage} from '@/hooks/useProfileImage';
 import {useGlobalDialog} from '@/hooks/useGlobalDialog';
 import ImageUpload from '@/components/signup/ImageUpload';
-import {
-  isValidNicknameLength,
-  isValidPasswordLength,
-  isValidPasswordRule,
-} from '@/utils/user';
+import {isValidNicknameLength} from '@/utils/user';
 
 const HTTP_STATUS = require('http-status');
 
@@ -39,22 +36,12 @@ function Setting() {
   const {openGlobalDialog, closeGlobalDialog} = useGlobalDialog();
   const {openAlertSnackbar} = useAlertSnackbar();
   const [nickname, setNickname] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [isUniqueNickname, setIsUniqueNickname] = useState<boolean>(false);
 
   const {is_2fa_enabled} = profileDataState;
 
   const handleNicknameInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNickname(e.target.value);
-  };
-
-  const handlePassword = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPassword(e.target.value);
-  };
-
-  const handleConfirmPassword = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setConfirmPassword(e.target.value);
   };
 
   const handleDuplicatedNickname = async () => {
@@ -222,17 +209,27 @@ function Setting() {
             </Button>
           </Grid>
 
-          <Grid item xs={12}>
-            <Button href="/user/reset-password">비밀번호 재설정</Button>
+          <Grid item container xs={10} sx={{mt: 2, mb: 2}}>
+            <Grid item xs={1}>
+              <LockIcon />
+            </Grid>
+            <Grid item xs={9}>
+              <Typography>비밀번호 재설정</Typography>
+            </Grid>
+          </Grid>
+          <Grid item xs={2}>
+            <IconButton
+              href="/user/reset-password"
+              aria-label="password-change"
+            >
+              <ArrowRightIcon />
+            </IconButton>
           </Grid>
 
           <Grid item xs={10}>
             <Typography variant="body1" component="div">
               2차 인증 활성화
-              <Typography
-                variant="span"
-                style={{color: is_2fa_enabled ? 'green' : 'grey'}}
-              >
+              <Typography style={{color: is_2fa_enabled ? 'green' : 'grey'}}>
                 ({is_2fa_enabled ? 'ON' : 'OFF'})
               </Typography>
             </Typography>
