@@ -1,7 +1,15 @@
 import * as jsonwebtoken from 'jsonwebtoken';
 
+export const getJwtToken = (): string | null => {
+  const jwtToken: string | null = sessionStorage.getItem('accessToken');
+  if (jwtToken === null) {
+    return null;
+  }
+  return jwtToken;
+};
+
 export const getExpirationTimeInMilliseconds = () => {
-  const token = sessionStorage.getItem('accessToken');
+  const token = getJwtToken();
   if (token === null) {
     return 0;
   }
