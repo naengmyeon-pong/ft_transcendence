@@ -20,11 +20,11 @@ export class Record {
   @Column()
   loserId: string;
 
-  @ManyToOne(() => User, user_id => user_id.win_records)
+  @ManyToOne(() => User, user_id => user_id.win_records, {onDelete: 'CASCADE'})
   @JoinColumn({name: 'winnerId'})
   winner: string;
 
-  @ManyToOne(() => User, user_id => user_id.lose_records)
+  @ManyToOne(() => User, user_id => user_id.lose_records, {onDelete: 'CASCADE'})
   @JoinColumn({name: 'loserId'})
   loser: string;
 
