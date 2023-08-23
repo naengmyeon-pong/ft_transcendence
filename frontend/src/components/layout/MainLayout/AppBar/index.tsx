@@ -1,11 +1,12 @@
 'use client';
-import React from 'react';
+import React, {useCallback, useContext, useEffect} from 'react';
 import {MouseEvent, useState} from 'react';
 import Link from 'next/link';
 import logo from '@/public/logo.jpeg';
 import {
   AppBar,
   Avatar,
+  Badge,
   Box,
   Button,
   IconButton,
@@ -16,10 +17,11 @@ import {
   Typography,
   createTheme,
 } from '@mui/material';
-
+import NotificationsIcon from '@mui/icons-material/Notifications';
 import MenuIcon from '@mui/icons-material/Menu';
-import AlarmEvent from './Alarm';
-import LogOut from './LogOut';
+import {Notificate} from '@/types/UserContext';
+import {UserContext} from './Context';
+import {useRouter} from 'next/router';
 
 const customTheme = createTheme({
   components: {
@@ -43,6 +45,15 @@ function CustomAppBar() {
   const [anchorElOther, setAnchorElOther] = useState<null | HTMLElement>(null);
   const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
 
+  const [notificate_menu, setNotificateMenu] =
+    React.useState<null | HTMLElement>(null);
+  const notificate_open = Boolean(notificate_menu);
+  const [notificates, setNotificates] = useState<Notificate[]>([]);
+  const [read_notificate, setReadNotificate] = useState<boolean>(false);
+
+  const {chat_socket, setConvertPage} = useContext(UserContext);
+  const router = useRouter();
+
   const handleOpenOtherMenu = (event: MouseEvent<HTMLElement>) => {
     setAnchorElOther(event.currentTarget);
   };
@@ -57,6 +68,34 @@ function CustomAppBar() {
   const handleCloseUserMenu = () => {
     setAnchorElUser(null);
   };
+
+  useEffect(() => {
+    function handleChatNotification(rep: Notificate) {
+      setNotificates(preNotis => [...preNotis, rep]);
+      setReadNotificate(true);
+    }
+    chat_socket?.on('chatroom-notification', handleChatNotification);
+  }, []);
+
+  function handleNotificate(event: MouseEvent<HTMLElement>) {
+    setReadNotificate(false);
+    setNotificateMenu(event.currentTarget);
+  }
+  function handleNotificateMenuClose() {
+    setNotificateMenu(null);
+  }
+
+  function handleSendRoom(row: Notificate, index: number) {
+    notificates.splice(index, 1);
+    setConvertPage(Number(row.room_id));
+    router.push('/main/chat');
+  }
+
+  const logOut = useCallback(() => {
+    sessionStorage.removeItem('accessToken');
+    chat_socket?.disconnect();
+    router.push('/');
+  }, []);
 
   return (
     <ThemeProvider theme={customTheme}>
@@ -181,9 +220,51 @@ function CustomAppBar() {
             </Link>
           </Box>
           <Box sx={{flexGrow: 0, display: {xs: 'none', sm: 'flex'}}}>
-            <AlarmEvent />
+            <IconButton
+              onClick={handleNotificate}
+              aria-label="more"
+              id="long-button"
+              aria-controls={notificate_open ? 'long-menu' : undefined}
+              aria-expanded={notificate_open ? 'true' : undefined}
+              aria-haspopup="true"
+            >
+              {read_notificate ? (
+                <Badge
+                  overlap="circular"
+                  color="error"
+                  anchorOrigin={{vertical: 'top', horizontal: 'right'}}
+                  variant="dot"
+                >
+                  <NotificationsIcon sx={{color: 'black'}} />
+                </Badge>
+              ) : (
+                <NotificationsIcon sx={{color: 'black'}} />
+              )}
+            </IconButton>
+            {notificates.length > 0 && (
+              <Menu
+                id="long-menu"
+                MenuListProps={{
+                  'aria-labelledby': 'long-button',
+                }}
+                anchorEl={notificate_menu}
+                open={notificate_open}
+                onClose={handleNotificateMenuClose}
+              >
+                {notificates.map((row, index) => (
+                  <MenuItem
+                    key={index}
+                    onClick={() => handleSendRoom(row, index)}
+                  >
+                    <Typography>
+                      {`${row.user_id}님이 채팅방으로 초대하였습니다`}
+                    </Typography>
+                  </MenuItem>
+                ))}
+              </Menu>
+            )}
             <Button>마이페이지</Button>
-            <LogOut />
+            <Button onClick={logOut}>로그아웃</Button>
           </Box>
         </Toolbar>
       </AppBar>

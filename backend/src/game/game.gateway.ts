@@ -69,8 +69,8 @@ export class GameGateway implements OnGatewayDisconnect {
     const gameTypes = ['normal', 'rank'];
     const gameModes = ['easy', 'hard'];
 
-    this.gameService.createData(gameTypes, 'type');
-    this.gameService.createData(gameModes, 'mode');
+    await this.gameService.createData(gameTypes, 'type');
+    await this.gameService.createData(gameModes, 'mode');
     this.gameService.setDataID();
     this.gameService.initWaitUserList(waitUserList);
   }
@@ -124,7 +124,7 @@ export class GameGateway implements OnGatewayDisconnect {
     const typeMode = findTypeMode(joinGameInfo);
     const waitUsers: GameUser[] = waitUserList[typeMode];
     const user = this.getUserID(socket);
-    let isFound: boolean = false;
+    let isFound = false;
     let index = -1;
     waitUsers.forEach((value, key) => {
       if (value.user_id === user) {

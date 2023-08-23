@@ -1,24 +1,15 @@
+import * as HTTP_STATUS from 'http-status';
+
 import apiManager from '@/api/apiManager';
 
-export const getJwtToken = (): string => {
-  const jwtToken: string | null = sessionStorage.getItem('accessToken');
-  if (jwtToken === null) {
-    return '';
-  }
-  return jwtToken;
-};
-
 export const isValidJwtToken = async (): Promise<boolean> => {
-  const jwtToken = getJwtToken();
-  if (jwtToken === '') {
-    return false;
-  }
   try {
     const response = await apiManager.get('/user/validation-token');
-    console.log(response);
-    return true;
+    if (response.status === HTTP_STATUS.OK) {
+      return true;
+    }
+    return false;
   } catch (error) {
-    console.log(error);
     return false;
   }
 };
