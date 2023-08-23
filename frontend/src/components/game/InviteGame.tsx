@@ -18,6 +18,7 @@ export default function InviteGame() {
   const handleReturnMain = () => {
     setIsGameOver(false);
     setGameInfo(null);
+    setInviteGameState(null);
   };
 
   const handleInviteGameInfo = useCallback(
@@ -33,42 +34,60 @@ export default function InviteGame() {
     []
   );
 
-  const handleInviteRoomName = useCallback((roomUserInfo: RoomUserInfo) => {
-    const {
-      room_name,
-      left_user,
-      right_user,
-    }: {room_name: string; left_user: string; right_user: string} =
-      roomUserInfo;
-
-    sessionStorage.setItem('room_name', room_name);
-    sessionStorage.setItem('left_user', left_user);
-    sessionStorage.setItem('right_user', right_user);
-  }, []);
-
   const sendGameStartEvent = useCallback(() => {
     console.log('시작이벤트 받음');
+    console.log(invite_game_state.inviter_id);
     chat_socket?.emit('update_frame', invite_game_state.inviter_id);
   }, [chat_socket, invite_game_state.inviter_id]);
+
+  // TODO: 게임 대기방에서 초대를 수락하는 경우 생각해볼것
+  const exitCancelGame = useCallback(
+    (rep: string) => {
+      alert(`${rep} 님이 게임을 취소하였습니다`);
+      setInviteGameState(null);
+    },
+    [setInviteGameState]
+  );
+
+  useEffect(() => {
+    sessionStorage.setItem('left_user', invite_game_state.inviter_nickname);
+    sessionStorage.setItem('right_user', invite_game_state.invitee_nickname);
+    sessionStorage.setItem('room_name', invite_game_state.inviter_id);
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+
+    function handleUnload() {
+      chat_socket?.emit('cancel_game', {is_inviter: false});
+    }
+
+    window.addEventListener('unload', handleUnload);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.addEventListener('unload', handleUnload);
+      window.addEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [chat_socket, invite_game_state]);
 
   useEffect(() => {
     chat_socket?.on('enter_game', sendGameStartEvent);
     chat_socket?.on('game_info', handleInviteGameInfo);
-    chat_socket?.on('room_name', handleInviteRoomName);
+    chat_socket?.on('cancel_game', exitCancelGame);
     chat_socket?.emit('enter_game', invite_game_state);
     return () => {
       chat_socket?.off('enter_game', sendGameStartEvent);
       chat_socket?.off('game_info', handleInviteGameInfo);
-      chat_socket?.off('enter_game', sendGameStartEvent);
+      chat_socket?.off('cancel_game', exitCancelGame);
     };
   }, [
     chat_socket,
     user_id,
     invite_game_state.inviter_id,
-    handleInviteRoomName,
     handleInviteGameInfo,
     sendGameStartEvent,
     invite_game_state,
+    exitCancelGame,
   ]);
 
   return (

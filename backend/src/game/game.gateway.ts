@@ -124,7 +124,7 @@ export class GameGateway implements OnGatewayDisconnect {
     const typeMode = findTypeMode(joinGameInfo);
     const waitUsers: GameUser[] = waitUserList[typeMode];
     const user = this.getUserID(socket);
-    let isFound: boolean = false;
+    let isFound = false;
     let index = -1;
     waitUsers.forEach((value, key) => {
       if (value.user_id === user) {
@@ -301,11 +301,13 @@ export class GameGateway implements OnGatewayDisconnect {
     {room_name, up, down}: {room_name: string; up: boolean; down: boolean}
   ) {
     const roomInfo: RoomInfo = gameRooms.get(room_name);
-
+    console.log('roomInfo: ', roomInfo);
     if (this.gameService.isLeftUser(roomInfo, socket.id) === true) {
+      console.log('left');
       roomInfo.users[EUserIndex.LEFT].keys.up = up;
       roomInfo.users[EUserIndex.LEFT].keys.down = down;
     } else {
+      console.log('right');
       roomInfo.users[EUserIndex.RIGHT].keys.up = up;
       roomInfo.users[EUserIndex.RIGHT].keys.down = down;
     }
@@ -404,7 +406,7 @@ export class GameGateway implements OnGatewayDisconnect {
       return '잘못된 요청입니다.';
     }
     // 임시로 기존에 있으면 패스
-    inviteGameInfo.inviter_nickname = userB.user_nickname;
+    inviteGameInfo.invitee_nickname = userB.user_nickname;
     const tmp = (item: InviteGameInfo) =>
       item.invitee_id === inviteGameInfo.invitee_id &&
       item.inviter_id === inviteGameInfo.inviter_id;
@@ -472,7 +474,7 @@ export class GameGateway implements OnGatewayDisconnect {
   ) {
     const roomInfo: RoomInfo = gameRooms.get(inviteGameInfo.inviter_id);
     const user = this.getUserID(socket);
-    socket.emit('room_name', inviteGameInfo.inviter_id);
+    // socket.emit('room_name', inviteGameInfo.inviter_id);
     socket.emit('game_info', {game_info: roomInfo.game_info});
     if (user === inviteGameInfo.inviter_id) {
       socket.emit('enter_game');

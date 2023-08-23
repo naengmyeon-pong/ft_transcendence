@@ -45,16 +45,16 @@ export default function AlarmEvent() {
 
   // 초대한 사용자가 응답한 사용자에 대한 결과를 받는 이벤트
   const inviteGameMoveEvent = useCallback(
-    (inviteGameInfo: InviteGameInfo | string) => {
+    (inviteGameInfo: InviteGameInfo) => {
       console.log(inviteGameInfo);
       // 거절
       const tmp: InviteGameInfoProps = {
         invite_game_info: inviteGameInfo,
         event_type: '',
       };
-      if (typeof inviteGameInfo === 'string') {
+      if (inviteGameInfo.state === false) {
         tmp.event_type = InviteGameEnum.INVITE_RESPON_FALSE;
-      } else {
+      } else if (inviteGameInfo.state === true) {
         tmp.event_type = InviteGameEnum.INVITE_RESPON_TRUE;
       }
       setGameAlarm(prev => [...prev, tmp]);

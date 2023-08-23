@@ -18,9 +18,7 @@ function Action({user_info}: {user_info: UserType}) {
       'invite_game',
       {
         inviter_id: user_id,
-        inviter_nickname: user_nickname,
         invitee_id: user_info.id,
-        invitee_nickname: user_info.nickName,
         mode: mode,
       },
       (rep: Promise<string | null>) => {

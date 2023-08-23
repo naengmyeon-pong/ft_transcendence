@@ -1,5 +1,11 @@
 'use client';
-import React, {useCallback, useContext, useEffect, useState} from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 import {
   Avatar,
@@ -44,10 +50,10 @@ function FriendList({friend}: {friend: UserType}) {
     setAnchorEl(null);
   }
 
-  const OpenUserInfoPage = () => {
+  const OpenUserInfoPage = useMemo(() => {
     console.log('클릭: OpenUserInfoPage');
     setAnchorEl(null);
-  };
+  }, []);
 
   return (
     <>
@@ -91,9 +97,7 @@ function FriendList({friend}: {friend: UserType}) {
         <MenuItem onClick={handleDeleteFriend}>
           <Typography>친구 삭제</Typography>
         </MenuItem>
-        <MenuItem onClick={OpenUserInfoPage}>
-          <UserInfoPage user_info={friend} />
-        </MenuItem>
+        <UserInfoPage user_info={friend} menuClose={setAnchorEl} />
       </Menu>
     </>
   );
