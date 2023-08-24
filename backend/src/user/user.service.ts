@@ -66,6 +66,13 @@ export class UserService {
       // if (user && (await bcrypt.compare(userAuthDto.user_pw, user.user_pw))) {
       // user token create. (secret + Payload)
       if (user.is_2fa_enabled === false) {
+        if (user.two_factor_auth_secret !== null) {
+          // 2FA 미사용 유저의 시크릿 키 삭제
+          await this.userRepository.update(
+            {user_id: userAuthDto.user_id},
+            {two_factor_auth_secret: null}
+          );
+        }
         const payload: Payload = {user_id: userAuthDto.user_id};
         const accessToken = this.generateAccessToken(payload);
         return accessToken;
@@ -76,16 +83,6 @@ export class UserService {
     }
     throw new UnauthorizedException('login failed');
   }
-  // async signIn(userAuthDto: UserAuthDto): Promise<string> {
-  //   const user = await this.findUser(userAuthDto.user_id);
-  //   if (user && (await bcrypt.compare(userAuthDto.user_pw, user.user_pw))) {
-  //     // user token create. (secret + Payload)
-  //     const payload: Payload = {user_id: userAuthDto.user_id};
-  //     const accessToken = this.jwtService.sign(payload);
-  //     return accessToken;
-  //   }
-  //   throw new UnauthorizedException('login failed');
-  // }
 
   async updateUser(
     userDto: UpdateUserDto,
