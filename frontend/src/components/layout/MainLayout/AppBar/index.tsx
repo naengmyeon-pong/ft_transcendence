@@ -263,7 +263,9 @@ function CustomAppBar() {
                 ))}
               </Menu>
             )}
-            <Button href="/user/setting">마이페이지</Button>
+            <Link href="/user/setting">
+              <Button>마이페이지</Button>
+            </Link>
             <Button onClick={logOut}>로그아웃</Button>
           </Box>
         </Toolbar>

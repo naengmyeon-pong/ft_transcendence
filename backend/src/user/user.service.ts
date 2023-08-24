@@ -93,17 +93,9 @@ export class UserService {
     userID: string
   ): Promise<void> {
     const user = await this.findUser(userID);
-    console.log(user, '\n', userDto);
+    console.log(user, '\n', userDto, file);
     if (!user) {
       throw new UnauthorizedException('User not found');
-    }
-    if (userDto.user_pw) {
-      await this.userRepository.update(
-        {user_id: userID},
-        {
-          user_pw: userDto.user_pw,
-        }
-      );
     }
     if (userDto.user_nickname) {
       await this.userRepository.update(
@@ -114,19 +106,13 @@ export class UserService {
       );
     }
     if (file) {
-      if (
-        user.user_image ===
-        `${process.env.NEXT_PUBLIC_BACKEND_SERVER}/images/logo.jpeg`
-      ) {
-        await this.userRepository.update(
-          {user_id: userID},
-          {
-            user_image:
-              `${process.env.NEXT_PUBLIC_BACKEND_SERVER}` +
-              file.path.substr(11),
-          }
-        );
-      }
+      await this.userRepository.update(
+        {user_id: userID},
+        {
+          user_image:
+            `${process.env.NEXT_PUBLIC_BACKEND_SERVER}` + file.path.substr(11),
+        }
+      );
     }
   }
 

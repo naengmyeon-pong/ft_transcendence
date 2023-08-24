@@ -1,14 +1,16 @@
 'use client';
-import React, {useContext} from 'react';
+
+import {useRecoilValue} from 'recoil';
+
 import {Avatar, Box, Typography} from '@mui/material';
-import {UserContext} from '../Context';
+
+import {profileState} from '@/states/profile';
 
 // TODO: 닉네임, 랭크, 사진 변경필요합니다
 export default function Profile() {
   const rankNum = '랭크점수: 1000';
+  const {image, nickname} = useRecoilValue(profileState);
 
-  const {user_nickname} = useContext(UserContext);
-  const {user_image} = useContext(UserContext);
   return (
     <Box
       sx={{
@@ -22,10 +24,10 @@ export default function Profile() {
     >
       <Box display="flex">
         {/* <Typography variant="h6" noWrap component="p"> */}
-        <Avatar src={`${user_image}`} alt="프로필사진" />
+        <Avatar src={image} alt="프로필사진" />
         {/* </Typography> */}
         <Box sx={{px: '10px'}}>
-          <Typography variant="h6">{user_nickname}</Typography>
+          <Typography variant="h6">{nickname}</Typography>
           <Typography variant="h6" sx={{fontSize: '1em'}}>
             {rankNum}
           </Typography>

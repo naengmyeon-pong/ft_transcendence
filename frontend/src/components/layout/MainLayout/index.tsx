@@ -43,18 +43,18 @@ function MainLayout({children}: MainLayoutProps) {
     (async () => {
       try {
         const response = await apiManager.get('/user/user-info');
-        // console.log('response: ', response);
         const {user_id, user_image, user_nickname, is_2fa_enabled} =
           response.data;
+        const cacheBuster = new Date().getTime();
         setProfileDataState({
           user_id,
-          image: user_image,
+          image: `${user_image}?${cacheBuster}}`,
           nickname: user_nickname,
           is_2fa_enabled,
         });
-        setUserId(response.data.user_id);
-        setUserNickName(response.data.user_nickname);
-        setUserImage(`${response.data.user_image}`);
+        setUserId(user_id);
+        setUserNickName(user_nickname);
+        setUserImage(user_image);
         const accessToken = sessionStorage.getItem('accessToken');
         if (accessToken === null) {
           router.push('/');
