@@ -17,6 +17,11 @@ import {
 } from '@mui/material';
 import {UserContext} from '@/components/layout/MainLayout/Context';
 import apiManager from '@/api/apiManager';
+import axios from 'axios';
+import * as HTTP_STATUS from 'http-status';
+import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
+import {useSetRecoilState} from 'recoil';
+import {tokenExpiredExit} from '@/states/tokenExpired';
 
 const style = {
   position: 'absolute',
@@ -58,6 +63,8 @@ function CreateRoomForm({setCreateModal}: CreateModalProps) {
   const [password, setPassword] = useState<string>('');
   const [maxUser, setMaxUser] = useState<number>(4);
   const {user_id, setConvertPage} = useContext(UserContext);
+  const {openAlertSnackbar} = useAlertSnackbar();
+  const setTokenExpiredExit = useSetRecoilState(tokenExpiredExit);
 
   const handleClose = useCallback(() => {
     setCreateModal(false);
@@ -99,9 +106,13 @@ function CreateRoomForm({setCreateModal}: CreateModalProps) {
       });
       setConvertPage(rep?.data?.id);
     } catch (error) {
-      // TODO: 에러처리
-      alert('에러가 발생하였습니다.');
-      console.log(error);
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === HTTP_STATUS.UNAUTHORIZED) {
+          setTokenExpiredExit(true);
+          return;
+        }
+        openAlertSnackbar({message: error.response?.data.message});
+      }
     }
   }
 

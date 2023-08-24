@@ -7,6 +7,7 @@ import React, {
   useEffect,
   useRef,
 } from 'react';
+import * as HTTP_STATUS from 'http-status';
 import {
   Avatar,
   Badge,
@@ -39,6 +40,10 @@ import Dm from './DM';
 import {useRecoilState, useRecoilValue} from 'recoil';
 import {dmBadgeCnt, profileDMChoise} from '@/states/userContext';
 import {dmList, dmNotify, dmUserInfo} from '@/states/dmUser';
+import axios from 'axios';
+import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
+import {useSetRecoilState} from 'recoil';
+import {tokenExpiredExit} from '@/states/tokenExpired';
 
 function SideBar() {
   console.log('SideBar');
@@ -55,6 +60,8 @@ function SideBar() {
   const [friend_search_list, setFriendSearchList] = useState<UserType[]>([]);
   const [profile_dm_choise, setDmChoise] = useRecoilState(profileDMChoise);
   const [dm_badge_value, setDMBadge] = useRecoilState(dmBadgeCnt);
+  const {openAlertSnackbar} = useAlertSnackbar();
+  const setTokenExpiredExit = useSetRecoilState(tokenExpiredExit);
   const [notify, setNofify] = useRecoilState(dmNotify);
 
   const dm_user = useRecoilValue(dmUserInfo);
@@ -101,7 +108,13 @@ function SideBar() {
       });
       setFriendSearchList(rep.data);
     } catch (error) {
-      console.log('FtSideBar.tsx: ', error);
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === HTTP_STATUS.UNAUTHORIZED) {
+          setTokenExpiredExit(true);
+          return;
+        }
+        openAlertSnackbar({message: error.response?.data.message});
+      }
     }
   }
 
@@ -282,15 +295,14 @@ function SideBar() {
                 }}
               >
                 <Box display="flex" sx={{flexDirection: 'column'}}>
-                  <Badge
+                  {/* <Badge
                     overlap="circular"
                     color="error"
                     anchorOrigin={{vertical: 'top', horizontal: 'right'}}
-                    // variant="dot"
                     badgeContent={dm_badge_value}
-                  >
-                    <Typography width={'60px'}>DM</Typography>
-                  </Badge>
+                  > */}
+                  <Typography width={'60px'}>DM</Typography>
+                  {/* </Badge> */}
                 </Box>
               </Button>
             </ButtonGroup>
@@ -349,7 +361,6 @@ function SideBar() {
           ) : (
             <Dm />
           )}
-          {/* TODO: 현재 DM 유저와 대화중인지 확인 후 DM 리스트 혹은 대화 인터페이스 넣기  */}
           <Divider />
         </Box>
       </Drawer>
