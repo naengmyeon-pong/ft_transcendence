@@ -81,7 +81,8 @@ export class GameGateway implements OnGatewayDisconnect {
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
     let inviteGameInfo: InviteGameInfo | null;
-    const userID = this.getUserID(socket);
+    // const userID = this.getUserID(socket);
+    const userID = socket.handshake.query.user_id as string;
     if (this.isUserGaming(userID)) {
       // 유저가 게임중인 경우
       const roomName: string | null = this.gameService.isForfeit(userID);
@@ -139,7 +140,7 @@ export class GameGateway implements OnGatewayDisconnect {
     if (userInfo && userInfo.is_gaming === true) {
       return true;
     }
-    return false;
+    this.logger.log('게임 소켓 연결 해제');
   }
 
   createGameRoom(userId: string, gameUsers: GameUser[]): string {
@@ -422,11 +423,16 @@ export class GameGateway implements OnGatewayDisconnect {
   };
 
   getUserID = (socket: Socket): string => {
-    const jwt: string = socket.handshake.auth.token;
-    const decodedToken = this.jwtService.verify(jwt, {
-      secret: process.env.SIGNIN_JWT_SECRET_KEY,
-    });
-    return decodedToken.user_id;
+    try {
+      const jwt: string = socket.handshake.auth.token;
+      const decodedToken = this.jwtService.verify(jwt, {
+        secret: process.env.SIGNIN_JWT_SECRET_KEY,
+      });
+      return decodedToken.user_id;
+    } catch (e) {
+      this.logger.log('token expire');
+      socket.emit('token-expire');
+    }
   };
 
   /*

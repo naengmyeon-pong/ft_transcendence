@@ -27,29 +27,30 @@ export class UserGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleConnection(@ConnectedSocket() socket: Socket) {
     this.logger.log(`${socket.id} 웹소켓 연결`);
-    try {
-      const userID = this.getUserID(socket);
+    const userID = socket.handshake.query.user_id as string;
 
-      this.socketArray.addSocketArray({
-        user_id: userID,
-        socket_id: socket.id,
-      });
-    } catch (e) {
-      this.logger.log(e.message);
-      // 소켓끊고, 로그인페이지로 redirect 시키도록.
-      // socket.disconnect();
-    }
+    this.socketArray.addSocketArray({
+      user_id: userID,
+      socket_id: socket.id,
+    });
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
+    const userID = socket.handshake.query.user_id as string;
+    this.socketArray.removeSocketArray(userID);
     this.logger.log(`${socket.id} 웹소켓 연결 해제`);
   }
 
   getUserID = (socket: Socket): string => {
-    const jwt: string = socket.handshake.auth.token;
-    const decodedToken = this.jwtService.verify(jwt, {
-      secret: process.env.SIGNIN_JWT_SECRET_KEY,
-    });
-    return decodedToken.user_id;
+    try {
+      const jwt: string = socket.handshake.auth.token;
+      const decodedToken = this.jwtService.verify(jwt, {
+        secret: process.env.SIGNIN_JWT_SECRET_KEY,
+      });
+      return decodedToken.user_id;
+    } catch (e) {
+      this.logger.log('token expire');
+      socket.emit('token-expire');
+    }
   };
 }
