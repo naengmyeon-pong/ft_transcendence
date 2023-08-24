@@ -372,25 +372,6 @@ export class GameService {
     return false;
   };
 
-  // getTypeModeID = (
-  //   type: string,
-  //   mode: string
-  // ): { game_type: number; game_mode: number } => {
-  //   let typeID: number;
-  //   let modeID: number;
-  //   if (type === 'normal') {
-  //     typeID === 1;
-  //   } else {
-  //     typeID === 2;
-  //   }
-  //   if (mode === 'easy') {
-  //     modeID === 1;
-  //   } else {
-  //     modeID === 2;
-  //   }
-  //   return { game_type: typeID, game_mode: modeID }
-  // };
-
   getTypeModeID = (
     roomInfo: RoomInfo
   ): {game_type: number; game_mode: number} => {
