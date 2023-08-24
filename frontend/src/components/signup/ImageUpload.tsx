@@ -1,5 +1,7 @@
 'use client';
 
+import {useRecoilValue} from 'recoil';
+
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardHeader from '@mui/material/CardHeader';
@@ -8,16 +10,24 @@ import Button from '@mui/material/Button';
 
 import logo from '@/public/logo.jpeg';
 import {useProfileImage} from '@/hooks/useProfileImage';
+import {profileState} from '@/states/profile';
 import {ALLOWED_IMAGE_FILE_EXTENSION} from '@/constants/signup';
 
 function ImageUpload() {
   const {previewImage, fileInputRef, handleUploadFile, handleImageRemoval} =
     useProfileImage();
+  const profileDataState = useRecoilValue(profileState);
 
   return (
     <Card variant="outlined">
       <CardHeader
-        avatar={<Avatar src={previewImage || logo.src} />}
+        avatar={
+          <Avatar
+            src={
+              previewImage ? previewImage : profileDataState.image || logo.src
+            }
+          />
+        }
         title="프로필 사진"
         subheader="기본 이미지는 냉면 이미지로 설정됩니다."
       />

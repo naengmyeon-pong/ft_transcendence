@@ -12,6 +12,7 @@ import {
   UploadedFile,
   Query,
   Req,
+  UseInterceptors,
 } from '@nestjs/common';
 import {AuthGuard} from '@nestjs/passport';
 import {ApiTags, ApiOperation, ApiQuery, ApiResponse} from '@nestjs/swagger';
@@ -21,6 +22,7 @@ import {UserDto} from './dto/user.dto';
 import {UserAuthDto} from './dto/userAuth.dto';
 import {UserService} from './user.service';
 import {UpdateUserDto} from './dto/update-user.dto';
+import {FileInterceptor} from '@nestjs/platform-express';
 
 @Controller('user')
 @ApiTags('User')
@@ -33,7 +35,7 @@ export class UserController {
     return this.userService.getUser(req.user.user_id);
   }
 
-  @Delete('/delete:user_id')
+  @Delete('/delete')
   @ApiQuery({
     name: 'user_id',
     required: true,
@@ -100,6 +102,7 @@ export class UserController {
 
   @Patch('/update')
   @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(FileInterceptor('user_image'))
   @ApiOperation({
     summary: '사용자 정보 업데이트 API',
     description: '사용자 정보를 업데이트한다.',

@@ -11,11 +11,9 @@ function Action({user_info}: {user_info: UserType}) {
   const {closeGlobalModal} = useGlobalModal();
   const mode = useRecoilValue(inviteGameModeState);
   const router = useRouter();
-  const {chat_socket, user_id} = useContext(UserContext);
+  const {chat_socket, user_id, user_nickname} = useContext(UserContext);
 
   const inviteGame = () => {
-    console.log('초대');
-    console.log(mode);
     chat_socket?.emit(
       'invite_game',
       {
@@ -23,10 +21,10 @@ function Action({user_info}: {user_info: UserType}) {
         invitee_id: user_info.id,
         mode: mode,
       },
-      (rep: boolean) => {
+      (rep: Promise<string | null>) => {
         console.log(rep);
-        if (rep === false) {
-          alert('접속중인 유저가 아닙니다');
+        if (rep !== null) {
+          alert(rep);
         }
       }
     );

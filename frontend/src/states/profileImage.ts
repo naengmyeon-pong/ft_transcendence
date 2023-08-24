@@ -15,6 +15,7 @@ export const profileImageState = atom<ProfileImage>({
   default: {
     uploadFile: null,
     userId: '',
+    isImageUploaded: false,
   },
   effects_UNSTABLE: [persistAtom],
 });

@@ -9,6 +9,7 @@ import {
   ListItem,
   ListItemAvatar,
   ListItemText,
+  MenuItem,
   Typography,
 } from '@mui/material';
 import Divider from '@mui/material/Divider';
@@ -30,7 +31,7 @@ function UserProfileModalAction({user_info}: {user_info: UserType}) {
       </Box>
       <Divider sx={{mt: 2, mb: 2}} />
       <Box display="flex" flexDirection="column">
-        <RecordSummary />
+        <RecordSummary user_info={user_info} />
       </Box>
       <Box display="flex" flexDirection="column">
         <DetailRecord user_info={user_info} />
@@ -39,7 +40,13 @@ function UserProfileModalAction({user_info}: {user_info: UserType}) {
   );
 }
 
-export default function UserInfoPage({user_info}: {user_info: UserType}) {
+export default function UserInfoPage({
+  user_info,
+  menuClose,
+}: {
+  user_info: UserType;
+  menuClose: React.Dispatch<React.SetStateAction<HTMLLIElement | null>>;
+}) {
   const {openGlobalModal} = useGlobalModal();
 
   const content = useCallback(() => {
@@ -76,7 +83,14 @@ export default function UserInfoPage({user_info}: {user_info: UserType}) {
 
   return (
     <>
-      <Typography onClick={handleClick}>프로필 보기</Typography>
+      <MenuItem
+        onClick={() => {
+          handleClick();
+          menuClose(null);
+        }}
+      >
+        프로필 보기
+      </MenuItem>
     </>
   );
 }

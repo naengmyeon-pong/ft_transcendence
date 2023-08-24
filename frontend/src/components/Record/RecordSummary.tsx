@@ -5,12 +5,15 @@ import {useEffect, useState} from 'react';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Chip from '@mui/material/Chip';
-import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
 
 import apiManager from '@/api/apiManager';
+import {UserType} from '@/types/UserContext';
+import axios from 'axios';
+import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
 
-function RecordSummary() {
+function RecordSummary({user_info}: {user_info: UserType}) {
+  const {openAlertSnackbar} = useAlertSnackbar();
   const [recentRecord, setRecentRecord] = useState<string[]>([]);
   const [win, setWin] = useState<number>(0);
   const [lose, setLose] = useState<number>(0);
@@ -23,9 +26,9 @@ function RecordSummary() {
   useEffect(() => {
     const getUserRecord = async () => {
       try {
-        //TODO: id 를 현재 보고 있는 유저의 아이디로 변경하기
-        const response = await apiManager.get('/record/simple?id=user1');
-        console.log(response);
+        const response = await apiManager.get(
+          `/record/simple?id=${user_info.id}`
+        );
         let numberWin = 0;
         let numberLose = 0;
         const recentRecord: string[] = response.data.recent_record;
@@ -55,6 +58,9 @@ function RecordSummary() {
         setRankScore(numberRankScore);
       } catch (error) {
         console.log(error);
+        if (axios.isAxiosError(error)) {
+          openAlertSnackbar({message: error.response?.data.message});
+        }
       }
     };
 
