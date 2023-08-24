@@ -1,14 +1,22 @@
-import {FriendListRepository} from '@/chat/chat.repository';
+import {
+  ChatMemberRepository,
+  FriendListRepository,
+} from '@/chat/chat.repository';
 import {SocketArray} from '@/global-variable/global.socket';
 import {UserRepository} from '@/user/user.repository';
-import {Injectable} from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 
 @Injectable()
 export class FriendService {
   constructor(
     private friendListRepository: FriendListRepository,
     private userRepository: UserRepository,
-    private socketArray: SocketArray
+    private socketArray: SocketArray,
+    private chatMemberRepository: ChatMemberRepository
   ) {}
 
   async addFriend(user_id: string, friend_id: string) {
@@ -80,5 +88,18 @@ export class FriendService {
       },
     });
     return ret;
+  }
+
+  async isChatMember(user_id: string) {
+    if (!user_id) {
+      throw new BadRequestException('empty parameter.');
+    }
+    const member = await this.chatMemberRepository.findOneBy({
+      userId: user_id,
+    });
+    if (!member) {
+      throw new NotFoundException(`${user_id} is not member of this chat.`);
+    }
+    return member;
   }
 }

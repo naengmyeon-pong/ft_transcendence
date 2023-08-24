@@ -11,6 +11,7 @@ import {DmService} from './dm.service';
 import {Block} from '@/global-variable/global.block';
 import {JwtService} from '@nestjs/jwt';
 import {SocketArray} from '@/global-variable/global.socket';
+import {ChatMember} from '@/chat/chat.entity';
 
 @WebSocketGateway({
   namespace: 'pong',
@@ -33,7 +34,10 @@ export class DmGateway {
     @ConnectedSocket() socket: Socket,
     @MessageBody() {target_id, message}: {target_id: string; message: string}
   ) {
-    const user_id = this.getUserID(socket);
+    const user_id = await this.getUserID(socket);
+    if (!user_id) {
+      return false;
+    }
     try {
       const nickname = socket.handshake.query.nickname as string;
       const ban_members = this.block.getBlockUsers(user_id);
@@ -63,7 +67,7 @@ export class DmGateway {
     }
   }
 
-  getUserID = (socket: Socket): string => {
+  async getUserID(socket: Socket): Promise<string> {
     try {
       const jwt: string = socket.handshake.auth.token;
       const decodedToken = this.jwtService.verify(jwt, {
@@ -72,7 +76,19 @@ export class DmGateway {
       return decodedToken.user_id;
     } catch (e) {
       this.logger.log('token expire');
-      socket.emit('token-expire');
+      let member: ChatMember = undefined;
+      try {
+        member = await this.dmService.isChatMember(
+          socket.handshake.query.user_id as string
+        );
+      } catch (e) {
+        console.log(e.message);
+      }
+      if (member) {
+        socket.emit('token-expire', member.chatroomId);
+      } else {
+        socket.emit('token-expire');
+      }
     }
-  };
+  }
 }

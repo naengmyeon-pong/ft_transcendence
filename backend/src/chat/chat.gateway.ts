@@ -12,6 +12,7 @@ import {ChatService} from './chat.service';
 import {SocketArray} from '@/global-variable/global.socket';
 import {Block} from '@/global-variable/global.block';
 import {JwtService} from '@nestjs/jwt';
+import {ChatMember} from './chat.entity';
 
 interface MessagePayload {
   room_id: number;
@@ -52,11 +53,14 @@ export class ChatGateway implements OnGatewayInit {
   }
 
   @SubscribeMessage('message')
-  handleMessage(
+  async handleMessage(
     @ConnectedSocket() socket: Socket,
     @MessageBody() {room_id, message}: MessagePayload
   ) {
-    const user_id = this.getUserID(socket);
+    const user_id = await this.getUserID(socket);
+    if (!user_id) {
+      return false;
+    }
     try {
       // 토큰안에 nickname, image도 넣을까?
       // const user_id = socket.handshake.query.user_id as string;
@@ -90,7 +94,10 @@ export class ChatGateway implements OnGatewayInit {
     @ConnectedSocket() socket: Socket,
     @MessageBody() room_id: number
   ): Promise<boolean> {
-    const user_id = this.getUserID(socket);
+    const user_id = await this.getUserID(socket);
+    if (!user_id) {
+      return false;
+    }
     try {
       if (await this.chatService.joinRoom(room_id, user_id)) {
         socket.join(`${room_id}`);
@@ -116,9 +123,18 @@ export class ChatGateway implements OnGatewayInit {
   @SubscribeMessage('leave-room')
   async handleLeaveRoom(
     @ConnectedSocket() socket: Socket,
-    @MessageBody('room_id') room_id: number
+    @MessageBody() {room_id, state}
   ) {
-    const user_id = this.getUserID(socket);
+    let user_id: string;
+    console.log('room_id: ', room_id, ' state: ', state);
+    if (state) {
+      user_id = socket.handshake.query.user_id as string;
+    } else {
+      user_id = await this.getUserID(socket);
+      if (!user_id) {
+        return false;
+      }
+    }
     try {
       const leave = await this.chatService.leaveRoom(room_id, user_id);
       socket.leave(`${room_id}`);
@@ -145,7 +161,10 @@ export class ChatGateway implements OnGatewayInit {
     @ConnectedSocket() socket: Socket,
     @MessageBody() {room_id, target_id}: ExecPayload
   ) {
-    const user_id = this.getUserID(socket);
+    const user_id = await this.getUserID(socket);
+    if (!user_id) {
+      return false;
+    }
     try {
       if (await this.chatService.addToAdmin(room_id, user_id, target_id)) {
         this.nsp.to(`${room_id}`).emit('room-member', {
@@ -165,7 +184,10 @@ export class ChatGateway implements OnGatewayInit {
     @ConnectedSocket() socket: Socket,
     @MessageBody() {room_id, target_id}: ExecPayload
   ) {
-    const user_id = this.getUserID(socket);
+    const user_id = await this.getUserID(socket);
+    if (!user_id) {
+      return false;
+    }
     try {
       if (await this.chatService.delAdmin(room_id, user_id, target_id)) {
         this.nsp.to(`${room_id}`).emit('room-member', {
@@ -185,7 +207,10 @@ export class ChatGateway implements OnGatewayInit {
     @ConnectedSocket() socket: Socket,
     @MessageBody() {room_id, target_id, mute_time}: MutePayload
   ) {
-    const user_id = this.getUserID(socket);
+    const user_id = await this.getUserID(socket);
+    if (!user_id) {
+      return false;
+    }
     try {
       if (mute_time) {
         if (
@@ -216,7 +241,10 @@ export class ChatGateway implements OnGatewayInit {
     @ConnectedSocket() socket: Socket,
     @MessageBody() {room_id, target_id}: ExecPayload
   ) {
-    const user_id = this.getUserID(socket);
+    const user_id = await this.getUserID(socket);
+    if (!user_id) {
+      return false;
+    }
     try {
       if (await this.chatService.kickMember(room_id, user_id, target_id)) {
         const login_user = this.socketArray.getUserSocket(target_id);
@@ -237,7 +265,10 @@ export class ChatGateway implements OnGatewayInit {
     @ConnectedSocket() socket: Socket,
     @MessageBody() {room_id, target_id}: ExecPayload
   ) {
-    const user_id = this.getUserID(socket);
+    const user_id = await this.getUserID(socket);
+    if (!user_id) {
+      return false;
+    }
     try {
       if (await this.handleKickMember(socket, {room_id, target_id})) {
         if (await this.chatService.banMember(room_id, user_id, target_id)) {
@@ -256,7 +287,10 @@ export class ChatGateway implements OnGatewayInit {
     @ConnectedSocket() socket: Socket,
     @MessageBody() target_id: string
   ) {
-    const user_id = this.getUserID(socket);
+    const user_id = await this.getUserID(socket);
+    if (!user_id) {
+      return false;
+    }
     try {
       await this.chatService.blockMember(user_id, target_id);
       socket.emit('block-list');
@@ -271,7 +305,10 @@ export class ChatGateway implements OnGatewayInit {
     @ConnectedSocket() socket: Socket,
     @MessageBody() target_id: string
   ) {
-    const user_id = this.getUserID(socket);
+    const user_id = await this.getUserID(socket);
+    if (!user_id) {
+      return false;
+    }
     try {
       await this.chatService.unBlockMember(user_id, target_id);
       socket.emit('block-list');
@@ -282,11 +319,14 @@ export class ChatGateway implements OnGatewayInit {
   }
 
   @SubscribeMessage('chatroom-notification')
-  handleNotification(
+  async handleNotification(
     @ConnectedSocket() socket: Socket,
     @MessageBody() {room_id, target_id}: ExecPayload
   ) {
-    const user_id = this.getUserID(socket);
+    const user_id = await this.getUserID(socket);
+    if (!user_id) {
+      return false;
+    }
     const login_user = this.socketArray.getUserSocket(target_id);
     socket
       .to(`${login_user.socket_id}`)
@@ -298,7 +338,10 @@ export class ChatGateway implements OnGatewayInit {
   // @SubscribeMessage('update-user-info')
   // async handleUpdateUserInfo(@ConnectedSocket() socket: Socket) {
   //   try {
-  //     const user_id = this.getUserID(socket);
+  //     const user_id = await this.getUserID(socket);
+  // if (!user_id) {
+  //   return false;
+  // }
   //     const user = await this.chatService.getUser(user_id);
   //     socket.handshake.query.nickname = user.user_nickname;
   //     socket.handshake.query.image = user.user_image;
@@ -311,7 +354,7 @@ export class ChatGateway implements OnGatewayInit {
   //   }
   // }
 
-  getUserID = (socket: Socket): string => {
+  async getUserID(socket: Socket): Promise<string> {
     try {
       const jwt: string = socket.handshake.auth.token;
       const decodedToken = this.jwtService.verify(jwt, {
@@ -320,7 +363,19 @@ export class ChatGateway implements OnGatewayInit {
       return decodedToken.user_id;
     } catch (e) {
       this.logger.log('token expire');
-      socket.emit('token-expire');
+      let member: ChatMember = undefined;
+      try {
+        member = await this.chatService.isChatMember(
+          socket.handshake.query.user_id as string
+        );
+      } catch (e) {
+        console.log(e.message);
+      }
+      if (member) {
+        socket.emit('token-expire', member.chatroomId);
+      } else {
+        socket.emit('token-expire');
+      }
     }
-  };
+  }
 }

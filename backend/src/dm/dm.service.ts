@@ -1,10 +1,17 @@
-import {DMRepository} from '@/chat/chat.repository';
-import {Injectable} from '@nestjs/common';
+import {ChatMemberRepository, DMRepository} from '@/chat/chat.repository';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {IsNull, Not} from 'typeorm';
 
 @Injectable()
 export class DmService {
-  constructor(private dmRepository: DMRepository) {}
+  constructor(
+    private dmRepository: DMRepository,
+    private chatMemberRepository: ChatMemberRepository
+  ) {}
 
   async getDirectMessage(user_id: string, other_id: string) {
     const directmessage = await this.dmRepository.find({
@@ -91,5 +98,18 @@ export class DmService {
       ret.push(temp);
     });
     return ret;
+  }
+
+  async isChatMember(user_id: string) {
+    if (!user_id) {
+      throw new BadRequestException('empty parameter.');
+    }
+    const member = await this.chatMemberRepository.findOneBy({
+      userId: user_id,
+    });
+    if (!member) {
+      throw new NotFoundException(`${user_id} is not member of this chat.`);
+    }
+    return member;
   }
 }

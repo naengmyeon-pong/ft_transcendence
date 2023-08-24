@@ -30,8 +30,10 @@ function MainLayout({children}: MainLayoutProps) {
   const router = useRouter();
   const [profileDataState, setProfileDataState] = useRecoilState(profileState);
   const {manager, setManager} = useContext(UserContext);
-
   const [initMainLayout, setInitMainLayout] = useState(false);
+
+  // const roomId = useContext(UserContext).convert_page;
+  // const {chat_socket} = useContext(UserContext);
 
   function init_setBlockUsers(data: UserType[]) {
     for (const node of data) {
@@ -39,6 +41,7 @@ function MainLayout({children}: MainLayoutProps) {
     }
     // console.log('block_users: ', block_users);
   }
+
   useEffect(() => {
     (async () => {
       try {
@@ -92,11 +95,14 @@ function MainLayout({children}: MainLayoutProps) {
         setDmList(rep.data);
         setInitMainLayout(true);
         // console.log('dmList: ', rep);
-        socketIo.on('token-expire', reason => {
-          console.log('reason: ', reason);
+        socketIo.on('token-expire', roomId => {
+          // console.log('roomId: ', roomId);
           // 서버가 연결을 끊은 경우 (ex, JWT 만료)
           sessionStorage.clear();
           router.push('/');
+          if (roomId) {
+            socketIo.emit('leave-room', {room_id: roomId, state: true});
+          }
           socketIo.disconnect();
         });
       } catch (error) {
@@ -105,6 +111,20 @@ function MainLayout({children}: MainLayoutProps) {
       }
     })();
   }, []);
+
+  // useEffect(() => {
+  //   chat_socket?.on('token-expire', reason => {
+  //     console.log('reason: ', reason);
+  //     // 서버가 연결을 끊은 경우 (ex, JWT 만료)
+  //     sessionStorage.clear();
+  //     router.push('/');
+  //     chat_socket?.emit('leave-room', {room_id: roomId, state: true});
+  //     chat_socket.disconnect();
+  //   });
+  //   return () => {
+  //     chat_socket?.off('token-expire');
+  //   };
+  // }, [chat_socket, roomId, router]);
 
   return (
     <>
