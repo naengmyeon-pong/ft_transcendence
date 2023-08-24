@@ -30,7 +30,9 @@ import {
   isTokenExpired,
   getExpirationTimeInMilliseconds,
   getRemainedTime,
+  getJwtToken,
 } from '@/utils/token';
+import {isValidSignupToken} from '@/api/auth';
 
 export default function Signup() {
   const router = useRouter();
@@ -145,21 +147,34 @@ export default function Signup() {
   };
 
   useEffect(() => {
-    const expirationTime = getExpirationTimeInMilliseconds();
-    const intervalId = setInterval(() => {
-      if (isTokenExpired(expirationTime)) {
-        clearInterval(intervalId);
-        openAlertSnackbar({message: '회원가입 시간이 만료되었습니다.'});
+    (async () => {
+      if (getJwtToken() === null) {
+        openAlertSnackbar({message: '잘못된 접근입니다.'});
         router.push('/user/login');
         return;
       }
-      const formattedTime: string = getRemainedTime(expirationTime);
-      setRemainedTime(formattedTime);
-    }, 1000);
+      if ((await isValidSignupToken()) === false) {
+        openAlertSnackbar({message: '유효하지 않은 토큰입니다.'});
+        router.push('/user/login');
+        return;
+      }
 
-    return () => {
-      clearInterval(intervalId);
-    };
+      const expirationTime = getExpirationTimeInMilliseconds();
+      const intervalId = setInterval(() => {
+        if (isTokenExpired(expirationTime)) {
+          clearInterval(intervalId);
+          openAlertSnackbar({message: '회원가입 시간이 만료되었습니다.'});
+          router.push('/user/login');
+          return;
+        }
+        const formattedTime: string = getRemainedTime(expirationTime);
+        setRemainedTime(formattedTime);
+      }, 1000);
+
+      return () => {
+        clearInterval(intervalId);
+      };
+    })();
   }, []);
 
   return (
