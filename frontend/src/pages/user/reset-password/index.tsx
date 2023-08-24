@@ -24,7 +24,9 @@ import {
   isTokenExpired,
   getExpirationTimeInMilliseconds,
   getRemainedTime,
+  getJwtToken,
 } from '@/utils/token';
+import {isValidSignupToken, isValidUserToken} from '@/api/auth';
 
 function PasswordReset() {
   const router = useRouter();
@@ -84,11 +86,30 @@ function PasswordReset() {
   };
 
   useEffect(() => {
+    (async () => {
+      if (getJwtToken() === null) {
+        openAlertSnackbar({message: '잘못된 접근입니다.'});
+        router.push('/user/login');
+        return;
+      }
+
+      if (
+        (await isValidSignupToken()) === false &&
+        (await isValidUserToken()) === false
+      ) {
+        openAlertSnackbar({message: '잘못된 접근입니다.'});
+        router.push('/user/login');
+        return;
+      }
+    })();
+
     const expirationTime = getExpirationTimeInMilliseconds();
     const intervalId = setInterval(() => {
       if (isTokenExpired(expirationTime)) {
         clearInterval(intervalId);
-        openAlertSnackbar({message: '비밀번호 재설정 시간이 만료되었습니다.'});
+        openAlertSnackbar({
+          message: '비밀번호 재설정 시간이 만료되었습니다.',
+        });
         if (passwordReset === true) {
           router.push('/user/login');
         } else {

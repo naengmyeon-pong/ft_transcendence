@@ -5,6 +5,7 @@ import {useRouter} from 'next/router';
 
 import axios from 'axios';
 import {useRecoilState} from 'recoil';
+import Link from 'next/link';
 
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
@@ -23,7 +24,8 @@ import {useProfileImage} from '@/hooks/useProfileImage';
 import {useGlobalDialog} from '@/hooks/useGlobalDialog';
 import ImageUpload from '@/components/signup/ImageUpload';
 import {isValidNicknameLength} from '@/utils/user';
-import Link from 'next/link';
+import {getJwtToken} from '@/utils/token';
+import {isValidUserToken} from '@/api/auth';
 
 const HTTP_STATUS = require('http-status');
 
@@ -212,11 +214,25 @@ function Setting() {
       }
     };
 
-    fetchUser();
-    setProfileImageDataState({
-      ...profileImageDataState,
-      isImageUploaded: false,
-    });
+    (async () => {
+      if (getJwtToken() === null) {
+        openAlertSnackbar({message: '잘못된 접근입니다.'});
+        router.push('/user/login');
+        return;
+      }
+      if ((await isValidUserToken()) === false) {
+        openAlertSnackbar({
+          message: '유효하지 않은 토큰입니다.',
+        });
+        router.push('/user/login');
+        return;
+      }
+      fetchUser();
+      setProfileImageDataState({
+        ...profileImageDataState,
+        isImageUploaded: false,
+      });
+    })();
   }, []);
 
   return (

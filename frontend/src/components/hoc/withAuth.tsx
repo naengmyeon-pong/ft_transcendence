@@ -3,7 +3,7 @@
 import {useRouter} from 'next/router';
 import {ComponentType, useEffect} from 'react';
 
-import {isValidJwtToken} from '@/api/auth';
+import {isValidUserToken} from '@/api/auth';
 import {getJwtToken} from '@/utils/token';
 
 interface WithAuthProps {
@@ -20,7 +20,7 @@ const withAuth = <P extends WithAuthProps>(
       const verifyToken = async () => {
         if (getJwtToken() === null) {
           router.push('/user/login');
-        } else if (await isValidJwtToken()) {
+        } else if (await isValidUserToken()) {
           router.push('/main/game');
         } else {
           sessionStorage.removeItem('accessToken');

@@ -9,18 +9,22 @@ import {useRecoilState, useSetRecoilState} from 'recoil';
 import {Box, Grid, Toolbar} from '@mui/material';
 
 import apiManager from '@/api/apiManager';
+import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
 import CustomAppBar from '@/components/layout/MainLayout/AppBar';
 import SideBar from '@/components/layout/MainLayout/SideBar';
 import {UserContext} from '@/components/layout/MainLayout/Context';
 import {UserType} from '@/types/UserContext';
 import {dmList} from '@/states/dmUser';
 import {profileState} from '@/states/profile';
+import {getJwtToken} from '@/utils/token';
+import {isValidUserToken} from '@/api/auth';
 
 interface MainLayoutProps {
   children: React.ReactNode;
 }
 
 function MainLayout({children}: MainLayoutProps) {
+  const {openAlertSnackbar} = useAlertSnackbar();
   const {setUserId} = useContext(UserContext);
   const {setChatSocket} = useContext(UserContext);
   const {setUserNickName} = useContext(UserContext);
@@ -44,6 +48,16 @@ function MainLayout({children}: MainLayoutProps) {
 
   useEffect(() => {
     (async () => {
+      if (getJwtToken() === null) {
+        openAlertSnackbar({message: '로그인이 필요합니다.'});
+        router.push('/user/login');
+        return;
+      }
+      if ((await isValidUserToken()) === false) {
+        openAlertSnackbar({message: '유효하지 않은 토큰입니다.'});
+        router.push('/user/login');
+        return;
+      }
       try {
         const response = await apiManager.get('/user/user-info');
         const {user_id, user_image, user_nickname, is_2fa_enabled} =

@@ -5,6 +5,7 @@ import {useRouter} from 'next/router';
 
 import axios from 'axios';
 import * as HTTP_STATUS from 'http-status';
+import Link from 'next/link';
 
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
@@ -29,7 +30,9 @@ import {
   isTokenExpired,
   getExpirationTimeInMilliseconds,
   getRemainedTime,
+  getJwtToken,
 } from '@/utils/token';
+import {isValidSignupToken} from '@/api/auth';
 
 export default function Signup() {
   const router = useRouter();
@@ -144,6 +147,19 @@ export default function Signup() {
   };
 
   useEffect(() => {
+    (async () => {
+      if (getJwtToken() === null) {
+        openAlertSnackbar({message: '잘못된 접근입니다.'});
+        router.push('/user/login');
+        return;
+      }
+      if ((await isValidSignupToken()) === false) {
+        openAlertSnackbar({message: '유효하지 않은 토큰입니다.'});
+        router.push('/user/login');
+        return;
+      }
+    })();
+
     const expirationTime = getExpirationTimeInMilliseconds();
     const intervalId = setInterval(() => {
       if (isTokenExpired(expirationTime)) {
@@ -326,10 +342,13 @@ export default function Signup() {
         >
           회원가입
         </Button>
+
+        <Link href="/user/login">
+          <Button fullWidth variant="outlined">
+            메인으로 돌아가기
+          </Button>
+        </Link>
       </Box>
-      <Button fullWidth variant="outlined" href="/user/login">
-        메인으로 돌아가기
-      </Button>
     </>
   );
 }
