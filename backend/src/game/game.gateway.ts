@@ -140,7 +140,7 @@ export class GameGateway implements OnGatewayDisconnect {
     if (userInfo && userInfo.is_gaming === true) {
       return true;
     }
-    this.logger.log('게임 소켓 연결 해제');
+    return false;
   }
 
   createGameRoom(userId: string, gameUsers: GameUser[]): string {
