@@ -34,7 +34,10 @@ export const useProfileImage = () => {
       fileInputRef.current.value = ''; // Reset the input value
     }
     setPreviewImage('');
-    setProfileImageDataState({...profileImageDataState, isUploadImage: false});
+    setProfileImageDataState({
+      ...profileImageDataState,
+      isImageUploaded: false,
+    });
   };
 
   const createImageFile = (file: File, filename: string): File => {
@@ -87,7 +90,7 @@ export const useProfileImage = () => {
     const modifiedFileNameByUserId: File = createImageFile(file, filename);
     setProfileImageDataState({
       ...profileImageDataState,
-      isUploadImage: true,
+      isImageUploaded: true,
       uploadFile: modifiedFileNameByUserId,
     });
   };

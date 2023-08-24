@@ -34,10 +34,9 @@ function Setting() {
   const {openGlobalDialog, closeGlobalDialog} = useGlobalDialog();
   const {openAlertSnackbar} = useAlertSnackbar();
   const [isUniqueNickname, setIsUniqueNickname] = useState<boolean>(false);
-  const [isSameWithInitialNickname, setIsSameWithInitialNickname] =
-    useState<boolean>(true);
+  const [isInitialNickname, setIsInitialNickname] = useState<boolean>(true);
   const {is_2fa_enabled, nickname} = profileDataState;
-  const {userId, uploadFile, isUploadImage} = profileImageDataState;
+  const {userId, uploadFile, isImageUploaded} = profileImageDataState;
   const initialNickname = profileDataState.nickname;
 
   const handleNicknameInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,9 +44,9 @@ function Setting() {
     setProfileDataState({...profileDataState, nickname: changedNickname});
     setIsUniqueNickname(false);
     if (initialNickname === changedNickname) {
-      setIsSameWithInitialNickname(true);
+      setIsInitialNickname(true);
     } else {
-      setIsSameWithInitialNickname(false);
+      setIsInitialNickname(false);
     }
   };
 
@@ -157,10 +156,7 @@ function Setting() {
           message: '회원정보 수정이 완료되었습니다.',
           severity: 'success',
         });
-        setProfileImageDataState({
-          ...profileImageDataState,
-          isUploadImage: false,
-        });
+        setProfileDataState({...profileDataState, image: ''});
         router.push('/main/game');
       }
     } catch (error) {
@@ -191,6 +187,10 @@ function Setting() {
     };
 
     fetchUser();
+    setProfileImageDataState({
+      ...profileImageDataState,
+      isImageUploaded: false,
+    });
   }, []);
 
   return (
@@ -287,8 +287,8 @@ function Setting() {
 
         <Button
           disabled={
-            isUploadImage === false &&
-            (isSameWithInitialNickname || isUniqueNickname === false)
+            isImageUploaded === false &&
+            (isInitialNickname || isUniqueNickname === false)
           }
           fullWidth
           type="submit"
