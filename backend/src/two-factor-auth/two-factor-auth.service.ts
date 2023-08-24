@@ -12,6 +12,7 @@ import {
 import {TwoFactorAuthCodeDto} from './dto/two-factor-auth-code.dto';
 import {UserRepository} from 'src/user/user.repository';
 import {Payload} from 'src/user/payload';
+import * as crypto from 'crypto';
 
 interface twoFactorAuth {
   secret: string;
@@ -20,6 +21,9 @@ interface twoFactorAuth {
 
 @Injectable()
 export class TwoFactorAuthService {
+  private readonly algorithm = 'aes-256-cbc';
+  private readonly ivLength = 16;
+
   constructor(
     private readonly userService: UserService,
     private readonly configService: ConfigService,
@@ -36,11 +40,9 @@ export class TwoFactorAuthService {
       process.env.TWO_FACTOR_AUTH_APP_NAME,
       secret
     );
-
     const twoFactorAuth: twoFactorAuth = {secret, otpAuthUrl};
-
-    await this.userService.setTwoFactorAuthSecret(userID, secret);
-
+    const encryptedSecretKey = this.encryptSecretKey(secret);
+    await this.userService.setTwoFactorAuthSecret(userID, encryptedSecretKey);
     return twoFactorAuth;
   }
 
@@ -61,10 +63,12 @@ export class TwoFactorAuthService {
     if (!user.two_factor_auth_secret) {
       return false;
     }
-
+    const decryptedSecretKey = this.decryptSecretKey(
+      user.two_factor_auth_secret
+    );
     return authenticator.verify({
       token: twoFactorAuthCodeDto.code,
-      secret: user.two_factor_auth_secret,
+      secret: decryptedSecretKey,
     });
   }
 
@@ -90,9 +94,37 @@ export class TwoFactorAuthService {
     if (isCodeValidated === false) {
       throw new UnauthorizedException('Invalid Auth Code');
     }
-    // user.is_2fa_authenticated = true;
     const payload: Payload = {user_id: user.user_id};
     const AccessToken = this.userService.generateAccessToken(payload);
     return AccessToken;
+  }
+
+  encryptSecretKey(text: string): string {
+    const iv = crypto.randomBytes(this.ivLength);
+    const cipher = crypto.createCipheriv(
+      this.algorithm,
+      Buffer.from(process.env.TWO_FACTOR_AUTH_PRIVATE_KEY),
+      iv
+    );
+    const encrypted = Buffer.concat([cipher.update(text), cipher.final()]);
+
+    return `${iv.toString('hex')}:${encrypted.toString('hex')}`;
+  }
+
+  decryptSecretKey(encryptedText: string): string {
+    const [ivHex, encryptedHex] = encryptedText.split(':');
+    const iv = Buffer.from(ivHex, 'hex');
+    const encryptedBuffer = Buffer.from(encryptedHex, 'hex');
+    const decipher = crypto.createDecipheriv(
+      this.algorithm,
+      Buffer.from(process.env.TWO_FACTOR_AUTH_PRIVATE_KEY),
+      iv
+    );
+    const decrypted = Buffer.concat([
+      decipher.update(encryptedBuffer),
+      decipher.final(),
+    ]);
+
+    return decrypted.toString();
   }
 }
