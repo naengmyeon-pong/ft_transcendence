@@ -1,6 +1,7 @@
 'use client';
 
 import {useRouter} from 'next/navigation';
+import Link from 'next/link';
 import {useEffect, useState} from 'react';
 
 import {useSetRecoilState} from 'recoil';
@@ -13,7 +14,6 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
-import Link from '@mui/material/Link';
 
 import apiManager from '@/api/apiManager';
 import logo from '@/public/logo.jpeg';
@@ -154,31 +154,30 @@ function LoginPage() {
             로그인
           </Button>
 
-          <Button
-            component={Link}
-            href={process.env.NEXT_PUBLIC_OAUTH_URL}
-            fullWidth
-            variant="contained"
-            sx={{
-              mb: 2,
-              backgroundColor: '#424242',
-              ':hover': {
-                backgroundColor: 'black',
-              },
-            }}
-          >
-            <Svg42Logo />
-            회원가입
-          </Button>
+          <Link href={`${process.env.NEXT_PUBLIC_OAUTH_URL}`}>
+            <Button
+              fullWidth
+              variant="contained"
+              sx={{
+                mb: 2,
+                backgroundColor: '#424242',
+                ':hover': {
+                  backgroundColor: 'black',
+                },
+              }}
+            >
+              <Svg42Logo />
+              회원가입
+            </Button>
+          </Link>
 
           <Grid container>
             <Grid item xs>
               <Link
-                variant="body2"
-                href={process.env.NEXT_PUBLIC_OAUTH_URL}
+                href={`${process.env.NEXT_PUBLIC_OAUTH_URL}`}
                 onClick={handleResetLinkClick}
               >
-                비밀번호가 기억나지 않으신가요?
+                <Typography>비밀번호가 기억나지 않으신가요?</Typography>
               </Link>
             </Grid>
           </Grid>
