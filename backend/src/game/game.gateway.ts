@@ -37,6 +37,7 @@ import {Type} from '@/record/type/type.entity';
 import {Mode} from '@/record/mode/mode.entity';
 import {SocketArray} from '@/global-variable/global.socket';
 import {ETypeMode} from './types/type-mode.enum';
+import {Payload} from '@/user/payload';
 
 const waitUserList: GameUser[][] = [[], [], [], []];
 
@@ -158,6 +159,7 @@ export class GameGateway implements OnGatewayDisconnect {
 
   @SubscribeMessage('exit_game') // 유저가 게임중에 페이지를 이탈한 경우 (임시 이벤트)
   handleExitGame(@ConnectedSocket() socket: Socket) {
+    // TODO: 토큰이 만료됐을 때,
     const userID = this.getUserID(socket);
     const roomName: string | null = this.gameService.isForfeit(userID);
     if (roomName) {
@@ -425,8 +427,8 @@ export class GameGateway implements OnGatewayDisconnect {
   };
 
   getUserID = (socket: Socket): string => {
+    const jwt: string = socket.handshake.auth.token;
     try {
-      const jwt: string = socket.handshake.auth.token;
       const decodedToken = this.jwtService.verify(jwt, {
         secret: process.env.SIGNIN_JWT_SECRET_KEY,
       });
@@ -434,6 +436,10 @@ export class GameGateway implements OnGatewayDisconnect {
     } catch (e) {
       this.logger.log('token expire');
       socket.emit('token-expire');
+      const decodedToken: any = this.jwtService.decode(jwt);
+      if (decodedToken !== null) {
+        return decodedToken.user_id;
+      }
     }
   };
 
