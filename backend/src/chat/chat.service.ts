@@ -238,7 +238,7 @@ export class ChatService {
 
   async addToAdmin(room_id: number, user_id: string, target_id: string) {
     if (this.isOwner(room_id, user_id)) {
-      const member = await this.isChatMember(room_id, target_id);
+      const member = await this.isChatMember(target_id);
       member.permission = 1;
       await this.chatMemberRepository.save(member);
       return true;
@@ -248,7 +248,7 @@ export class ChatService {
 
   async delAdmin(room_id: number, user_id: string, target_id: string) {
     if (this.isOwner(room_id, user_id)) {
-      const member = await this.isChatMember(room_id, target_id);
+      const member = await this.isChatMember(target_id);
       member.permission = 0;
       await this.chatMemberRepository.save(member);
       return true;
@@ -257,8 +257,8 @@ export class ChatService {
   }
 
   async kickMember(room_id: number, user_id: string, target_id: string) {
-    const admin = await this.isChatMember(room_id, user_id);
-    const member = await this.isChatMember(room_id, target_id);
+    const admin = await this.isChatMember(user_id);
+    const member = await this.isChatMember(target_id);
 
     if (admin.permission > member.permission) {
       return true;
@@ -272,8 +272,8 @@ export class ChatService {
     target_id: string,
     mute_time: string
   ) {
-    const admin = await this.isChatMember(room_id, user_id);
-    const member = await this.isChatMember(room_id, target_id);
+    const admin = await this.isChatMember(user_id);
+    const member = await this.isChatMember(target_id);
 
     if (admin.permission > member.permission) {
       member.mute = mute_time;
@@ -284,8 +284,8 @@ export class ChatService {
   }
 
   async banMember(room_id: number, user_id: string, target_id: string) {
-    const admin = await this.isChatMember(room_id, user_id);
-    const member = await this.isChatMember(room_id, target_id);
+    const admin = await this.isChatMember(user_id);
+    const member = await this.isChatMember(target_id);
 
     if (admin.permission > member.permission) {
       const ban_member = this.chatBanRepository.create({
@@ -316,20 +316,19 @@ export class ChatService {
   }
 
   async isOwner(room_id: number, user_id: string) {
-    const member = await this.isChatMember(room_id, user_id);
+    const member = await this.isChatMember(user_id);
     if (member.permission === 2) {
       return true;
     }
     return false;
   }
 
-  async isChatMember(room_id: number, user_id: string) {
+  async isChatMember(user_id: string) {
     if (!user_id) {
       throw new BadRequestException('empty parameter.');
     }
     const member = await this.chatMemberRepository.findOneBy({
       userId: user_id,
-      chatroomId: room_id,
     });
     if (!member) {
       throw new NotFoundException(`${user_id} is not member of this chat.`);
