@@ -16,6 +16,11 @@ import {useRouter} from 'next/router';
 import {useGlobalModal} from '@/hooks/useGlobalModal';
 import {useRecoilState} from 'recoil';
 import {testInputState} from '@/states/globalModal';
+import axios from 'axios';
+import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
+import * as HTTP_STATUS from 'http-status';
+import {useSetRecoilState} from 'recoil';
+import {tokenExpiredExit} from '@/states/tokenExpired';
 
 const BoxBorder = styled('div')({
   border: '1px solid black',
@@ -68,6 +73,8 @@ const ModalAction = () => {
   const roomId = useContext(UserContext).convert_page;
 
   const [testInput, setTestInput] = useRecoilState(testInputState);
+  const {openAlertSnackbar} = useAlertSnackbar();
+  const setTokenExpiredExit = useSetRecoilState(tokenExpiredExit);
 
   const {closeGlobalModal} = useGlobalModal();
 
@@ -80,10 +87,22 @@ const ModalAction = () => {
       setTestInput('');
       closeGlobalModal();
     } catch (error) {
-      console.log('sendChangePassword: ', error);
-      alert('패스워드 변경 실패');
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === HTTP_STATUS.UNAUTHORIZED) {
+          setTokenExpiredExit(true);
+          return;
+        }
+        openAlertSnackbar({message: error.response?.data.message});
+      }
     }
-  }, [closeGlobalModal, roomId, setTestInput, testInput]);
+  }, [
+    closeGlobalModal,
+    roomId,
+    setTestInput,
+    testInput,
+    openAlertSnackbar,
+    setTokenExpiredExit,
+  ]);
 
   return (
     <Box>

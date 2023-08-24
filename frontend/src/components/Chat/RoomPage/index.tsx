@@ -7,6 +7,11 @@ import UserList from './UserList';
 import {useRouter} from 'next/router';
 import {UserContext} from '@/components/layout/MainLayout/Context';
 import apiManager from '@/api/apiManager';
+import axios from 'axios';
+import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
+import * as HTTP_STATUS from 'http-status';
+import {useSetRecoilState} from 'recoil';
+import {tokenExpiredExit} from '@/states/tokenExpired';
 
 const BoxBorder = styled('div')({
   border: '1px solid black',
@@ -20,6 +25,8 @@ function ChatRoom() {
   const {setConvertPage} = useContext(UserContext);
   const router = useRouter();
   const [init_chat_room, setInitChatRoom] = useState(false);
+  const {openAlertSnackbar} = useAlertSnackbar();
+  const setTokenExpiredExit = useSetRecoilState(tokenExpiredExit);
 
   console.log('ChatRoom');
   async function SearchRoom() {
@@ -30,7 +37,13 @@ function ChatRoom() {
       setInitChatRoom(true);
     } catch (error) {
       console.log(error);
-      alert('비정상 접근입니다');
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === HTTP_STATUS.UNAUTHORIZED) {
+          setTokenExpiredExit(true);
+          return;
+        }
+        openAlertSnackbar({message: error.response?.data.message});
+      }
       setConvertPage(0);
       router.back();
     }
