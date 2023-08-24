@@ -208,15 +208,15 @@ export class GameGateway implements OnGatewayDisconnect {
     if (this.isGameMatched(joinGameInfo, waitingUser) === false) {
       return;
     } else {
-      const {firstUserID, secondUserID} = await this.createRoom(waitingUser);
-      this.removeUserInInviteWaitlist(firstUserID, false);
-      this.removeUserInInviteWaitlist(secondUserID, false);
+      const {firstUserId, secondUserId} = await this.createRoom(waitingUser);
+      this.removeUserInInviteWaitlist(firstUserId, false);
+      this.removeUserInInviteWaitlist(secondUserId, false);
     }
   }
 
   createRoom = async (
     userSocket: GameUser
-  ): Promise<{firstUserID: string; secondUserID: string}> => {
+  ): Promise<{firstUserId: string; secondUserId: string}> => {
     const gameUsers: GameUser[] = [];
     const firstUser = waitUserList[userSocket.type_mode].shift();
     const secondUser = userSocket;
@@ -257,7 +257,7 @@ export class GameGateway implements OnGatewayDisconnect {
     this.nsp.to(roomName).emit('room_name', roomUserInfo);
     this.nsp.to(roomName).emit('game_info', {game_info: gameInfo});
 
-    return {firstUserID: firstUser.user_id, secondUserID: secondUser.user_id};
+    return {firstUserId, secondUserId};
   };
 
   createInviteGameRoom = (inviteGameInfo: InviteGameInfo) => {
