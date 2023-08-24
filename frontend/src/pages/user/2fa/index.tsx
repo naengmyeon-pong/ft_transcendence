@@ -16,13 +16,13 @@ import Typography from '@mui/material/Typography';
 import apiManager from '@/api/apiManager';
 import {profileState} from '@/states/profile';
 import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
+import withAuth from '@/components/hoc/withAuth';
 
 function TwoFactorAuth() {
   const router = useRouter();
-  const [QRCodeImage, setQRCodeImage] = useState<string>('');
-  const [profileDataState, setProfileDataState] = useRecoilState(profileState);
-
   const {openAlertSnackbar} = useAlertSnackbar();
+  const [profileDataState, setProfileDataState] = useRecoilState(profileState);
+  const [QRCodeImage, setQRCodeImage] = useState<string>('');
 
   const handleClick = () => {
     router.back();
@@ -59,24 +59,30 @@ function TwoFactorAuth() {
 
   useEffect(() => {
     const generateQRCode = async () => {
-      const response = await apiManager.post(
-        '/2fa/generate',
-        {user_id: profileDataState.user_id},
-        {
-          responseType: 'arraybuffer',
+      try {
+        const response = await apiManager.post(
+          '/2fa/generate',
+          {user_id: profileDataState.user_id},
+          {
+            responseType: 'arraybuffer',
+          }
+        );
+        const base64Image: string = Buffer.from(
+          response.data,
+          'binary'
+        ).toString('base64');
+        setQRCodeImage('data:image/png;base64,' + base64Image);
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          const status = error.response?.status;
+          if (status === HTTP_STATUS.UNAUTHORIZED) {
+            openAlertSnackbar({message: '잘못된 접근입니다.'});
+          }
         }
-      );
-      const base64Image: string = Buffer.from(response.data, 'binary').toString(
-        'base64'
-      );
-      setQRCodeImage('data:image/png;base64,' + base64Image);
+      }
     };
 
-    try {
-      generateQRCode();
-    } catch (error) {
-      console.log(error);
-    }
+    generateQRCode();
   }, []);
 
   return (
@@ -85,7 +91,9 @@ function TwoFactorAuth() {
         2차 인증 설정
       </Typography>
 
-      <Image src={QRCodeImage} alt="QRCode" width={256} height={256} />
+      {QRCodeImage && (
+        <Image src={QRCodeImage} alt="QRCode" width={256} height={256} />
+      )}
 
       <Box component="form" onSubmit={handleSubmit} noValidate sx={{mt: 1}}>
         <TextField
@@ -107,4 +115,4 @@ function TwoFactorAuth() {
   );
 }
 
-export default TwoFactorAuth;
+export default withAuth(TwoFactorAuth);
