@@ -5,6 +5,7 @@ import {useRouter} from 'next/router';
 
 import axios from 'axios';
 import * as HTTP_STATUS from 'http-status';
+import Link from 'next/link';
 
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
@@ -326,10 +327,13 @@ export default function Signup() {
         >
           회원가입
         </Button>
+
+        <Link href="/user/login">
+          <Button fullWidth variant="outlined">
+            메인으로 돌아가기
+          </Button>
+        </Link>
       </Box>
-      <Button fullWidth variant="outlined" href="/user/login">
-        메인으로 돌아가기
-      </Button>
     </>
   );
 }
