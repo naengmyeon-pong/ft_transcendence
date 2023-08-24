@@ -208,25 +208,27 @@ export class GameGateway implements OnGatewayDisconnect {
     if (this.isGameMatched(joinGameInfo, waitingUser) === false) {
       return;
     } else {
-      const {firstUserID, secondUserID} = await this.createRoom(waitingUser);
-      this.removeUserInInviteWaitlist(firstUserID, false);
-      this.removeUserInInviteWaitlist(secondUserID, false);
+      const {firstUserId, secondUserId} = await this.createRoom(waitingUser);
+      this.removeUserInInviteWaitlist(firstUserId, false);
+      this.removeUserInInviteWaitlist(secondUserId, false);
     }
   }
 
   createRoom = async (
     userSocket: GameUser
-  ): Promise<{firstUserID: string; secondUserID: string}> => {
+  ): Promise<{firstUserId: string; secondUserId: string}> => {
     const gameUsers: GameUser[] = [];
     const firstUser = waitUserList[userSocket.type_mode].shift();
     const secondUser = userSocket;
+    const firstUserId = firstUser.user_id;
+    const secondUserId = secondUser.user_id;
     gameUsers.push(firstUser);
     gameUsers.push(secondUser);
 
     const roomName = this.createGameRoom(firstUser.user_id, gameUsers);
     this.joinRoom(firstUser.user_id, secondUser.user_id, roomName, false);
 
-    const [left_user, right_user] = await this.findUserName(
+    const [left_user, right_user] = await this.findUserNickname(
       firstUser.user_id,
       secondUser.user_id
     );
@@ -250,12 +252,12 @@ export class GameGateway implements OnGatewayDisconnect {
     ) {
       gameInfo.ball.speed *= 1.5;
     }
-    this.socketArray.getUserSocket(left_user).is_gaming = true;
-    this.socketArray.getUserSocket(right_user).is_gaming = true;
+    this.socketArray.getUserSocket(firstUserId).is_gaming = true;
+    this.socketArray.getUserSocket(secondUserId).is_gaming = true;
     this.nsp.to(roomName).emit('room_name', roomUserInfo);
     this.nsp.to(roomName).emit('game_info', {game_info: gameInfo});
 
-    return {firstUserID: firstUser.user_id, secondUserID: secondUser.user_id};
+    return {firstUserId, secondUserId};
   };
 
   createInviteGameRoom = (inviteGameInfo: InviteGameInfo) => {
@@ -318,7 +320,7 @@ export class GameGateway implements OnGatewayDisconnect {
     secondSocket.join(roomName);
   };
 
-  findUserName = async (
+  findUserNickname = async (
     leftUserID: string,
     rightUserID: string
   ): Promise<[string, string]> => {
@@ -439,7 +441,7 @@ export class GameGateway implements OnGatewayDisconnect {
     알람을 데이터베이스에 저장하지 않아서 생기는 문제
     1. 이미 초대받은 사용자가 초대를 보내려는 경우
     2. 닉네임이 변경되는경우 갱신이 안됨
-    3. 
+    3.
   */
 
   // 전역변수로 두 아이디, 모드 저장
