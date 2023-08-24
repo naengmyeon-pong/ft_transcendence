@@ -14,9 +14,10 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
 import apiManager from '@/api/apiManager';
+import {isValidUserToken} from '@/api/auth';
 import {profileState} from '@/states/profile';
 import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
-import withAuth from '@/components/hoc/withAuth';
+import {getJwtToken} from '@/utils/token';
 
 function TwoFactorAuth() {
   const router = useRouter();
@@ -82,6 +83,19 @@ function TwoFactorAuth() {
       }
     };
 
+    (async () => {
+      if (getJwtToken() === null) {
+        openAlertSnackbar({message: '로그인이 필요합니다.'});
+        router.push('/user/login');
+        return;
+      }
+      if ((await isValidUserToken()) === false) {
+        openAlertSnackbar({message: '유효하지 않은 토큰입니다.'});
+        router.push('/user/login');
+        return;
+      }
+    })();
+
     generateQRCode();
   }, []);
 
@@ -115,4 +129,4 @@ function TwoFactorAuth() {
   );
 }
 
-export default withAuth(TwoFactorAuth);
+export default TwoFactorAuth;
