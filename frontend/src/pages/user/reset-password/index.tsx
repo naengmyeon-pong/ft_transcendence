@@ -101,29 +101,29 @@ function PasswordReset() {
         router.push('/user/login');
         return;
       }
-
-      const expirationTime = getExpirationTimeInMilliseconds();
-      const intervalId = setInterval(() => {
-        if (isTokenExpired(expirationTime)) {
-          clearInterval(intervalId);
-          openAlertSnackbar({
-            message: '비밀번호 재설정 시간이 만료되었습니다.',
-          });
-          if (passwordReset === true) {
-            router.push('/user/login');
-          } else {
-            router.push('/user/setting');
-          }
-          return;
-        }
-        const formattedTime: string = getRemainedTime(expirationTime);
-        setRemainedTime(formattedTime);
-      }, 1000);
-
-      return () => {
-        clearInterval(intervalId);
-      };
     })();
+
+    const expirationTime = getExpirationTimeInMilliseconds();
+    const intervalId = setInterval(() => {
+      if (isTokenExpired(expirationTime)) {
+        clearInterval(intervalId);
+        openAlertSnackbar({
+          message: '비밀번호 재설정 시간이 만료되었습니다.',
+        });
+        if (passwordReset === true) {
+          router.push('/user/login');
+        } else {
+          router.push('/user/setting');
+        }
+        return;
+      }
+      const formattedTime: string = getRemainedTime(expirationTime);
+      setRemainedTime(formattedTime);
+    }, 1000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
   }, []);
 
   return (

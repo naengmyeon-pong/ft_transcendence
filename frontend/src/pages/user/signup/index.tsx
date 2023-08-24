@@ -158,23 +158,23 @@ export default function Signup() {
         router.push('/user/login');
         return;
       }
-
-      const expirationTime = getExpirationTimeInMilliseconds();
-      const intervalId = setInterval(() => {
-        if (isTokenExpired(expirationTime)) {
-          clearInterval(intervalId);
-          openAlertSnackbar({message: '회원가입 시간이 만료되었습니다.'});
-          router.push('/user/login');
-          return;
-        }
-        const formattedTime: string = getRemainedTime(expirationTime);
-        setRemainedTime(formattedTime);
-      }, 1000);
-
-      return () => {
-        clearInterval(intervalId);
-      };
     })();
+
+    const expirationTime = getExpirationTimeInMilliseconds();
+    const intervalId = setInterval(() => {
+      if (isTokenExpired(expirationTime)) {
+        clearInterval(intervalId);
+        openAlertSnackbar({message: '회원가입 시간이 만료되었습니다.'});
+        router.push('/user/login');
+        return;
+      }
+      const formattedTime: string = getRemainedTime(expirationTime);
+      setRemainedTime(formattedTime);
+    }, 1000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
   }, []);
 
   return (
