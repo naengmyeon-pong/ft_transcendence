@@ -44,7 +44,11 @@ function RecordSummary({user_info}: {user_info: UserType}) {
 
         setWin(numberWin);
         setLose(numberLose);
-        setWinRate(numberWinRate.toFixed(2));
+        if (isNaN(numberWinRate)) {
+          setWinRate('0');
+        } else {
+          setWinRate(numberWinRate.toFixed(2));
+        }
 
         const numberTotalWin = Number(response.data.win);
         const numberTotalLose = Number(response.data.lose);
@@ -52,7 +56,11 @@ function RecordSummary({user_info}: {user_info: UserType}) {
           (numberTotalWin / (numberTotalWin + numberTotalLose)) * 100;
         setTotalWin(numberTotalWin);
         setTotalLose(numberTotalLose);
-        setTotalWinRate(numberTotalWinRate.toFixed(2));
+        if (isNaN(numberWinRate)) {
+          setTotalWinRate('0');
+        } else {
+          setTotalWinRate(numberTotalWinRate.toFixed(2));
+        }
 
         const numberRankScore = Number(response.data.rank_score);
         setRankScore(numberRankScore);
