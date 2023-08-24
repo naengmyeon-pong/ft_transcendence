@@ -276,12 +276,11 @@ function Setting() {
             </Grid>
           </Grid>
           <Grid item xs={2}>
-            <IconButton
-              href="/user/reset-password"
-              aria-label="password-change"
-            >
-              <ArrowRightIcon />
-            </IconButton>
+            <Link href="/user/reset-password">
+              <IconButton aria-label="password-change">
+                <ArrowRightIcon />
+              </IconButton>
+            </Link>
           </Grid>
 
           <Grid item xs={10}>
