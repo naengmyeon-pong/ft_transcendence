@@ -143,7 +143,7 @@ function MainLayout({children}: MainLayoutProps) {
   return (
     <>
       {initMainLayout && (
-        <Box height={'100vh'}>
+        <Box height="80vh">
           <CustomAppBar />
           <Toolbar />
           <Box display="flex">
