@@ -116,20 +116,44 @@ function Setting() {
     }
   };
 
-  const handleDeleteUser = async () => {
-    // openGlobalDialog({
-
-    // })
+  const deleteUserApi = async () => {
     try {
       const response = await apiManager.delete('/user/delete');
       const {status} = response;
       console.log(response);
       if (status) {
+        closeGlobalDialog();
+        openAlertSnackbar({
+          message: '정상적으로 탈퇴했습니다.',
+          severity: 'success',
+        });
         router.push('/user/login');
       }
     } catch (error) {
       console.log(error);
+      if (axios.isAxiosError(error)) {
+        openAlertSnackbar({message: error.response?.data.message});
+      }
     }
+  };
+
+  const handleDeleteUser = async () => {
+    openGlobalDialog({
+      title: '회원탈퇴',
+      content: (
+        <DialogContentText id="alert-dialog-description">
+          회원탈퇴를 진행하시겠습니까?
+        </DialogContentText>
+      ),
+      actions: (
+        <>
+          <Button onClick={closeGlobalDialog} sx={{color: 'grey'}}>
+            아니오
+          </Button>
+          <Button onClick={deleteUserApi}>예</Button>
+        </>
+      ),
+    });
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
