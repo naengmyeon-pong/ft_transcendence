@@ -30,7 +30,7 @@ function UserProfileModalAction({user_info}: {user_info: UserType}) {
       </Box>
       <Divider sx={{mt: 2, mb: 2}} />
       <Box display="flex" flexDirection="column">
-        <RecordSummary />
+        <RecordSummary user_info={user_info} />
       </Box>
       <Box display="flex" flexDirection="column">
         <DetailRecord user_info={user_info} />

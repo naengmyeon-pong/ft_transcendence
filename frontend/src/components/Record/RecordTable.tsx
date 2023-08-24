@@ -70,7 +70,6 @@ function RecordTable({intraId, type}: {intraId: string; type: string}) {
   // Avoid a layout jump when reaching the last page with empty rows.
   const emptyRows =
     page > 0 ? Math.max(0, (1 + page) * rowsPerPage - totalCounts) : 0;
-  console.log(emptyRows);
 
   const handleChangePage = (
     event: React.MouseEvent<HTMLButtonElement> | null,
