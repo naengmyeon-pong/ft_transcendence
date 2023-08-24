@@ -236,7 +236,7 @@ function SideBar() {
             width: drawerWidth,
             // boxSizing: 'border-box',
           },
-          display: {sm: 'block', xs: 'none'},
+          display: 'block',
         }}
       >
         <Toolbar />
