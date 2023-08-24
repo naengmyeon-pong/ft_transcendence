@@ -12,6 +12,7 @@ import {ETypeMode} from './types/type-mode.enum';
 import {Type} from '@/record/type/type.entity';
 import {Mode} from '@/record/mode/mode.entity';
 import {GameUser} from './types/game-user.interface';
+import {SocketArray} from '@/global-variable/global.socket';
 
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
@@ -34,7 +35,8 @@ export class GameService {
     private userRepository: UserRepository,
     private recordRepository: RecordRepository,
     private modeRepository: ModeRepository,
-    private typeRepository: TypeRepository
+    private typeRepository: TypeRepository,
+    private socketArray: SocketArray
   ) {}
 
   initWaitUserList(waitUserList: GameUser[][]) {
@@ -115,12 +117,15 @@ export class GameService {
   };
 
   isForfeit = (userID: string): string | null => {
-    let loserIdx: number;
     for (const [key, value] of gameRooms) {
-      if (userID === value.users[0].user_id) {
-        loserIdx = 0;
-      } else if (userID === value.users[1].user_id) {
-        loserIdx = 1;
+      if (
+        userID === value.users[0].user_id ||
+        userID === value.users[1].user_id
+      ) {
+        this.socketArray.getUserSocket(value.users[0].user_id).is_gaming =
+          false;
+        this.socketArray.getUserSocket(value.users[1].user_id).is_gaming =
+          false;
       } else {
         continue;
       }

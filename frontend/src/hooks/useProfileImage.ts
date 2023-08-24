@@ -20,7 +20,7 @@ export const useProfileImage = () => {
     useRecoilState(profileImageState);
   const {userId} = profileImageDataState;
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [previewImage, setPreviewImage] = useState('');
+  const [previewImage, setPreviewImage] = useState<string>('');
 
   const setUserId = (userId: string) => {
     setProfileImageDataState({...profileImageDataState, userId});
@@ -34,6 +34,10 @@ export const useProfileImage = () => {
       fileInputRef.current.value = ''; // Reset the input value
     }
     setPreviewImage('');
+    setProfileImageDataState({
+      ...profileImageDataState,
+      isImageUploaded: false,
+    });
   };
 
   const createImageFile = (file: File, filename: string): File => {
@@ -86,6 +90,7 @@ export const useProfileImage = () => {
     const modifiedFileNameByUserId: File = createImageFile(file, filename);
     setProfileImageDataState({
       ...profileImageDataState,
+      isImageUploaded: true,
       uploadFile: modifiedFileNameByUserId,
     });
   };
@@ -95,6 +100,7 @@ export const useProfileImage = () => {
     previewImage,
     fileInputRef,
     setUserId,
+    setProfileImageDataState,
     handleUploadFile,
     handleImageRemoval,
   };

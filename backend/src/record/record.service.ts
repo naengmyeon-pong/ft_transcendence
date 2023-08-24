@@ -78,7 +78,6 @@ export class RecordService {
   };
 
   getRecentGames = async (userID: string, limit: number): Promise<string[]> => {
-    console.log('limit: ', limit);
     const recentGames: Record[] = await this.recordRepository.getRecentGames(
       userID,
       limit

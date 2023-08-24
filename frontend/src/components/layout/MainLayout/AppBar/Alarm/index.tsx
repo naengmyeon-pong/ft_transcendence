@@ -2,8 +2,8 @@ import {MouseEvent, useCallback, useContext, useEffect, useState} from 'react';
 import {Badge, IconButton, Menu} from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import {InviteGameInfo} from '@/common/types/game';
-import ChatAlarm from './ChatAlarm';
-import GameAlarm from './GameAlarm';
+import ChatAlarm from './Chat';
+import GameAlarm from './Game';
 import {
   Chatnotificate,
   InviteGameEnum,
@@ -13,7 +13,6 @@ import {UserContext} from '../../Context';
 
 export default function AlarmEvent() {
   const [read_notificate, setReadNotificate] = useState<boolean>(false);
-  // const [game_noti, setGameAlarm] = useState<InviteGameInfo[]>([]);
   const [game_noti, setGameAlarm] = useState<InviteGameInfoProps[]>([]);
   const [chat_noti, setChatAlarm] = useState<Chatnotificate[]>([]);
   const [alram_menu, setAlarmMenu] = useState<null | HTMLElement>(null);
@@ -45,16 +44,16 @@ export default function AlarmEvent() {
 
   // 초대한 사용자가 응답한 사용자에 대한 결과를 받는 이벤트
   const inviteGameMoveEvent = useCallback(
-    (inviteGameInfo: InviteGameInfo | string) => {
+    (inviteGameInfo: InviteGameInfo) => {
       console.log(inviteGameInfo);
       // 거절
       const tmp: InviteGameInfoProps = {
         invite_game_info: inviteGameInfo,
         event_type: '',
       };
-      if (typeof inviteGameInfo === 'string') {
+      if (inviteGameInfo.state === false) {
         tmp.event_type = InviteGameEnum.INVITE_RESPON_FALSE;
-      } else {
+      } else if (inviteGameInfo.state === true) {
         tmp.event_type = InviteGameEnum.INVITE_RESPON_TRUE;
       }
       setGameAlarm(prev => [...prev, tmp]);
@@ -63,14 +62,104 @@ export default function AlarmEvent() {
     [setReadNotificate, setGameAlarm]
   );
 
+  // 이전 알람에서 제거하고 거절했다는 메세지 추가
+  const cancelGameAlarm = useCallback((rep: string) => {
+    console.log('rep: ', rep);
+    setGameAlarm(prev => {
+      const foundIndex = prev.findIndex(
+        item => item.invite_game_info.inviter_nickname === rep
+      );
+      console.log('foundIndex: ', foundIndex);
+
+      if (foundIndex === -1) {
+        return prev;
+      }
+
+      const updatedNode = {...prev[foundIndex]};
+      updatedNode.invite_game_info = rep;
+      updatedNode.event_type = InviteGameEnum.LEFTWAITINGROOM;
+
+      const updatedAlarmList = [
+        ...prev.slice(0, foundIndex),
+        updatedNode,
+        ...prev.slice(foundIndex + 1),
+      ];
+      return updatedAlarmList;
+    });
+  }, []);
+
+  const inviterLogOut = useCallback((rep: string) => {
+    setGameAlarm(prev => {
+      console.log('초대자 나감rep: ', rep);
+      const foundIndex = prev.findIndex(
+        item => item.invite_game_info.inviter_nickname === rep
+      );
+      console.log('foundIndex: ', foundIndex);
+
+      if (foundIndex === -1) {
+        return prev;
+      }
+
+      const updatedNode = {...prev[foundIndex]};
+      updatedNode.invite_game_info = rep;
+      updatedNode.event_type = InviteGameEnum.INVITER_OFF;
+
+      const updatedAlarmList = [
+        ...prev.slice(0, foundIndex),
+        updatedNode,
+        ...prev.slice(foundIndex + 1),
+      ];
+      return updatedAlarmList;
+    });
+  }, []);
+
+  const inviteeLogOut = useCallback((rep: string) => {
+    setGameAlarm(prev => {
+      console.log('초대자 나감', rep);
+      const foundIndex = prev.findIndex(
+        item => item.invite_game_info.invitee_nickname === rep
+      );
+      console.log('foundIndex: ', foundIndex);
+
+      if (foundIndex === -1) {
+        return prev;
+      }
+
+      const updatedNode = {...prev[foundIndex]};
+      updatedNode.invite_game_info = rep;
+      updatedNode.event_type = InviteGameEnum.INVITEE_OFF;
+
+      const updatedAlarmList = [
+        ...prev.slice(0, foundIndex),
+        updatedNode,
+        ...prev.slice(foundIndex + 1),
+      ];
+      return updatedAlarmList;
+    });
+  }, []);
+
+  // 게임 초대 관련 이벤트
   useEffect(() => {
     chat_socket?.on('invite_game', inviteGameEvent);
     chat_socket?.on('invite_response', inviteGameMoveEvent);
+    chat_socket?.on('invitee_cancel_game_out', cancelGameAlarm);
+    chat_socket?.on('inviter_cancel_game_refresh', inviterLogOut);
+    chat_socket?.on('invitee_cancel_game_refresh', inviteeLogOut);
     return () => {
       chat_socket?.off('invite_game', inviteGameEvent);
       chat_socket?.off('invite_response', inviteGameMoveEvent);
+      chat_socket?.off('invitee_cancel_game_out', cancelGameAlarm);
+      chat_socket?.off('inviter_cancel_game_refresh', inviterLogOut);
+      chat_socket?.off('invitee_cancel_game_refresh', inviteeLogOut);
     };
-  }, [chat_socket, inviteGameEvent, inviteGameMoveEvent]);
+  }, [
+    chat_socket,
+    inviteGameEvent,
+    inviteGameMoveEvent,
+    cancelGameAlarm,
+    inviterLogOut,
+    inviteeLogOut,
+  ]);
 
   const handleChatAlarm = useCallback(
     (rep: Chatnotificate) => {
@@ -81,6 +170,7 @@ export default function AlarmEvent() {
     [setReadNotificate, setChatAlarm]
   );
 
+  // 채팅 관련 이벤트
   useEffect(() => {
     chat_socket?.on('chatroom-notification', handleChatAlarm);
     return () => {

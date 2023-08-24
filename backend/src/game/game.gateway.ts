@@ -80,7 +80,7 @@ export class GameGateway implements OnGatewayDisconnect {
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
-    const userID = socket.handshake.query.user_id as string;
+    const userID = this.getUserID(socket);
     const roomName: string | null = this.gameService.isForfeit(userID);
     if (roomName) {
       const roomInfo = gameRooms.get(roomName);
@@ -104,7 +104,7 @@ export class GameGateway implements OnGatewayDisconnect {
     return userId;
   }
 
-  @SubscribeMessage('exit_game') // 유저가 페이지를 이탈한 경우 (임시 이벤트)
+  @SubscribeMessage('exit_game') // 유저가 게임중에 페이지를 이탈한 경우 (임시 이벤트)
   handleExitGame(@ConnectedSocket() socket: Socket) {
     const userID = this.getUserID(socket);
     const roomName: string | null = this.gameService.isForfeit(userID);
@@ -151,16 +151,20 @@ export class GameGateway implements OnGatewayDisconnect {
       user_id,
       socket_id: socket.id,
       keys,
-      type_mode: -1,
+      type_mode: ETypeMode.NONE,
     };
     if (this.isGameMatched(joinGameInfo, waitingUser) === false) {
       return;
     } else {
-      this.createRoom(waitingUser);
+      const {firstUserID, secondUserID} = await this.createRoom(waitingUser);
+      this.removeUserInInviteWaitlist(firstUserID, false);
+      this.removeUserInInviteWaitlist(secondUserID, false);
     }
   }
 
-  createRoom = async (userSocket: GameUser) => {
+  createRoom = async (
+    userSocket: GameUser
+  ): Promise<{firstUserID: string; secondUserID: string}> => {
     const gameUsers: GameUser[] = [];
     const firstUser = waitUserList[userSocket.type_mode].shift();
     const secondUser = userSocket;
@@ -168,7 +172,7 @@ export class GameGateway implements OnGatewayDisconnect {
     gameUsers.push(secondUser);
 
     const roomName = this.createGameRoom(firstUser.user_id, gameUsers);
-    this.joinRoom(firstUser.user_id, secondUser.user_id, roomName);
+    this.joinRoom(firstUser.user_id, secondUser.user_id, roomName, false);
 
     const [left_user, right_user] = await this.findUserName(
       firstUser.user_id,
@@ -194,16 +198,70 @@ export class GameGateway implements OnGatewayDisconnect {
     ) {
       gameInfo.ball.speed *= 1.5;
     }
-
+    this.socketArray.getUserSocket(left_user).is_gaming = true;
+    this.socketArray.getUserSocket(right_user).is_gaming = true;
     this.nsp.to(roomName).emit('room_name', roomUserInfo);
     this.nsp.to(roomName).emit('game_info', {game_info: gameInfo});
+
+    return {firstUserID: firstUser.user_id, secondUserID: secondUser.user_id};
   };
 
-  joinRoom = (firstID: string, secondID: string, roomName: string) => {
-    const firstSocketID = this.socketArray.getUserSocket(firstID).socket_id;
+  createInviteGameRoom = (inviteGameInfo: InviteGameInfo) => {
+    const gameUsers: GameUser[] = [];
+    const leftKeys: KeyData = {up: false, down: false};
+    const rightKeys: KeyData = {up: false, down: false};
+    const inviterSocketID = this.socketArray.getUserSocket(
+      inviteGameInfo.inviter_id
+    ).socket_id;
+    const type_mode = findInviteGameMode(inviteGameInfo);
+    const inviter: GameUser = {
+      user_id: inviteGameInfo.inviter_id,
+      socket_id: inviterSocketID,
+      keys: leftKeys,
+      type_mode,
+    };
+    const inviteeSocketID = this.socketArray.getUserSocket(
+      inviteGameInfo.invitee_id
+    ).socket_id;
+
+    const invitee: GameUser = {
+      user_id: inviteGameInfo.invitee_id,
+      socket_id: inviteeSocketID,
+      keys: rightKeys,
+      type_mode,
+    };
+    gameUsers.push(inviter);
+    gameUsers.push(invitee);
+
+    const roomName = this.createGameRoom(inviter.user_id, gameUsers);
+    this.joinRoom(inviter.socket_id, invitee.socket_id, roomName, true);
+
+    const roomInfo: RoomInfo = gameRooms.get(roomName);
+    const gameInfo: GameInfo = roomInfo.game_info;
+    if (
+      roomInfo.type_mode === ETypeMode.NORMAL_HARD ||
+      roomInfo.type_mode === ETypeMode.RANK_HARD
+    ) {
+      gameInfo.ball.speed *= 1.5;
+    }
+  };
+
+  joinRoom = (
+    firstID: string,
+    secondID: string,
+    roomName: string,
+    isSocketProvided: boolean
+  ) => {
+    let firstSocketID: string, secondSocketID: string;
+    if (isSocketProvided === true) {
+      firstSocketID = firstID;
+      secondSocketID = secondID;
+    } else {
+      firstSocketID = this.socketArray.getUserSocket(firstID).socket_id;
+      secondSocketID = this.socketArray.getUserSocket(secondID).socket_id;
+    }
     const firstSocket = this.nsp.sockets.get(firstSocketID);
     firstSocket.join(roomName);
-    const secondSocketID = this.socketArray.getUserSocket(secondID).socket_id;
     const secondSocket = this.nsp.sockets.get(secondSocketID);
     secondSocket.join(roomName);
   };
@@ -231,7 +289,7 @@ export class GameGateway implements OnGatewayDisconnect {
   ): boolean => {
     waitingUser.type_mode = findTypeMode(joinGameInfo);
     const gameTypeMode = waitingUser.type_mode;
-    if (gameTypeMode === -1) {
+    if (gameTypeMode === ETypeMode.NONE) {
       throw new BadRequestException();
     }
     if (waitUserList[gameTypeMode].length === 0) {
@@ -251,7 +309,6 @@ export class GameGateway implements OnGatewayDisconnect {
     {room_name, up, down}: {room_name: string; up: boolean; down: boolean}
   ) {
     const roomInfo: RoomInfo = gameRooms.get(room_name);
-
     if (this.gameService.isLeftUser(roomInfo, socket.id) === true) {
       roomInfo.users[EUserIndex.LEFT].keys.up = up;
       roomInfo.users[EUserIndex.LEFT].keys.down = down;
@@ -266,11 +323,6 @@ export class GameGateway implements OnGatewayDisconnect {
     @ConnectedSocket() socket: Socket,
     @MessageBody() room_name: string
   ) {
-    const user_id = socket.handshake.query.user_id as string;
-    console.log('user_id: ', user_id);
-    console.log('room_name: ', room_name);
-    console.log('socket_id: ', socket.id);
-
     const roomInfo: RoomInfo = gameRooms.get(room_name);
     const gameInfo: GameInfo = roomInfo.game_info;
     const leftUserKeyState: KeyData = roomInfo.users[EUserIndex.LEFT].keys;
@@ -303,6 +355,10 @@ export class GameGateway implements OnGatewayDisconnect {
         clearInterval(roomInfo.interval);
         console.log('game over!');
         this.gameService.saveRecord(roomInfo, false, null);
+        this.socketArray.getUserSocket(roomInfo.users[0].user_id).is_gaming =
+          false;
+        this.socketArray.getUserSocket(roomInfo.users[1].user_id).is_gaming =
+          false;
         gameRooms.delete(roomInfo.room_name);
       }
     }, 1000 / 120);
@@ -339,90 +395,194 @@ export class GameGateway implements OnGatewayDisconnect {
   async handleInviteGame(
     @ConnectedSocket() inviterSocket: Socket,
     @MessageBody() inviteGameInfo: InviteGameInfo
-  ) {
-    // console.log(inviteGameInfo);
+  ): Promise<string | null> {
+    const userID = this.getUserID(inviterSocket);
+    const userInfo = this.socketArray.getUserSocket(userID);
+    if (userInfo.is_gaming === true) {
+      return '게임중에는 초대할 수 없습니다.';
+    }
     const target = this.socketArray.getUserSocket(inviteGameInfo.invitee_id);
     if (target === undefined) {
-      return false;
+      return '유저가 로그인 상태가 아닙니다.';
     }
-    // console.log(target);
     // 유저 아이디를 조회해서 타겟에 전송
-    try {
-      const B = await this.userRepository.findOneBy({
-        user_id: inviteGameInfo.invitee_id,
-      });
-      // 임시로 기존에 있으면 패스
-      inviteGameInfo.inviter_nickname = B.user_nickname;
-      const tmp = (item: InviteGameInfo) =>
-        item.invitee_id === inviteGameInfo.invitee_id;
-      if (!inviteWaitList.some(tmp)) {
-        inviteWaitList.push(inviteGameInfo);
-      }
-      inviterSocket.to(target.socket_id).emit('invite_game', inviteGameInfo);
-    } catch (error) {
-      console.log('handleInviteGame Error: ', error);
+    const userA = await this.userRepository.findOneBy({
+      user_id: inviteGameInfo.inviter_id,
+    });
+    if (!userA) {
+      return '잘못된 요청입니다.'; // 유저의 정보가 존재하지 않는 경우
     }
-
-    //
-    // 소켓에서 찾고 게임만들고 전달하는 과정 접속중이 아니면 false리턴
-
-    // if (
-    //   inviterSocket.id !==
-    //   this.socketArray.getUserSocket(inviteGameInfo.inviter_id)
-    // ) {
-    //   // 유저의 ID와 소켓이 매칭되지 않는 경우
-    //   throw new BadRequestException();
-    // }
-    // const inviteeSocket = this.socketArray.getUserSocket(
-    //   inviteGameInfo.invitee_id
-    // );
-    // if (!inviteeSocket) {
-    // 초대받은 유저가 로그인 상태가 아닌 경우
-    // inviterSocket.emit('invite_error', '유저가 로그인 상태가 아님');
-    // return;
-    // }
-    // console.log('invitee : ', inviteeSocket);
-    // inviterSocket.join(inviteGameInfo.inviter_id);
-    // inviterSocket.to(inviteeSocket).emit('invite_game', inviteGameInfo);
-    // inviterSocket.emit('test', 'hello');
+    inviteGameInfo.inviter_nickname = userA.user_nickname;
+    const userB = await this.userRepository.findOneBy({
+      user_id: inviteGameInfo.invitee_id,
+    });
+    if (!userB) {
+      return '잘못된 요청입니다.';
+    }
+    // 임시로 기존에 있으면 패스
+    inviteGameInfo.invitee_nickname = userB.user_nickname;
+    const tmp = (item: InviteGameInfo) =>
+      item.invitee_id === inviteGameInfo.invitee_id &&
+      item.inviter_id === inviteGameInfo.inviter_id;
+    if (!inviteWaitList.some(tmp)) {
+      inviteWaitList.push(inviteGameInfo);
+    }
+    inviterSocket.to(target.socket_id).emit('invite_game', inviteGameInfo);
   }
 
   @SubscribeMessage('invite_response')
   handleInviteGameResponse(
-    @ConnectedSocket() inviterSocket: Socket,
-    @MessageBody() inviteGameInfo: InviteGameInfo | string
+    @ConnectedSocket() inviteeSocket: Socket,
+    @MessageBody() inviteGameInfo: InviteGameInfo
   ) {
-    // 본인의 소켓이 아닌 다른 소켓으로 보내야함
-    const user_id = inviterSocket.handshake.query.user_id as string;
-    // inviteGameInfo 이 B의 닉네임일경우 A의 소켓을 찾을 수가 없음
+    const targetSocketID = this.socketArray.getUserSocket(
+      inviteGameInfo.inviter_id
+    ).socket_id;
 
-    // const target_id =
-    //   user_id === inviteGameInfo.inviter_id
-    //     ? inviteGameInfo.inviter_id
-    //     : (typeof inviteGameInfo.invitee_id === 'object' ? ;
-    // // inviterSocket.emit('invite_response', inviteGameInfo);
-    // const target_socket_id = this.socketArray.getUserSocket(target_id);
-    // inviterSocket
-    //   .to(`${target_socket_id}`)
-    //   .emit('invite_response', inviteGameInfo);
-    return;
+    if (inviteGameInfo.state === true) {
+      this.changeInviteGameState(inviteGameInfo.inviter_id, true);
+      this.createInviteGameRoom(inviteGameInfo);
+    }
+    inviteeSocket
+      .to(`${targetSocketID}`)
+      .emit('invite_response', inviteGameInfo);
+  }
+
+  changeInviteGameState = (inviterID: string, state: boolean) => {
+    inviteWaitList.forEach((value, key) => {
+      if (value.inviter_id === inviterID) {
+        value.state = state;
+        return;
+      }
+    });
+  };
+
+  @SubscribeMessage('cancel_game')
+  handleCancelGame(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody()
+    {
+      inviteGameInfo,
+      is_inviter,
+    }: {inviteGameInfo: InviteGameInfo; is_inviter: boolean}
+  ) {
+    const userID = this.getUserID(socket);
+    if (is_inviter === true) {
+      // 초대자가 최종 거절해서 게임을 취소한 경우
+      gameRooms.delete(userID);
+      this.removeUserInInviteWaitlist(userID, false, false);
+    } else if (inviteGameInfo !== undefined && is_inviter === false) {
+      // 피초대자가 수락한 뒤에 게임방에서 나간 경우
+      if (userID !== inviteGameInfo.invitee_id) {
+        return false;
+      }
+      gameRooms.delete(inviteGameInfo.inviter_id);
+      this.removeUserInInviteWaitlist(userID, false);
+    }
   }
 
   // 본인 아이디와 룸네임을 보내서, 서버에게 대기중이라는 상태를 보냅니다
   @SubscribeMessage('enter_game')
-  handleInviteGameWait(
-    @ConnectedSocket() inviterSocket: Socket,
-    @MessageBody() {user_id, room_name}
+  handleEnterGame(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() inviteGameInfo: InviteGameInfo
   ) {
-    console.log(user_id, room_name);
-    return null;
+    const roomInfo: RoomInfo = gameRooms.get(inviteGameInfo.inviter_id);
+    const userID = this.getUserID(socket);
+    socket.emit('game_info', {game_info: roomInfo.game_info});
+    if (userID === inviteGameInfo.inviter_id) {
+      socket.emit('enter_game');
+      this.socketArray.getUserSocket(inviteGameInfo.inviter_id).is_gaming =
+        true;
+      this.socketArray.getUserSocket(inviteGameInfo.invitee_id).is_gaming =
+        true;
+      this.removeUserInWaitlist(userID);
+      this.removeUserInInviteWaitlist(userID, true);
+      this.nsp.to(roomInfo.room_name).emit('start_game');
+    }
   }
+
+  removeUserInInviteWaitlist = (
+    userID: string,
+    isInviteGameBegin: boolean,
+    isException = true
+  ): boolean => {
+    let idx = -1;
+    if (isInviteGameBegin === true) {
+      // 초대매칭이 시작된 경우
+      inviteWaitList.forEach((value, key) => {
+        if (value.inviter_id === userID) {
+          idx = key;
+        }
+      });
+    } else if (isInviteGameBegin === false) {
+      // 초대매칭이 시작되기 전에 취소된 경우
+      inviteWaitList.forEach((value, key) => {
+        if (value.inviter_id === userID) {
+          idx = key;
+          const targetID = value.invitee_id;
+          const targetSocketID =
+            this.socketArray.getUserSocket(targetID).socket_id;
+          if (isException) {
+            if (value.state === false) {
+              // 피초대자가 수락하기 전
+              this.nsp
+                .to(targetSocketID)
+                .emit('inviter_cancel_invite_betray', value.invitee_nickname);
+            } else {
+              // 피초대자가 수락한 후 초대자가 랜덤매칭으로 이동
+              this.nsp
+                .to(targetSocketID)
+                .emit('inviter_cancel_game_betray', value.invitee_nickname);
+            }
+          } else {
+            this.nsp
+              .to(targetSocketID)
+              .emit('inviter_cancel_game_refuse', value.inviter_nickname);
+          }
+        } else if (value.invitee_id === userID) {
+          idx = key;
+          const targetID = value.inviter_id;
+          const targetSocketID =
+            this.socketArray.getUserSocket(targetID).socket_id;
+
+          if (isException) {
+            this.nsp
+              .to(targetSocketID)
+              .emit('invitee_cancel_game_out', value.inviter_nickname);
+          }
+        }
+      });
+    }
+    if (idx !== -1) {
+      inviteWaitList.splice(idx, 1);
+      return true;
+    }
+    return false;
+  };
+
+  removeUserInWaitlist = (userID: string): boolean => {
+    let user_idx = -1;
+    for (let i = 0; i < ETypeMode.RANK_HARD; i++) {
+      waitUserList[i].forEach((value, key) => {
+        if (value.user_id === userID) {
+          user_idx = key;
+          return;
+        }
+      });
+      if (user_idx !== -1) {
+        waitUserList[i].splice(user_idx, 1);
+        return true;
+      }
+      return false;
+    }
+  };
 }
 
-const findTypeMode = (joinGameInfo: JoinGameInfo): number => {
+const findTypeMode = (joinGameInfo: JoinGameInfo): ETypeMode => {
   const mode = joinGameInfo.mode;
   const type = joinGameInfo.type;
-  let gameTypeMode = -1;
+  let gameTypeMode: ETypeMode;
 
   if (type === 'normal') {
     if (mode === 'easy') {
@@ -438,4 +598,15 @@ const findTypeMode = (joinGameInfo: JoinGameInfo): number => {
     }
   }
   return gameTypeMode;
+};
+
+const findInviteGameMode = (inviteGameInfo: InviteGameInfo): ETypeMode => {
+  const mode: string = inviteGameInfo.mode;
+  if (mode === 'easy') {
+    return ETypeMode.NORMAL_EASY;
+  } else if (mode === 'hard') {
+    return ETypeMode.NORMAL_HARD;
+  } else {
+    console.log('Mode not found');
+  }
 };
