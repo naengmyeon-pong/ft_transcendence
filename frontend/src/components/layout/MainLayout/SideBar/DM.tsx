@@ -19,12 +19,16 @@ import React, {
   useState,
 } from 'react';
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
+import * as HTTP_STATUS from 'http-status';
+
 import {UserContext} from '../Context';
-import {DmChat, DmListData, UserType} from '@/types/UserContext';
+import {DmChat, DmListData} from '@/types/UserContext';
 import apiManager from '@/api/apiManager';
-import {useRecoilState, useRecoilValue, useSetRecoilState} from 'recoil';
+import {useRecoilState, useSetRecoilState} from 'recoil';
 import {dmList, dmNotify, dmUserInfo} from '@/states/dmUser';
-import {dmBadgeCnt} from '@/states/userContext';
+import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
+import axios from 'axios';
+import {tokenExpiredExit} from '@/states/tokenExpired';
 
 const Message = ({
   // 보낸이
@@ -78,14 +82,13 @@ export default function Dm() {
   const [textFieldDisabled, setTextFieldDisabled] = useState(false);
   // const [notify, setNofify] = useState<Map<string, number>>(new Map());
   const [notify, setNofify] = useRecoilState(dmNotify);
+  const {openAlertSnackbar} = useAlertSnackbar();
+  const setTokenExpiredExit = useSetRecoilState(tokenExpiredExit);
 
   // false: List, true: DM
   const [convert_list_dm, setConvertListDM] = useState(false);
 
   const [dm_user, setDmUser] = useRecoilState(dmUserInfo);
-
-  console.log('DmPage');
-  console.log('변경 감지 setDmList: ', dm_list);
 
   function closeDirectMessage() {
     setConvertListDM(false);
@@ -116,60 +119,85 @@ export default function Dm() {
 
   const changeUser = useCallback(
     async (row: DmListData) => {
-      const rep = await apiManager.get('dm', {
-        params: {
-          user_id: row.user1,
-          other_id: row.user2,
-        },
-      });
-      setDmUser(prev => {
-        if (prev?.id === row.user2) {
-          return prev;
-        }
-        return {
-          nickName: row.nickname,
-          id: row.user2,
-          image: '',
-        };
-      });
+      try {
+        const rep = await apiManager.get('dm', {
+          params: {
+            user_id: row.user1,
+            other_id: row.user2,
+          },
+        });
+        setDmUser(prev => {
+          if (prev?.id === row.user2) {
+            return prev;
+          }
+          return {
+            nickName: row.nickname,
+            id: row.user2,
+            image: '',
+          };
+        });
 
-      dm_user_id.current = row.user2;
-      dm_user_nickname.current = row.nickname;
-      setNofify(prev => {
-        const new_notify = new Map<string, number>(prev);
-        new_notify.set(row.user2, 0);
-        return new_notify;
-      });
-      setChats(rep.data);
-      setMessage('');
-      setConvertListDM(true);
-      if (block_users.has(`${dm_user_id.current}`)) {
-        setTextFieldDisabled(true);
-        return;
+        dm_user_id.current = row.user2;
+        dm_user_nickname.current = row.nickname;
+        setNofify(prev => {
+          const new_notify = new Map<string, number>(prev);
+          new_notify.set(row.user2, 0);
+          return new_notify;
+        });
+        setChats(rep.data);
+        setMessage('');
+        setConvertListDM(true);
+        if (block_users.has(`${dm_user_id.current}`)) {
+          setTextFieldDisabled(true);
+          return;
+        }
+        setTextFieldDisabled(false);
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          if (error.response?.status === HTTP_STATUS.UNAUTHORIZED) {
+            setTokenExpiredExit(true);
+            return;
+          }
+          openAlertSnackbar({message: error.response?.data.message});
+        }
       }
-      setTextFieldDisabled(false);
     },
     [block_users, setDmUser, setNofify]
   );
 
-  function handleDmMessage(chat: DmChat) {
+  async function handleDmMessage(chat: DmChat) {
     if (chat.userId === dm_user_id.current && chat.someoneId === user_id) {
       setChats(prevChats => [...prevChats, chat]);
     }
-
-    setDmList(prev => {
-      if (prev.some(item => item.user2 === chat.userId)) {
-        return prev;
-      }
-      return [
-        ...prev,
-        {
-          user1: chat.someoneId,
-          user2: chat.userId,
-          nickname: chat.nickname,
+    try {
+      const rep = await apiManager.get('dm/dm_list', {
+        params: {
+          user_id: user_id,
         },
-      ];
-    });
+      });
+      setDmList(rep.data);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === HTTP_STATUS.UNAUTHORIZED) {
+          setTokenExpiredExit(true);
+          return;
+        }
+        openAlertSnackbar({message: error.response?.data.message});
+      }
+    }
+    // setDmList(prev => {
+    //   if (prev.some(item => item.user2 === chat.userId)) {
+    //     return prev;
+    //   }
+    //   return [
+    //     ...prev,
+    //     {
+    //       user1: chat.someoneId,
+    //       user2: chat.userId,
+    //       nickname: chat.nickname,
+    //     },
+    //   ];
+    // });
   }
 
   function onChange(e: ChangeEvent<HTMLInputElement>) {
@@ -191,7 +219,7 @@ export default function Dm() {
         <>
           <Box display={'flex'} justifyContent={'space-between'}>
             <Typography>{`${row.nickname}`}</Typography>
-            <Typography sx={{color: 'red'}}>{`${cnt}`}</Typography>
+            {/* <Typography sx={{color: 'red'}}>{`${cnt}`}</Typography> */}
           </Box>
         </>
       );
@@ -244,7 +272,6 @@ export default function Dm() {
 
   return (
     <>
-      {/* <Box display={'flex'}> */}
       {convert_list_dm ? (
         <Box
           overflow={'auto'}

@@ -15,6 +15,11 @@ import {UserContext} from '@/components/layout/MainLayout/Context';
 import {UserType} from '@/types/UserContext';
 import apiManager from '@/api/apiManager';
 import {modalStyle} from '@/components/styled/modalStyle';
+import axios from 'axios';
+import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
+import * as HTTP_STATUS from 'http-status';
+import {useSetRecoilState} from 'recoil';
+import {tokenExpiredExit} from '@/states/tokenExpired';
 
 type CreateModalProps = {
   inviteModal: boolean;
@@ -26,6 +31,8 @@ function ChatInvite({inviteModal, handleInviteClose}: CreateModalProps) {
   const [list, setList] = useState<UserType[]>([]);
   const {user_id, chat_socket, convert_page} = useContext(UserContext);
   const [invite_list, setInviteList] = useState<Set<string>>(new Set());
+  const {openAlertSnackbar} = useAlertSnackbar();
+  const setTokenExpiredExit = useSetRecoilState(tokenExpiredExit);
 
   function handleNickName(e: ChangeEvent<HTMLInputElement>) {
     setNickName(e.target.value);
@@ -39,10 +46,14 @@ function ChatInvite({inviteModal, handleInviteClose}: CreateModalProps) {
       const rep = await apiManager.get(`/chatroom/user/${nickName}/${user_id}`);
       setList(rep.data);
     } catch (error) {
-      console.log(error);
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === HTTP_STATUS.UNAUTHORIZED) {
+          setTokenExpiredExit(true);
+          return;
+        }
+        openAlertSnackbar({message: error.response?.data.message});
+      }
     }
-    // TODO: 검색 후 해당하는 사용자를 표시해주는 컴포넌트를 생성
-    console.log(`${nickName} 에게 초대메세지 전송`);
     setNickName('');
   }
 
