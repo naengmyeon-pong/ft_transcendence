@@ -1,6 +1,6 @@
 'use client';
 
-import {DmListData, UserType} from '@/types/UserContext';
+import {UserType} from '@/types/UserContext';
 import React, {createContext, useState, ReactNode, useRef} from 'react';
 import {Manager, Socket} from 'socket.io-client';
 

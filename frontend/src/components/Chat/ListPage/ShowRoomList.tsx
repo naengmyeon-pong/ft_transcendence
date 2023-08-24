@@ -24,6 +24,11 @@ import LockIcon from '@mui/icons-material/Lock';
 import {UserContext} from '@/components/layout/MainLayout/Context';
 import {ChatListData, RoomListProps} from '@/types/UserContext';
 import apiManager from '@/api/apiManager';
+import axios from 'axios';
+import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
+import * as HTTP_STATUS from 'http-status';
+import {useSetRecoilState} from 'recoil';
+import {tokenExpiredExit} from '@/states/tokenExpired';
 
 const style = {
   position: 'absolute',
@@ -46,6 +51,8 @@ function ShowRoomList({roomList, refersh}: RoomListProps) {
   const {setConvertPage} = useContext(UserContext);
   const room_id = useRef(0);
   const [password_error, setPasswordError] = useState(false);
+  const {openAlertSnackbar} = useAlertSnackbar();
+  const setTokenExpiredExit = useSetRecoilState(tokenExpiredExit);
 
   const handlePasswordModalOpen = () => setPasswordModal(true);
   const handlePasswordModalClose = () => setPasswordModal(false);
@@ -79,13 +86,18 @@ function ShowRoomList({roomList, refersh}: RoomListProps) {
     }
     try {
       // TODO: 서버에 채팅방 이름과 패스워드를 보낸 후 맞는지 확인하고 들여보낸다
-      const rep = await apiManager.get(`/chatroom/join_room?room_id=${row.id}`);
+      await apiManager.get(`/chatroom/join_room?room_id=${row.id}`);
       console.log(row.id.toString());
       setConvertPage(row.id);
     } catch (error) {
-      alert('존재하지 않는 채팅방입니다, ');
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === HTTP_STATUS.UNAUTHORIZED) {
+          setTokenExpiredExit(true);
+          return;
+        }
+        openAlertSnackbar({message: error.response?.data.message});
+      }
       refersh();
-      console.log(error);
     }
   }
 
@@ -102,7 +114,13 @@ function ShowRoomList({roomList, refersh}: RoomListProps) {
       }
       setConvertPage(room_id.current);
     } catch (error) {
-      console.log(error);
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === HTTP_STATUS.UNAUTHORIZED) {
+          setTokenExpiredExit(true);
+          return;
+        }
+        openAlertSnackbar({message: error.response?.data.message});
+      }
     }
   }
 

@@ -16,6 +16,9 @@ import {UserContext} from '@/components/layout/MainLayout/Context';
 import {UserType} from '@/types/UserContext';
 import {dmList} from '@/states/dmUser';
 import {profileState} from '@/states/profile';
+import axios from 'axios';
+import {tokenExpiredExit} from '@/states/tokenExpired';
+import * as HTTP_STATUS from 'http-status';
 import {getJwtToken} from '@/utils/token';
 import {isValidUserToken} from '@/api/auth';
 
@@ -26,24 +29,22 @@ interface MainLayoutProps {
 function MainLayout({children}: MainLayoutProps) {
   const {openAlertSnackbar} = useAlertSnackbar();
   const {setUserId} = useContext(UserContext);
-  const {setChatSocket} = useContext(UserContext);
+  const {chat_socket, setChatSocket} = useContext(UserContext);
   const {setUserNickName} = useContext(UserContext);
-  const {user_image, setUserImage} = useContext(UserContext);
+  const {setUserImage} = useContext(UserContext);
   const {block_users} = useContext(UserContext);
   const setDmList = useSetRecoilState(dmList);
   const router = useRouter();
-  const [profileDataState, setProfileDataState] = useRecoilState(profileState);
-  const {manager, setManager} = useContext(UserContext);
+  const [, setProfileDataState] = useRecoilState(profileState);
+  const {setManager} = useContext(UserContext);
   const [initMainLayout, setInitMainLayout] = useState(false);
-
-  // const roomId = useContext(UserContext).convert_page;
-  // const {chat_socket} = useContext(UserContext);
+  const [token_expired_exit, setTokenExpiredExit] =
+    useRecoilState(tokenExpiredExit);
 
   function init_setBlockUsers(data: UserType[]) {
     for (const node of data) {
       block_users.set(node.id, node);
     }
-    // console.log('block_users: ', block_users);
   }
 
   useEffect(() => {
@@ -108,37 +109,43 @@ function MainLayout({children}: MainLayoutProps) {
         });
         setDmList(rep.data);
         setInitMainLayout(true);
-        // console.log('dmList: ', rep);
         socketIo.on('token-expire', roomId => {
-          // console.log('roomId: ', roomId);
           // 서버가 연결을 끊은 경우 (ex, JWT 만료)
           sessionStorage.clear();
           router.push('/');
-          if (roomId) {
-            socketIo.emit('leave-room', {room_id: roomId, state: true});
-          }
+          // if (roomId) {
+          socketIo.emit('leave-room', {room_id: roomId, state: true});
+          // }
           socketIo.disconnect();
         });
       } catch (error) {
         router.push('/');
-        console.log('MainLayout error: ', error);
+        if (axios.isAxiosError(error)) {
+          if (error.response?.status === HTTP_STATUS.UNAUTHORIZED) {
+            setTokenExpiredExit(true);
+            return;
+          }
+          openAlertSnackbar({message: error.response?.data.message});
+        }
       }
     })();
   }, []);
 
-  // useEffect(() => {
-  //   chat_socket?.on('token-expire', reason => {
-  //     console.log('reason: ', reason);
-  //     // 서버가 연결을 끊은 경우 (ex, JWT 만료)
-  //     sessionStorage.clear();
-  //     router.push('/');
-  //     chat_socket?.emit('leave-room', {room_id: roomId, state: true});
-  //     chat_socket.disconnect();
-  //   });
-  //   return () => {
-  //     chat_socket?.off('token-expire');
-  //   };
-  // }, [chat_socket, roomId, router]);
+  // 소켓 끊어졌을때
+  useEffect(() => {
+    if (token_expired_exit === true) {
+      router.push('/');
+      chat_socket?.disconnect();
+      openAlertSnackbar({message: '토큰이 만료되었습니다'});
+      setTokenExpiredExit(false);
+    }
+  }, [
+    token_expired_exit,
+    router,
+    chat_socket,
+    openAlertSnackbar,
+    setTokenExpiredExit,
+  ]);
 
   return (
     <>
@@ -150,8 +157,6 @@ function MainLayout({children}: MainLayoutProps) {
             <Box>
               <SideBar />
             </Box>
-            {/* <Box width="80vw" paddingLeft="150px"> */}
-            {/* <Box flexGrow="1"> */}
             <Grid container rowSpacing={20}>
               <Grid item xs={12}>
                 {/* <Box> */}
@@ -162,7 +167,6 @@ function MainLayout({children}: MainLayoutProps) {
               </Grid>
               {/* 개인 채팅창 위치 */}
             </Grid>
-            {/* </Box> */}
           </Box>
         </Box>
       )}
