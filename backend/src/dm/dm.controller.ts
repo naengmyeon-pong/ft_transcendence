@@ -1,9 +1,10 @@
 import {Controller, Get, Query, UseGuards} from '@nestjs/common';
 import {DmService} from './dm.service';
-import {ApiOperation, ApiQuery, ApiResponse} from '@nestjs/swagger';
+import {ApiOperation, ApiQuery, ApiResponse, ApiTags} from '@nestjs/swagger';
 import {AuthGuard} from '@nestjs/passport';
 
 @Controller('dm')
+@ApiTags('DM')
 @UseGuards(AuthGuard('jwt'))
 export class DmController {
   constructor(private dmService: DmService) {}
