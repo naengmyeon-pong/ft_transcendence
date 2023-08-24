@@ -114,6 +114,7 @@ export default function InviteGame() {
     chat_socket?.on('game_info', handleInviteGameInfo);
     chat_socket?.on('inviter_cancel_game_refuse', exitCancelGame);
     chat_socket?.on('inviter_cancel_game_betray', exitCancelGame);
+    chat_socket?.on('inviter_cancel_game_refresh', exitCancelGame);
     chat_socket?.on('inviter_cancel_invite_betray', exitCancelGame);
     chat_socket?.on('start_game', () => {
       chat_socket?.off('inviter_cancel_game_refuse', exitCancelGame);
@@ -121,6 +122,7 @@ export default function InviteGame() {
     });
     chat_socket?.emit('enter_game', invite_game_state);
     return () => {
+      chat_socket?.off('inviter_cancel_game_refresh', exitCancelGame);
       chat_socket?.off('enter_game', sendGameStartEvent);
       chat_socket?.off('game_info', handleInviteGameInfo);
       chat_socket?.off('inviter_cancel_game_refuse', exitCancelGame);
