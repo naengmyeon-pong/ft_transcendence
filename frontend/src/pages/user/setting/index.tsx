@@ -173,11 +173,13 @@ function Setting() {
         const response = await apiManager.get('/user');
         const {user_id, is_2fa_enabled, user_nickname, user_image} =
           response.data;
+        const cacheBuster = new Date().getTime();
+
         setProfileDataState({
           ...profileDataState,
           user_id,
           nickname: user_nickname,
-          image: user_image,
+          image: `${user_image}?${cacheBuster}}`,
           is_2fa_enabled,
         });
       } catch (error) {
