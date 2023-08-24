@@ -37,6 +37,9 @@ export default function MyApp({Component, pageProps}: AppProps) {
             </MainLayout>
           </UserProvider>
         )}
+        {isUserRoute === false && isMainRoute === false && (
+          <Component {...pageProps} />
+        )}
         <GlobalDialog />
         <AlertSnackbar />
       </QueryClientProvider>
