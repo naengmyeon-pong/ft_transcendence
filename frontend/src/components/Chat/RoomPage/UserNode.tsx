@@ -10,6 +10,7 @@ import {AddAdmin, DelAdmin} from './service/Admin';
 import {UserProps} from '@/types/UserContext';
 import {UserContext} from '@/components/layout/MainLayout/Context';
 import Block from '@/components/Block';
+import UserInfoPage from '@/components/UserProfileModal';
 
 /*
  * @PARAM: 클릭당한 유저의 id, nickname, image를 가진 객체
@@ -139,6 +140,7 @@ function UserNode({user, permission, myPermission}: UserProps) {
           component={MenuItem}
           onClose={() => setAnchorEl(null)}
         />
+        <UserInfoPage user_info={user} menuClose={setAnchorEl} />
       </Menu>
     );
   }
