@@ -126,4 +126,10 @@ export class SignUpController {
   ): Promise<void> {
     return await this.signUpService.changePW(req.user.user_id, user_pw);
   }
+
+  @Get('/validation-token')
+  @UseGuards(AuthGuard('signup'))
+  validateJwtToken(): boolean {
+    return true;
+  }
 }
