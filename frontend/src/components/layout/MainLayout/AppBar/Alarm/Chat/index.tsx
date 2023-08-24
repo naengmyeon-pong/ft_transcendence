@@ -1,7 +1,7 @@
 import {useRouter} from 'next/router';
-import {AlarmChatProps} from './AlarmProps';
-import {useCallback, useContext, useEffect, useState} from 'react';
-import {UserContext} from '../../Context';
+import {AlarmChatProps} from '../AlarmProps';
+import {useContext} from 'react';
+import {UserContext} from '../../../Context';
 import {MenuItem, Typography} from '@mui/material';
 
 export interface Chatnotificate {
@@ -14,8 +14,10 @@ export default function ChatAlarm({chat_noti, setChatAlarm}: AlarmChatProps) {
   const router = useRouter();
 
   function handleSendRoom(row: Chatnotificate, index: number) {
-    chat_noti.splice(index, 1);
-    // setChatNoti로 수정해야함
+    setChatAlarm(prev => {
+      prev.splice(index, 1);
+      return prev;
+    });
     setConvertPage(Number(row.room_id));
     router.push('/main/chat');
   }
