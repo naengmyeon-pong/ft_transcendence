@@ -82,8 +82,7 @@ export class GameGateway implements OnGatewayDisconnect {
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
     let inviteGameInfo: InviteGameInfo | null;
-    // const userID = this.getUserID(socket);
-    const userID = socket.handshake.query.user_id as string;
+    const {userID} = this.getUserID(socket);
     if (this.isUserGaming(userID)) {
       // 유저가 게임중인 경우
       const roomName: string | null = this.gameService.isForfeit(userID);
@@ -160,7 +159,7 @@ export class GameGateway implements OnGatewayDisconnect {
   @SubscribeMessage('exit_game') // 유저가 게임중에 페이지를 이탈한 경우 (임시 이벤트)
   handleExitGame(@ConnectedSocket() socket: Socket) {
     // TODO: 토큰이 만료됐을 때,
-    const userID = this.getUserID(socket);
+    const {userID} = this.getUserID(socket);
     const roomName: string | null = this.gameService.isForfeit(userID);
     if (roomName) {
       const roomInfo = gameRooms.get(roomName);
@@ -177,11 +176,11 @@ export class GameGateway implements OnGatewayDisconnect {
   ) {
     const typeMode = findTypeMode(joinGameInfo);
     const waitUsers: GameUser[] = waitUserList[typeMode];
-    const user = this.getUserID(socket);
+    const {userID} = this.getUserID(socket);
     let isFound = false;
     let index = -1;
     waitUsers.forEach((value, key) => {
-      if (value.user_id === user) {
+      if (value.user_id === userID) {
         isFound = true;
         index = key;
         return;
@@ -199,10 +198,13 @@ export class GameGateway implements OnGatewayDisconnect {
     @ConnectedSocket() socket: Socket,
     @MessageBody() joinGameInfo: JoinGameInfo
   ) {
-    const user_id = this.getUserID(socket);
+    const {userID, isExpired} = this.getUserID(socket);
+    if (isExpired) {
+      return;
+    }
     const keys: KeyData = {up: false, down: false};
     const waitingUser: GameUser = {
-      user_id,
+      user_id: userID,
       socket_id: socket.id,
       keys,
       type_mode: ETypeMode.NONE,
@@ -426,19 +428,19 @@ export class GameGateway implements OnGatewayDisconnect {
       .emit('game_info', {game_info: roomInfo.game_info});
   };
 
-  getUserID = (socket: Socket): string => {
+  getUserID = (socket: Socket): {userID: string; isExpired: boolean} => {
     const jwt: string = socket.handshake.auth.token;
     try {
       const decodedToken = this.jwtService.verify(jwt, {
         secret: process.env.SIGNIN_JWT_SECRET_KEY,
       });
-      return decodedToken.user_id;
+      return {userID: decodedToken.user_id, isExpired: false};
     } catch (e) {
       this.logger.log('token expire');
       socket.emit('token-expire');
       const decodedToken: any = this.jwtService.decode(jwt);
       if (decodedToken !== null) {
-        return decodedToken.user_id;
+        return {userID: decodedToken.user_id, isExpired: true};
       }
     }
   };
@@ -456,7 +458,10 @@ export class GameGateway implements OnGatewayDisconnect {
     @ConnectedSocket() inviterSocket: Socket,
     @MessageBody() inviteGameInfo: InviteGameInfo
   ): Promise<string | null> {
-    const userID = this.getUserID(inviterSocket);
+    const {userID, isExpired} = this.getUserID(inviterSocket);
+    if (isExpired) {
+      return;
+    }
     const userInfo = this.socketArray.getUserSocket(userID);
     if (userInfo.is_gaming === true) {
       return '게임중에는 초대할 수 없습니다.';
@@ -498,6 +503,14 @@ export class GameGateway implements OnGatewayDisconnect {
     const targetSocketID = this.socketArray.getUserSocket(
       inviteGameInfo.inviter_id
     ).socket_id;
+    const {isExpired} = this.getUserID(inviteeSocket);
+    if (isExpired) {
+      this.changeInviteGameState(inviteGameInfo.inviter_id, false);
+      inviteeSocket
+        .to(`${targetSocketID}`)
+        .emit('invite_response', inviteGameInfo);
+      return;
+    }
 
     if (inviteGameInfo.state === true) {
       this.changeInviteGameState(inviteGameInfo.inviter_id, true);
@@ -526,7 +539,7 @@ export class GameGateway implements OnGatewayDisconnect {
       is_inviter,
     }: {inviteGameInfo: InviteGameInfo; is_inviter: boolean}
   ) {
-    const userID = this.getUserID(socket);
+    const {userID} = this.getUserID(socket);
     if (is_inviter === true) {
       // 초대자가 최종 거절해서 게임을 취소한 경우
       gameRooms.delete(userID);
@@ -548,7 +561,7 @@ export class GameGateway implements OnGatewayDisconnect {
     @MessageBody() inviteGameInfo: InviteGameInfo
   ) {
     const roomInfo: RoomInfo = gameRooms.get(inviteGameInfo.inviter_id);
-    const userID = this.getUserID(socket);
+    const {userID} = this.getUserID(socket);
     socket.emit('game_info', {game_info: roomInfo.game_info});
     if (userID === inviteGameInfo.inviter_id) {
       socket.emit('enter_game');
