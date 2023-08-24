@@ -36,8 +36,6 @@ export class UserGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
-    const userID = socket.handshake.query.user_id as string;
-    this.socketArray.removeSocketArray(userID);
     this.logger.log(`${socket.id} 웹소켓 연결 해제`);
   }
 

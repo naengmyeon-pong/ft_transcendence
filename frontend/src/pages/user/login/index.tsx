@@ -70,6 +70,10 @@ function LoginPage() {
             openAlertSnackbar({message: '비밀번호가 일치하지 않습니다.'});
             break;
           }
+          case HTTP_STATUS.CONFLICT: {
+            openAlertSnackbar({message: '이미 로그인한 계정입니다.'});
+            break;
+          }
           default: {
             openAlertSnackbar({message: '오류가 발생했습니다.'});
             break;
