@@ -1,7 +1,7 @@
 import {useRouter} from 'next/router';
-import {AlarmChatProps} from './AlarmProps';
-import {useCallback, useContext, useEffect, useState} from 'react';
-import {UserContext} from '../../Context';
+import {AlarmChatProps} from '../AlarmProps';
+import {useContext} from 'react';
+import {UserContext} from '../../../Context';
 import {MenuItem, Typography} from '@mui/material';
 
 export interface Chatnotificate {

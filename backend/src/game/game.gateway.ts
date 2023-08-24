@@ -95,16 +95,18 @@ export class GameGateway implements OnGatewayDisconnect {
       // 유저가 게임 초대중인 경우
       let targetNickname: string;
       if (userID === inviteGameInfo.inviter_id) {
+        // 초대자가 끊긴 경우
         const targetSocketID = this.socketArray.getUserSocket(
-          inviteGameInfo.inviter_id
+          inviteGameInfo.invitee_id
         ).socket_id;
         targetNickname = inviteGameInfo.inviter_nickname;
         socket
           .to(targetSocketID)
           .emit('inviter_cancel_game_refresh', targetNickname);
       } else {
+        // 피초대자가 끊긴 경우
         const targetSocketID = this.socketArray.getUserSocket(
-          inviteGameInfo.invitee_id
+          inviteGameInfo.inviter_id
         ).socket_id;
         targetNickname = inviteGameInfo.invitee_nickname;
         socket
@@ -123,12 +125,13 @@ export class GameGateway implements OnGatewayDisconnect {
   }
 
   isUserInvited = (userID: string): InviteGameInfo | null => {
-    inviteWaitList.forEach((value, key) => {
-      if (value.inviter_id || value.invitee_id) {
-        return value;
+    let ret: InviteGameInfo | null = null;
+    inviteWaitList.forEach(value => {
+      if (userID === value.inviter_id || userID === value.invitee_id) {
+        ret = value;
       }
     });
-    return null;
+    return ret;
   };
 
   isUserGaming(userID: string): boolean {
@@ -580,7 +583,7 @@ export class GameGateway implements OnGatewayDisconnect {
           } else {
             this.nsp
               .to(targetSocketID)
-              .emit('inviter_cancel_game_refuse', value.invitee_nickname);
+              .emit('inviter_cancel_game_refuse', value.inviter_nickname);
           }
         } else if (value.invitee_id === userID) {
           idx = key;

@@ -24,4 +24,7 @@ export const InviteGameEnum = {
   INVITE: '초대',
   INVITE_RESPON_TRUE: '초대_수락',
   INVITE_RESPON_FALSE: '초대_거절',
+  LEFTWAITINGROOM: '대기방나감',
+  INVITER_OFF: 'inviter_off',
+  INVITEE_OFF: 'invitee_off',
 };

@@ -1,38 +1,18 @@
 import {useContext} from 'react';
-import {
-  AlarmGameProps,
-  InviteGameEnum,
-  InviteGameInfoProps,
-} from './AlarmProps';
-import {UserContext} from '../../Context';
+import {InviteGameEnum, InviteGameInfoProps} from '../AlarmProps';
+import {UserContext} from '../../../Context';
 import {useRouter} from 'next/router';
-import {Box, Button, Typography} from '@mui/material';
 import {useRecoilState} from 'recoil';
 import {inviteGameState} from '@/states/inviteGame';
+import {Box, Button} from '@mui/material';
 
-// 초대 상태에 따라 메세지를 나눠주는 컴포넌트
-
-function TitleGameAlarm({row}: {row: InviteGameInfoProps}) {
-  console.log('row: ', row);
-  return (
-    <Typography>
-      {row.event_type === InviteGameEnum.INVITE &&
-        `${row.invite_game_info.inviter_nickname}님이 게임을 초대하였습니다.`}
-      {row.event_type === InviteGameEnum.INVITE_RESPON_TRUE &&
-        `${row.invite_game_info.invitee_nickname}님이 게임초대를 수락하였습니다. 이동하시겠습니까?`}
-    </Typography>
-  );
-}
-
-function ActionGameAlarm({
+export default function ActionGameAlarm({
   row,
   index,
-  game_noti,
   setGameAlarm,
 }: {
   row: InviteGameInfoProps;
   index: number;
-  game_noti: InviteGameInfoProps[];
   setGameAlarm: React.Dispatch<React.SetStateAction<InviteGameInfoProps[]>>;
 }) {
   const {chat_socket} = useContext(UserContext);
@@ -74,6 +54,7 @@ function ActionGameAlarm({
   // A가 최종적으로 누르는 거절
   function inviteResponFalse() {
     removeGameNoti();
+    console.log('거절클릭: ');
     chat_socket?.emit('cancel_game', {
       inviteGameInfo: invite_game_state,
       is_inviter: true,
@@ -98,29 +79,6 @@ function ActionGameAlarm({
           <Button onClick={inviteResponTrue}>수락</Button>
           <Button onClick={inviteResponFalse}>거절</Button>
         </Box>
-      )}
-    </>
-  );
-}
-
-export default function GameAlarm({game_noti, setGameAlarm}: AlarmGameProps) {
-  return (
-    <>
-      {game_noti.length > 0 && (
-        <>
-          {game_noti.map((row, index) => (
-            //  onClick={() => handleSendGame(row, index)}
-            <Box key={index}>
-              <TitleGameAlarm row={row} />
-              <ActionGameAlarm
-                row={row}
-                index={index}
-                game_noti={game_noti}
-                setGameAlarm={setGameAlarm}
-              />
-            </Box>
-          ))}
-        </>
       )}
     </>
   );

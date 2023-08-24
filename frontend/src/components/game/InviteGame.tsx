@@ -1,12 +1,49 @@
 'use client';
 
-import {GameInfo} from '@/common/types/game';
+import {GameInfo, InviteGameInfo} from '@/common/types/game';
 import {useCallback, useContext, useEffect, useState} from 'react';
 import {UserContext} from '../layout/MainLayout/Context';
 import {useRecoilState} from 'recoil';
 import {inviteGameState} from '@/states/inviteGame';
 import {Button, Grid} from '@mui/material';
 import Pong from './Pong';
+
+interface InviteGameViewType {
+  isGameOver: boolean;
+  gameInfo: GameInfo;
+  handleReturnMain: () => void;
+}
+
+function InviteGameView({
+  isGameOver,
+  gameInfo,
+  handleReturnMain,
+}: InviteGameViewType) {
+  const {chat_socket} = useContext(UserContext);
+
+  return (
+    <>
+      {!isGameOver && (
+        <Grid item xs={8}>
+          <Pong socket={chat_socket} gameInfo={gameInfo} />
+        </Grid>
+      )}
+      {isGameOver && gameInfo !== null && (
+        <Grid item>
+          <p>
+            {gameInfo.leftScore > gameInfo.rightScore
+              ? sessionStorage.getItem('left_user')
+              : sessionStorage.getItem('right_user')}
+            승리!
+          </p>
+          <Button variant="contained" onClick={handleReturnMain}>
+            메인으로 돌아가기
+          </Button>
+        </Grid>
+      )}
+    </>
+  );
+}
 
 export default function InviteGame() {
   const {chat_socket, user_id} = useContext(UserContext);
@@ -40,7 +77,8 @@ export default function InviteGame() {
 
   // TODO: 게임 대기방에서 초대를 수락하는 경우 생각해볼것
   const exitCancelGame = useCallback(
-    (rep: string) => {
+    (rep: InviteGameInfo) => {
+      console.log('rep: ', rep);
       alert(`${rep} 님이 게임을 취소하였습니다`);
       setInviteGameState(null);
     },
@@ -74,15 +112,21 @@ export default function InviteGame() {
   useEffect(() => {
     chat_socket?.on('enter_game', sendGameStartEvent);
     chat_socket?.on('game_info', handleInviteGameInfo);
-    chat_socket?.on('cancel_game', exitCancelGame);
+    chat_socket?.on('inviter_cancel_game_refuse', exitCancelGame);
+    chat_socket?.on('inviter_cancel_game_betray', exitCancelGame);
+    chat_socket?.on('inviter_cancel_invite_betray', exitCancelGame);
     chat_socket?.on('start_game', () => {
-      chat_socket?.off('cancel_game', exitCancelGame);
+      chat_socket?.off('inviter_cancel_game_refuse', exitCancelGame);
+      chat_socket?.off('inviter_cancel_game_betray', exitCancelGame);
     });
     chat_socket?.emit('enter_game', invite_game_state);
     return () => {
       chat_socket?.off('enter_game', sendGameStartEvent);
       chat_socket?.off('game_info', handleInviteGameInfo);
-      chat_socket?.off('cancel_game', exitCancelGame);
+      chat_socket?.off('inviter_cancel_game_refuse', exitCancelGame);
+      chat_socket?.off('inviter_cancel_game_betray', exitCancelGame);
+      chat_socket?.off('inviter_cancel_invite_betray', exitCancelGame);
+      chat_socket?.off('start_game');
     };
   }, [
     chat_socket,
@@ -95,25 +139,10 @@ export default function InviteGame() {
   ]);
 
   return (
-    <>
-      {!isGameOver && (
-        <Grid item xs={8}>
-          <Pong socket={chat_socket} gameInfo={gameInfo} />
-        </Grid>
-      )}
-      {isGameOver && gameInfo !== null && (
-        <Grid item>
-          <p>
-            {gameInfo.leftScore > gameInfo.rightScore
-              ? sessionStorage.getItem('left_user')
-              : sessionStorage.getItem('right_user')}
-            승리!
-          </p>
-          <Button variant="contained" onClick={handleReturnMain}>
-            메인으로 돌아가기
-          </Button>
-        </Grid>
-      )}
-    </>
+    <InviteGameView
+      isGameOver={isGameOver}
+      gameInfo={gameInfo}
+      handleReturnMain={handleReturnMain}
+    />
   );
 }
