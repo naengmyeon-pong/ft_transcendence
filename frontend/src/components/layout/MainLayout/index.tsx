@@ -112,6 +112,7 @@ function MainLayout({children}: MainLayoutProps) {
         socketIo.on('token-expire', roomId => {
           // 서버가 연결을 끊은 경우 (ex, JWT 만료)
           sessionStorage.clear();
+          openAlertSnackbar({message: '토큰이 만료되었습니다. 다시 로그인해주세요.'});
           router.push('/');
           // if (roomId) {
           socketIo.emit('leave-room', {room_id: roomId, state: true});
