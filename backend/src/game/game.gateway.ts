@@ -135,7 +135,8 @@ export class GameGateway implements OnGatewayDisconnect {
   };
 
   isUserGaming(userID: string): boolean {
-    if (this.socketArray.getUserSocket(userID).is_gaming === true) {
+    const userInfo = this.socketArray.getUserSocket(userID);
+    if (userInfo && userInfo.is_gaming === true) {
       return true;
     }
     return false;
