@@ -111,8 +111,8 @@ export class ChatController {
     required: true,
     description: '채팅방의 id',
   })
-  @Get('join_room')
-  async getRoom(@Query('room_id') room_id: number) {
+  @Get('isRoom')
+  async isRoom(@Query('room_id') room_id: number) {
     return await this.chatService.getRoom(room_id);
   }
 
@@ -218,12 +218,6 @@ export class ChatController {
   ): Promise<boolean> {
     return await this.chatService.checkChatRoomPw(room_id, userDto);
   }
-  // async checkChatRoomPw(
-  //   @Body('room_id') room_id: number,
-  //   @Body('password') password: number
-  // ): Promise<boolean> {
-  //   return await this.chatService.checkChatRoomPw(room_id, password);
-  // }
 
   @ApiOperation({
     summary: '채팅방 pw를 변경하는 API',
@@ -259,9 +253,8 @@ export class ChatController {
 
   @ApiOperation({
     summary: '유저를 검색하는 API',
-    description: `메인페이지에서 유저를 검색할 경우, 
-    자기자신과 이미 친구목록에 있는 유저 그리고 차단목록에 있는 유저를 제외하고 
-    입력한 닉네임과 유사한 모든 유저를 불러옵니다.`,
+    description: `메인페이지에서 유저를 검색할 경우,
+    자기자신과 이미 친구목록에 있는 유저 그리고 차단목록에 있는 유저를 제외하고 입력한 닉네임과 유사한 모든 유저를 불러옵니다.`,
   })
   @ApiResponse({
     status: 200,

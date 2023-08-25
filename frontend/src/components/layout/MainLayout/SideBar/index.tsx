@@ -186,10 +186,11 @@ function SideBar() {
           return prev;
         }
         prev.forEach(friend => {
-          if (friend.id === userId) {
-            friend.state = state;
+          const tmp_user: UserType = friend;
+          if (tmp_user.id === userId) {
+            tmp_user.state = state;
           }
-          tmp_list.push(friend);
+          tmp_list.push(tmp_user);
         });
         return tmp_list;
       });

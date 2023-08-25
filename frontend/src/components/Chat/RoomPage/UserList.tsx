@@ -188,7 +188,6 @@ export default function UserList() {
 
   useEffect(() => {
     // 소켓 이벤트 등록해서 들어온 메세지 헨들링
-    console.log('room-member on');
     chat_socket?.on('room-member', handleUserList);
     roomUsers();
   }, []);

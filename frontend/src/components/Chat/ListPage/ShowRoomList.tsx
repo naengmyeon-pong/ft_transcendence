@@ -75,19 +75,13 @@ function ShowRoomList({roomList, refersh}: RoomListProps) {
 
   async function enterRoom(e: React.MouseEvent<unknown>, row: ChatListData) {
     e.preventDefault();
-    if (row.is_password) {
-      room_id.current = row.id;
-      setPasswordModal(true);
-      return;
-    }
-    if (row.current_nums >= row.max_nums) {
-      alert('인원 초과입니다');
-      return;
-    }
     try {
-      // TODO: 서버에 채팅방 이름과 패스워드를 보낸 후 맞는지 확인하고 들여보낸다
-      await apiManager.get(`/chatroom/join_room?room_id=${row.id}`);
-      console.log(row.id.toString());
+      const res = await apiManager.get(`/chatroom/isRoom?room_id=${row.id}`);
+      if (res.data.is_password) {
+        room_id.current = row.id;
+        setPasswordModal(true);
+        return;
+      }
       setConvertPage(row.id);
     } catch (error) {
       if (axios.isAxiosError(error)) {

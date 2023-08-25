@@ -90,7 +90,6 @@ function CreateRoomForm({setCreateModal}: CreateModalProps) {
       return;
     }
     try {
-      console.log('password: ', password);
       const rep = await apiManager.post('/chatroom/create_room', {
         room_name: name,
         max_nums: maxUser,

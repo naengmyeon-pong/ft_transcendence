@@ -28,11 +28,9 @@ function ChatRoom() {
   const {openAlertSnackbar} = useAlertSnackbar();
   const setTokenExpiredExit = useSetRecoilState(tokenExpiredExit);
 
-  console.log('ChatRoom');
   async function SearchRoom() {
     try {
-      const rep = await apiManager.get(`/chatroom/join_room?room_id=${roomId}`);
-      console.log('ChatRoom.tsx: ', rep.data);
+      const rep = await apiManager.get(`/chatroom/isRoom?room_id=${roomId}`);
       setRoomName(rep.data?.name);
       setInitChatRoom(true);
     } catch (error) {

@@ -63,7 +63,7 @@ function ChatBox() {
     chat_socket?.emit('join-room', roomId, (res: boolean) => {
       if (res === false) {
         router.back();
-        alert('에러가 발생하였습니다.');
+        alert('해당 채팅방에 입장할 수 없습니다.');
       }
     });
 

@@ -105,7 +105,7 @@ export class ChatService {
       user_id: roomDto.user_id,
     });
     if (!user) {
-      throw new NotFoundException(`${roomDto.user_id} is not our member`);
+      throw new NotFoundException(`${roomDto.user_id}는 유저가 아닙니다.`);
     }
     // user_id의 owner가 있으면 방을 만들지 않도록. 1명의 owner당 1개의 채팅방만 만들 수 있어서.
     const already = await this.chatMemberRepository.find({
@@ -116,7 +116,7 @@ export class ChatService {
     });
     if (already.length !== 0) {
       throw new ConflictException(
-        `${roomDto.user_id} is already owner ${already[0].chatroomId}`
+        `${roomDto.user_id}는 이미 채팅방의 주인입니다.`
       );
     }
     const query_runner = this.dataSource.createQueryRunner();
@@ -127,7 +127,7 @@ export class ChatService {
       let hashedPassword;
       if (roomDto.password) {
         const salt = await bcrypt.genSalt();
-        hashedPassword = await bcrypt.hash(roomDto.password.toString(), salt);
+        hashedPassword = await bcrypt.hash(roomDto.password, salt);
       }
       const room = this.chatRoomRepository.create({
         name: roomDto.room_name,
@@ -149,7 +149,7 @@ export class ChatService {
       return room;
     } catch (e) {
       await query_runner.rollbackTransaction();
-      throw new InternalServerErrorException();
+      throw new InternalServerErrorException('서버에러가 발생했습니다.');
     } finally {
       await query_runner.release();
     }
@@ -158,7 +158,9 @@ export class ChatService {
   async joinRoom(room_id: number, user_id: string) {
     // 우리 서버의 user가 맞는지 확인하고, 채팅방에 member로 등록되어있는지 확인
     if (!room_id || !user_id) {
-      throw new BadRequestException('empty parameter.');
+      throw new BadRequestException(
+        '채팅방 아이디와 유저 아이디를 올바르게 입력해주세요.'
+      );
     }
     // ban_list에 등록되어 있는지 확인
     const ban_member = await this.chatBanRepository.findOneBy({
@@ -166,7 +168,9 @@ export class ChatService {
       userId: user_id,
     });
     if (ban_member) {
-      throw new ForbiddenException(`${user_id} is ban this room.`);
+      throw new ForbiddenException(
+        `${user_id}는 해당채팅방에서 밴 상태입니다.`
+      );
     }
 
     const member = await this.chatMemberRepository.findOneBy({
@@ -181,7 +185,7 @@ export class ChatService {
     const room = await this.getRoom(room_id);
     if (room.current_nums >= room.max_nums) {
       // 새로운 유저라서 방에 추가해줘야 하는데, 방 인원이 꽉 찼을 경우
-      throw new ConflictException('sorry, room is full!');
+      throw new ConflictException('해당 채팅방 인원이 꽉 찼습니다.');
     }
     room.current_nums += 1;
     const query_runner = this.dataSource.createQueryRunner();
@@ -200,7 +204,7 @@ export class ChatService {
       return true;
     } catch (e) {
       await query_runner.rollbackTransaction();
-      throw new InternalServerErrorException();
+      throw new InternalServerErrorException('서버에러가 발생했습니다.');
     } finally {
       await query_runner.release();
     }
@@ -208,7 +212,9 @@ export class ChatService {
 
   async leaveRoom(room_id: number, user_id: string) {
     if (!room_id || !user_id) {
-      throw new BadRequestException('empty parameter.');
+      throw new BadRequestException(
+        '채팅방 아이디와 유저 아이디를 올바르게 입력해주세요.'
+      );
     }
     const room = await this.chatRoomRepository.findOneBy({id: room_id});
     if (!room) {
@@ -299,7 +305,6 @@ export class ChatService {
   }
 
   async blockMember(user_id: string, target_id: string) {
-    const target = await this.isChatMember(target_id);
     const block_list = this.blockRepository.create({
       userId: user_id,
       blockId: target_id,
@@ -309,7 +314,6 @@ export class ChatService {
   }
 
   async unBlockMember(user_id: string, target_id: string) {
-    const target = await this.isChatMember(target_id);
     await this.blockRepository.delete({
       userId: user_id,
       blockId: target_id,
@@ -327,13 +331,13 @@ export class ChatService {
 
   async isChatMember(user_id: string) {
     if (!user_id) {
-      throw new BadRequestException('empty parameter.');
+      throw new BadRequestException('유저아이디를 입력해주세요.');
     }
     const member = await this.chatMemberRepository.findOneBy({
       userId: user_id,
     });
     if (!member) {
-      throw new NotFoundException(`${user_id} is not member of this chat.`);
+      throw new NotFoundException(`${user_id}는 채팅방 멤버가 아닙니다.`);
     }
     return member;
   }
@@ -341,7 +345,10 @@ export class ChatService {
   async getRoom(room_id: number) {
     const room = await this.chatRoomRepository.findOneBy({id: room_id});
     if (!room) {
-      throw new NotFoundException('Please enter right chat room.');
+      throw new NotFoundException('해당 채팅방은 존재하지 않습니다.');
+    }
+    if (room.current_nums >= room.max_nums) {
+      throw new ConflictException('해당 채팅방 인원이 꽉 찼습니다.');
     }
     return room;
   }
@@ -353,7 +360,8 @@ export class ChatService {
     const room = await this.getRoom(room_id);
     if (
       room &&
-      (await bcrypt.compare(userDto.password.toString(), room.password))
+      room.is_password === true &&
+      (await bcrypt.compare(userDto.password, room.password))
     ) {
       return true;
     }
@@ -364,10 +372,7 @@ export class ChatService {
     const room = await this.getRoom(room_id);
     if (userDto && userDto.password) {
       const salt = await bcrypt.genSalt();
-      const hashedPassword = await bcrypt.hash(
-        userDto.password.toString(),
-        salt
-      );
+      const hashedPassword = await bcrypt.hash(userDto.password, salt);
       room.password = hashedPassword;
       room.is_password = true;
     } else {
@@ -380,7 +385,7 @@ export class ChatService {
   //초대 검색할 때, 채팅방에 있는 사람 제외하고, 차단 유저 제외하고 비슷한 닉네임 다 조회.
   async inviteChatRoom(user_nickname: string, user_id: string) {
     if (!user_nickname) {
-      throw new BadRequestException('empty user_nickname param.');
+      throw new BadRequestException('유저닉네임을 제대로 입력해주세요.');
     }
 
     const users = await this.userRepository
@@ -414,7 +419,7 @@ export class ChatService {
   // 자기자신, 차단유저, 친구목록에 있는 유저 빼고.
   async searchUser(user_id: string, user_nickname: string) {
     if (!user_nickname) {
-      throw new BadRequestException('empty user_nickname param.');
+      throw new BadRequestException('유저닉네임을 제대로 입력해주세요.');
     }
     const users = await this.userRepository
       .createQueryBuilder('users')
@@ -441,7 +446,7 @@ export class ChatService {
 
   async getBlockList(user_id: string) {
     if (!user_id) {
-      throw new BadRequestException('empty user_id param.');
+      throw new BadRequestException('유저아이디를 올바르게 업력해주세요');
     }
 
     const block_list = await this.blockRepository
