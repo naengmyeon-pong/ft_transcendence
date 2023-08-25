@@ -80,11 +80,12 @@ export class SignUpController {
     status: 401,
     description: 'user_id가 userAuth 데이터베이스에 존재하지 않는 경우',
   })
-  @UseGuards(AuthGuard('signup'))
+  // @UseGuards(AuthGuard('signup'))
   async checkUserNickname(
     @Query('user_id') userID: string,
     @Query('nickname') nickname: string
   ): Promise<boolean> {
+    console.log(userID, nickname);
     return await this.signUpService.checkUserNickname(userID, nickname);
   }
 
