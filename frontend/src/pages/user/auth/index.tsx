@@ -5,7 +5,7 @@ import {useRouter} from 'next/router';
 import type {InferGetServerSidePropsType, GetServerSideProps} from 'next';
 
 import axios from 'axios';
-import {useRecoilValue} from 'recoil';
+import {useRecoilState, useRecoilValue} from 'recoil';
 import * as HTTP_STATUS from 'http-status';
 
 import CircularProgress from '@mui/material/CircularProgress';
@@ -15,6 +15,7 @@ import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
 import apiManager from '@/api/apiManager';
 import {useProfileImage} from '@/hooks/useProfileImage';
 import {passwordResetState} from '@/states/passwordReset';
+import {loginState} from '@/states/loginState';
 
 export const getServerSideProps: GetServerSideProps = async ({query}) => {
   const {code} = query;
@@ -28,6 +29,7 @@ function AuthPage({
   const {openAlertSnackbar} = useAlertSnackbar();
   const {setUserId} = useProfileImage();
   const passwordReset = useRecoilValue(passwordResetState);
+  const [{isOAuthLogin}, setLoginState] = useRecoilState(loginState);
 
   useEffect(() => {
     (async () => {
@@ -37,7 +39,27 @@ function AuthPage({
         return;
       }
 
-      console.log(passwordReset);
+      if (isOAuthLogin) {
+        try {
+          const response = await apiManager.get(`/user/oauth?code=${code}`);
+          if (response.status === HTTP_STATUS.ACCEPTED) {
+            setLoginState({isOAuthLogin, is2faEnabled: true});
+            router.push('/user/login');
+          } else {
+            const accessToken = response.data;
+            sessionStorage.setItem('accessToken', accessToken);
+            router.push('/main/game');
+          }
+        } catch (error) {
+          if (axios.isAxiosError(error)) {
+            const message = error.response?.data.message;
+            openAlertSnackbar({message});
+            router.push('/user/login');
+          }
+        }
+        return;
+      }
+
       try {
         const response = await apiManager.get(`/signup/auth?code=${code}`);
 

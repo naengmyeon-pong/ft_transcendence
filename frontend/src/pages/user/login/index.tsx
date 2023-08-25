@@ -2,9 +2,9 @@
 
 import {useRouter} from 'next/navigation';
 import Link from 'next/link';
-import {useEffect, useState} from 'react';
+import {use, useEffect, useState} from 'react';
 
-import {useSetRecoilState} from 'recoil';
+import {useRecoilState, useSetRecoilState} from 'recoil';
 import axios from 'axios';
 import * as HTTP_STATUS from 'http-status';
 
@@ -21,10 +21,13 @@ import withAuth from '@/components/hoc/withAuth';
 import Svg42Logo from '@/components/Svg42Logo';
 import {passwordResetState} from '@/states/passwordReset';
 import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
+import {loginState} from '@/states/loginState';
 
 function LoginPage() {
   const router = useRouter();
   const setPasswordReset = useSetRecoilState(passwordResetState);
+  const [{is2faEnabled, isOAuthLogin}, setLoginState] =
+    useRecoilState(loginState);
   const {openAlertSnackbar} = useAlertSnackbar();
 
   const [intraId, setIntraId] = useState<string>('');
@@ -108,6 +111,10 @@ function LoginPage() {
     setIs2faLogin(false);
   };
 
+  const handleOAuthLoginClick = () => {
+    setLoginState({is2faEnabled, isOAuthLogin: true});
+  };
+
   useEffect(() => {
     setPasswordReset(false);
   }, []);
@@ -161,6 +168,20 @@ function LoginPage() {
           <Link href={`${process.env.NEXT_PUBLIC_OAUTH_URL}`}>
             <Button
               fullWidth
+              variant="outlined"
+              sx={{
+                mb: 2,
+              }}
+              onClick={handleOAuthLoginClick}
+            >
+              <Svg42Logo />
+              42 OAuth 로그인
+            </Button>
+          </Link>
+
+          <Link href={`${process.env.NEXT_PUBLIC_OAUTH_URL}`}>
+            <Button
+              fullWidth
               variant="contained"
               sx={{
                 mb: 2,
@@ -168,6 +189,9 @@ function LoginPage() {
                 ':hover': {
                   backgroundColor: 'black',
                 },
+              }}
+              onClick={() => {
+                setLoginState({is2faEnabled: false, isOAuthLogin: false});
               }}
             >
               <Svg42Logo />
