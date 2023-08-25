@@ -60,7 +60,9 @@ function LoginPage() {
         const status = error.response?.status;
         switch (status) {
           case HTTP_STATUS.BAD_REQUEST: {
-            openAlertSnackbar({message: 'Intra ID 를 입력해주세요.'});
+            openAlertSnackbar({
+              message: 'Intra ID 또는 비밀번호를 확인해주세요.',
+            });
             break;
           }
           case HTTP_STATUS.NOT_FOUND: {
