@@ -22,7 +22,6 @@ function Action({user_info}: {user_info: UserType}) {
         mode: mode,
       },
       (rep: Promise<string | null>) => {
-        console.log(rep);
         if (rep !== null) {
           alert(rep);
         }

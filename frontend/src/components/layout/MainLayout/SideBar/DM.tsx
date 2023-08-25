@@ -266,7 +266,6 @@ export default function Dm() {
   }, [dm_list.length]);
 
   useEffect(() => {
-    console.log('dm 페이지 감지', dm_user);
     if (dm_user !== null && user_id !== null) {
       changeUser({
         user1: user_id,

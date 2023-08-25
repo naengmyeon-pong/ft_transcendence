@@ -38,7 +38,6 @@ function TwoFactorAuth() {
       const response = await apiManager.post('/2fa/turn-on', {
         code: otpPassword,
       });
-      console.log(response);
       if (HTTP_STATUS.CREATED) {
         openAlertSnackbar({
           message: 'OTP 설정이 완료되었습니다.',

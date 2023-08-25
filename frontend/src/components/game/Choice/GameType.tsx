@@ -14,7 +14,6 @@ export default function GameType({
   setGameType: React.Dispatch<React.SetStateAction<string>>;
 }) {
   const handleGameType = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log(event.currentTarget.value);
     setGameType(event.currentTarget.value);
   };
 

@@ -79,7 +79,6 @@ export default function InviteGame() {
 
   const exitCancelGame = useCallback(
     (rep: InviteGameInfo) => {
-      console.log('rep: ', rep);
       alert(`${rep} 님이 게임을 취소하였습니다`);
       setInviteGameState(null);
     },

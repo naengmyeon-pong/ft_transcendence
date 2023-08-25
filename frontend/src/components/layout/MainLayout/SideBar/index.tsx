@@ -143,7 +143,6 @@ function SideBar() {
 
   const handleDMCnt = useCallback(
     (chat: DmChat) => {
-      console.log('lstState: ', lstState);
       if (lstState_ref.current !== 2 || dm_user_id.current !== chat.userId) {
         setDMBadge(prev => prev + 1);
       }
@@ -178,7 +177,6 @@ function SideBar() {
   //friendlist 갱신
   useEffect(() => {
     chat_socket?.on('update-friend-state', ({userId, state}) => {
-      console.log(`userId : ${userId}, state :${state}`);
       setFriendList(prev => {
         const tmp_list: UserType[] = [];
         if (prev === null || prev === undefined) {

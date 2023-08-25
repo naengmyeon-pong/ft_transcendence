@@ -54,7 +54,6 @@ export default function ActionGameAlarm({
   // A가 최종적으로 누르는 거절
   function inviteResponFalse() {
     removeGameNoti();
-    console.log('거절클릭: ');
     chat_socket?.emit('cancel_game', {
       inviteGameInfo: invite_game_state,
       is_inviter: true,

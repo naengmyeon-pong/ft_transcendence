@@ -2,7 +2,6 @@ import {Typography} from '@mui/material';
 import {InviteGameEnum, InviteGameInfoProps} from '../AlarmProps';
 
 export default function TitleGameAlarm({row}: {row: InviteGameInfoProps}) {
-  console.log('row: ', row);
   return (
     <Typography>
       {row.event_type === InviteGameEnum.INVITE &&
