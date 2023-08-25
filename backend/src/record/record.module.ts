@@ -10,6 +10,7 @@ import {Record} from './record.entity';
 import {User} from 'src/user/user.entitiy';
 import {TypeRepository} from './type/type.repository';
 import {Type} from './type/type.entity';
+import {JwtCustomModule} from '@/utils/jwt-custom.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import {Type} from './type/type.entity';
     TypeOrmModule.forFeature([Record]),
     TypeOrmModule.forFeature([User]),
     TypeOrmModule.forFeature([Type]),
+    JwtCustomModule,
   ],
   controllers: [RecordController],
   providers: [RecordService, RecordRepository, UserRepository, TypeRepository],

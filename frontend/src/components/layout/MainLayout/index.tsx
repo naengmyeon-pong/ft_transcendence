@@ -21,6 +21,7 @@ import {tokenExpiredExit} from '@/states/tokenExpired';
 import * as HTTP_STATUS from 'http-status';
 import {getJwtToken} from '@/utils/token';
 import {isValidUserToken} from '@/api/auth';
+import {useGlobalModal} from '@/hooks/useGlobalModal';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -40,6 +41,7 @@ function MainLayout({children}: MainLayoutProps) {
   const [initMainLayout, setInitMainLayout] = useState(false);
   const [token_expired_exit, setTokenExpiredExit] =
     useRecoilState(tokenExpiredExit);
+  const {closeGlobalModal} = useGlobalModal();
 
   function init_setBlockUsers(data: UserType[]) {
     for (const node of data) {
@@ -145,6 +147,7 @@ function MainLayout({children}: MainLayoutProps) {
       chat_socket?.disconnect();
       openAlertSnackbar({message: '토큰이 만료되었습니다'});
       setTokenExpiredExit(false);
+      closeGlobalModal();
     }
   }, [
     token_expired_exit,
@@ -152,6 +155,7 @@ function MainLayout({children}: MainLayoutProps) {
     chat_socket,
     openAlertSnackbar,
     setTokenExpiredExit,
+    closeGlobalModal,
   ]);
 
   return (
