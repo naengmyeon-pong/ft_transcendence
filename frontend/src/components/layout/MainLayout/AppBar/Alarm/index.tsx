@@ -108,10 +108,12 @@ export default function AlarmEvent() {
 
   const inviteeLogOut = useCallback((rep: string) => {
     setGameAlarm(prev => {
+      console.log('rep: ', rep);
       const foundIndex = prev.findIndex(
         item => item.invite_game_info.invitee_nickname === rep
-      );
-
+        );
+        
+        console.log('foundIndex: ', foundIndex);
       if (foundIndex === -1) {
         return prev;
       }
@@ -143,6 +145,7 @@ export default function AlarmEvent() {
     chat_socket?.on('invitee_cancel_game_refresh', inviteeLogOut);
     // 초대자가 초대를 보내고 B가 수락하기 전에 랜덤게임을 시작한 경우
     chat_socket?.on('inviter_cancel_invite_betray', inviterLogOut);
+    chat_socket?.on('invitee_cancel_game_back', inviteeLogOut);
     return () => {
       chat_socket?.off('invite_game', inviteGameEvent);
       chat_socket?.off('invite_response', inviteGameMoveEvent);
@@ -150,6 +153,7 @@ export default function AlarmEvent() {
       chat_socket?.off('inviter_cancel_game_refresh', inviterLogOut);
       chat_socket?.off('invitee_cancel_game_refresh', inviteeLogOut);
       chat_socket?.off('inviter_cancel_invite_betray', inviterLogOut);
+      chat_socket?.off('invitee_cancel_game_back', inviteeLogOut);
     };
   }, [
     chat_socket,

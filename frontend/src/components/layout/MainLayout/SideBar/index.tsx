@@ -46,7 +46,6 @@ import {useSetRecoilState} from 'recoil';
 import {tokenExpiredExit} from '@/states/tokenExpired';
 
 function SideBar() {
-  console.log('SideBar');
 
   // lstState: 0 = 차단 목록, 1 = 친구 목록, 2 = DM
   const [lstState, setLstState] = useState(1);
@@ -207,7 +206,6 @@ function SideBar() {
     }
 
     function handleFriendList(res: UserType[]) {
-      console.log('res: ', res);
       setFriendList(res);
     }
     setBlockUsersSize(block_users.size);
@@ -220,7 +218,7 @@ function SideBar() {
       chat_socket?.off('friend-list', handleFriendList);
       chat_socket?.off('block-list', handleBlockList);
     };
-  }, []);
+  }, [chat_socket]);
 
   useEffect(() => {
     if (profile_dm_choise === true) {
