@@ -8,8 +8,7 @@ import {profileState} from '@/states/profile';
 
 // TODO: 닉네임, 랭크, 사진 변경필요합니다
 export default function Profile() {
-  const rankNum = '랭크점수: 1000';
-  const {image, nickname} = useRecoilValue(profileState);
+  const {image, nickname, rank_score} = useRecoilValue(profileState);
 
   return (
     <Box
@@ -29,7 +28,7 @@ export default function Profile() {
         <Box sx={{px: '10px'}}>
           <Typography variant="h6">{nickname}</Typography>
           <Typography variant="h6" sx={{fontSize: '1em'}}>
-            {rankNum}
+            랭크 점수 : {rank_score}
           </Typography>
         </Box>
       </Box>

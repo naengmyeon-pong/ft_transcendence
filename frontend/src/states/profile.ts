@@ -8,5 +8,6 @@ export const profileState = atom<Profile>({
     nickname: '',
     image: '',
     is_2fa_enabled: false,
+    rank_score: 1000,
   },
 });

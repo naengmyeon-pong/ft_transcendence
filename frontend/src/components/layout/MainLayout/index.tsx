@@ -61,7 +61,7 @@ function MainLayout({children}: MainLayoutProps) {
       }
       try {
         const response = await apiManager.get('/user/user-info');
-        const {user_id, user_image, user_nickname, is_2fa_enabled} =
+        const {user_id, user_image, user_nickname, is_2fa_enabled, rank_score} =
           response.data;
         const cacheBuster = new Date().getTime();
         setProfileDataState({
@@ -69,6 +69,7 @@ function MainLayout({children}: MainLayoutProps) {
           image: `${user_image}?${cacheBuster}}`,
           nickname: user_nickname,
           is_2fa_enabled,
+          rank_score,
         });
         setUserId(user_id);
         setUserNickName(user_nickname);
@@ -112,7 +113,9 @@ function MainLayout({children}: MainLayoutProps) {
         socketIo.on('token-expire', roomId => {
           // 서버가 연결을 끊은 경우 (ex, JWT 만료)
           sessionStorage.clear();
-          openAlertSnackbar({message: '토큰이 만료되었습니다. 다시 로그인해주세요.'});
+          openAlertSnackbar({
+            message: '토큰이 만료되었습니다. 다시 로그인해주세요.',
+          });
           router.push('/');
           // if (roomId) {
           socketIo.emit('leave-room', {room_id: roomId, state: true});
@@ -129,6 +132,12 @@ function MainLayout({children}: MainLayoutProps) {
           openAlertSnackbar({message: error.response?.data.message});
         }
       }
+      // TODO: 소켓 연결 해제 확인하기
+      return () => {
+        if (chat_socket) {
+          chat_socket.disconnect();
+        }
+      };
     })();
   }, []);
 
