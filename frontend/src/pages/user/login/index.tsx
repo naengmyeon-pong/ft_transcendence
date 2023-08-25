@@ -2,9 +2,9 @@
 
 import {useRouter} from 'next/navigation';
 import Link from 'next/link';
-import {useEffect, useState} from 'react';
+import {use, useEffect, useState} from 'react';
 
-import {useSetRecoilState} from 'recoil';
+import {useRecoilState, useSetRecoilState} from 'recoil';
 import axios from 'axios';
 import * as HTTP_STATUS from 'http-status';
 
@@ -21,14 +21,15 @@ import withAuth from '@/components/hoc/withAuth';
 import Svg42Logo from '@/components/Svg42Logo';
 import {passwordResetState} from '@/states/passwordReset';
 import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
+import {loginState} from '@/states/loginState';
 
 function LoginPage() {
   const router = useRouter();
   const setPasswordReset = useSetRecoilState(passwordResetState);
+  const [{is2faEnabled, isOAuthLogin, user_id}, setLoginState] =
+    useRecoilState(loginState);
   const {openAlertSnackbar} = useAlertSnackbar();
-
   const [intraId, setIntraId] = useState<string>('');
-  const [is2faLogin, setIs2faLogin] = useState<boolean>(false);
 
   const handleResetLinkClick = () => {
     setPasswordReset(true);
@@ -48,7 +49,7 @@ function LoginPage() {
       const response = await apiManager.post('/user/signin', data);
       if (response.data === HTTP_STATUS.ACCEPTED) {
         setIntraId(enteredIntraId);
-        setIs2faLogin(true);
+        setLoginState({user_id, is2faEnabled: true, isOAuthLogin});
       } else {
         sessionStorage.setItem('accessToken', response.data);
         router.push('/main/game');
@@ -86,7 +87,7 @@ function LoginPage() {
   const handleOtpSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = {
-      user_id: intraId,
+      user_id: intraId || user_id,
       code: event.currentTarget.otpPassword.value,
     };
 
@@ -105,7 +106,11 @@ function LoginPage() {
   };
 
   const handleCancelOtpLogin = () => {
-    setIs2faLogin(false);
+    setLoginState({user_id: '', is2faEnabled: false, isOAuthLogin});
+  };
+
+  const handleOAuthLoginClick = () => {
+    setLoginState({user_id, is2faEnabled, isOAuthLogin: true});
   };
 
   useEffect(() => {
@@ -125,7 +130,7 @@ function LoginPage() {
         </Typography>
       </Box>
 
-      {is2faLogin === false ? (
+      {is2faEnabled === false ? (
         <Box component="form" onSubmit={handleSubmit} noValidate sx={{mt: 1}}>
           <TextField
             margin="normal"
@@ -161,6 +166,20 @@ function LoginPage() {
           <Link href={`${process.env.NEXT_PUBLIC_OAUTH_URL}`}>
             <Button
               fullWidth
+              variant="outlined"
+              sx={{
+                mb: 2,
+              }}
+              onClick={handleOAuthLoginClick}
+            >
+              <Svg42Logo />
+              42 OAuth 로그인
+            </Button>
+          </Link>
+
+          <Link href={`${process.env.NEXT_PUBLIC_OAUTH_URL}`}>
+            <Button
+              fullWidth
               variant="contained"
               sx={{
                 mb: 2,
@@ -168,6 +187,9 @@ function LoginPage() {
                 ':hover': {
                   backgroundColor: 'black',
                 },
+              }}
+              onClick={() => {
+                setLoginState({is2faEnabled: false, isOAuthLogin: false});
               }}
             >
               <Svg42Logo />

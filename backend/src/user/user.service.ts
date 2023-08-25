@@ -4,21 +4,28 @@ import {
   HttpCode,
   HttpStatus,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
+import {JwtService} from '@nestjs/jwt';
+
+import axios from 'axios';
+import * as bcrypt from 'bcryptjs';
+
+import * as fs from 'fs';
+
 import {User} from './user.entitiy';
 import {UserDto} from './dto/user.dto';
 import {UserAuthDto} from './dto/userAuth.dto';
-import {JwtService} from '@nestjs/jwt';
 import {UserRepository} from './user.repository';
 import {IsUserAuthRepository} from 'src/signup/signup.repository';
-import * as bcrypt from 'bcryptjs';
 import {Payload} from './payload';
 import {UpdateUserDto} from './dto/update-user.dto';
-import * as fs from 'fs';
 import {SocketArray} from '@/global-variable/global.socket';
+import {SignUpService} from '@/signup/signup.service';
+import {OAuthUser} from '@/types/user/oauth';
 
 @Injectable()
 export class UserService {
@@ -26,6 +33,7 @@ export class UserService {
     // @InjectRepository(UserRepository)
     private userRepository: UserRepository,
     private userAuthRepository: IsUserAuthRepository,
+    private signupService: SignUpService,
     private jwtService: JwtService,
     private socketArray: SocketArray
   ) {}
@@ -88,6 +96,34 @@ export class UserService {
       }
     }
     throw new UnauthorizedException('login failed');
+  }
+
+  async getOAuthUser(code: string): Promise<string | OAuthUser> {
+    const api_uri = process.env.INTRA_API_URI;
+    const accessToken = await this.signupService.getAccessToken(code);
+
+    const response = await axios.get(api_uri, {
+      headers: {Authorization: `Bearer ${accessToken}`},
+    });
+    const user = await this.userRepository.findOneBy({
+      user_id: response.data.login,
+    });
+    if (user) {
+      if (user.is_2fa_enabled === false) {
+        try {
+          const payload: Payload = {user_id: response.data.login};
+          const accessToken = this.generateAccessToken(payload);
+          return accessToken;
+        } catch (error) {
+          console.log('getOAuthError', error);
+          throw new InternalServerErrorException();
+        }
+      } else {
+        return {status: HttpStatus.ACCEPTED, user_id: user.user_id};
+      }
+    } else {
+      throw new NotFoundException('회원가입이 필요합니다.');
+    }
   }
 
   async updateUser(
