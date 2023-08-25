@@ -106,7 +106,7 @@ function ShowRoomList({roomList, refersh}: RoomListProps) {
     try {
       const rep = await apiManager.post('/chatroom/chatroom_pw', {
         room_id: room_id.current,
-        password: Number(password),
+        password: password,
       });
       if (rep.data === false) {
         setPasswordError(true);
@@ -125,11 +125,6 @@ function ShowRoomList({roomList, refersh}: RoomListProps) {
   }
 
   function handlePassword(e: ChangeEvent<HTMLInputElement>) {
-    const check = /^[0-9]+$/;
-    if (!check.test(e.target.value) && e.target.value !== '') {
-      alert('숫자만 입력해주세요.');
-      return;
-    }
     setPassword(e.target.value);
   }
   return (
@@ -190,7 +185,6 @@ function ShowRoomList({roomList, refersh}: RoomListProps) {
       />
       <Modal open={passwordModal} onClose={handlePasswordModalClose}>
         <Box component="form" onSubmit={checkPassword} noValidate sx={style}>
-          {/* <Box component="form" onSubmit={checkPassword} noValidate sx={style}> */}
           <Typography variant="h4">비밀번호 입력</Typography>
           <TextField
             error={password_error ? true : false}
