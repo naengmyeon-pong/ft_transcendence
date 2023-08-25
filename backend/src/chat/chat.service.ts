@@ -16,10 +16,11 @@ import {UserRepository} from 'src/user/user.repository';
 import {RoomDto} from './dto/room.dto';
 import {SocketArray} from '@/global-variable/global.socket';
 import {Block} from '@/global-variable/global.block';
-import {DataSource} from 'typeorm';
-import {ChatMember, ChatRoom} from './chat.entity';
+import {DataSource, QueryRunner} from 'typeorm';
+import {BlockList, ChatBan, ChatMember, ChatRoom} from './chat.entity';
 import * as bcrypt from 'bcryptjs';
 import {PartialRoomDto} from './dto/partial-room.dto';
+import {User} from '@/user/user.entitiy';
 
 export interface UserInfo {
   id: string;
@@ -40,8 +41,8 @@ export class ChatService {
     private dataSource: DataSource
   ) {}
 
-  async getRoomList() {
-    const chatrooms = await this.chatRoomRepository
+  async getRoomList(): Promise<any> {
+    const chatrooms: any = await this.chatRoomRepository
       .createQueryBuilder('chatRoom')
       .select([
         'chatRoom.id AS "id"',
@@ -69,14 +70,14 @@ export class ChatService {
     return chatrooms;
   }
 
-  async getRoomMembers(room_id: number) {
-    const room_members = {
+  async getRoomMembers(room_id: number): Promise<any> {
+    const room_members: any = {
       owner: {}, // permission = 2
       admin: [], // permission = 1
       user: [], // permission = 0
     };
 
-    const members = await this.chatMemberRepository
+    const members: ChatMember[] = await this.chatMemberRepository
       .createQueryBuilder('chatMember')
       .innerJoinAndSelect('chatMember.user', 'users')
       .where('chatMember.chatroom.id = :chatroomId', {chatroomId: room_id})
@@ -100,15 +101,15 @@ export class ChatService {
     return room_members;
   }
 
-  async createRoom(roomDto: RoomDto) {
-    const user = await this.userRepository.findOneBy({
+  async createRoom(roomDto: RoomDto): Promise<ChatRoom> {
+    const user: User = await this.userRepository.findOneBy({
       user_id: roomDto.user_id,
     });
     if (!user) {
       throw new NotFoundException(`${roomDto.user_id}는 유저가 아닙니다.`);
     }
     // user_id의 owner가 있으면 방을 만들지 않도록. 1명의 owner당 1개의 채팅방만 만들 수 있어서.
-    const already = await this.chatMemberRepository.find({
+    const already: ChatMember[] = await this.chatMemberRepository.find({
       where: {
         userId: roomDto.user_id,
         permission: 2,
@@ -119,14 +120,14 @@ export class ChatService {
         `${roomDto.user_id}는 이미 채팅방의 주인입니다.`
       );
     }
-    const query_runner = this.dataSource.createQueryRunner();
+    const query_runner: QueryRunner = this.dataSource.createQueryRunner();
     await query_runner.connect();
     await query_runner.startTransaction();
 
     try {
-      let hashedPassword;
+      let hashedPassword: string;
       if (roomDto.password) {
-        const salt = await bcrypt.genSalt();
+        const salt: any = await bcrypt.genSalt();
         hashedPassword = await bcrypt.hash(roomDto.password, salt);
       }
       const room = this.chatRoomRepository.create({
@@ -138,7 +139,7 @@ export class ChatService {
         password: roomDto.password ? hashedPassword : roomDto.password,
       });
       await query_runner.manager.getRepository(ChatRoom).save(room);
-      const room_member = this.chatMemberRepository.create({
+      const room_member: ChatMember = this.chatMemberRepository.create({
         permission: 2,
         mute: null,
         chatroom: room,
@@ -162,18 +163,7 @@ export class ChatService {
         '채팅방 아이디와 유저 아이디를 올바르게 입력해주세요.'
       );
     }
-    // ban_list에 등록되어 있는지 확인
-    const ban_member = await this.chatBanRepository.findOneBy({
-      chatroomId: room_id,
-      userId: user_id,
-    });
-    if (ban_member) {
-      throw new ForbiddenException(
-        `${user_id}는 해당채팅방에서 밴 상태입니다.`
-      );
-    }
-
-    const member = await this.chatMemberRepository.findOneBy({
+    const member: ChatMember = await this.chatMemberRepository.findOneBy({
       chatroomId: room_id,
       userId: user_id,
     });
@@ -182,13 +172,9 @@ export class ChatService {
     }
 
     // room 인원 증가시키고, room_member에 추가
-    const room = await this.getRoom(room_id);
-    if (room.current_nums >= room.max_nums) {
-      // 새로운 유저라서 방에 추가해줘야 하는데, 방 인원이 꽉 찼을 경우
-      throw new ConflictException('해당 채팅방 인원이 꽉 찼습니다.');
-    }
+    const room: ChatRoom = await this.getRoom(room_id);
     room.current_nums += 1;
-    const query_runner = this.dataSource.createQueryRunner();
+    const query_runner: QueryRunner = this.dataSource.createQueryRunner();
     await query_runner.connect();
     await query_runner.startTransaction();
     try {
@@ -210,18 +196,20 @@ export class ChatService {
     }
   }
 
-  async leaveRoom(room_id: number, user_id: string) {
+  async leaveRoom(room_id: number, user_id: string): Promise<ChatMember> {
     if (!room_id || !user_id) {
       throw new BadRequestException(
         '채팅방 아이디와 유저 아이디를 올바르게 입력해주세요.'
       );
     }
-    const room = await this.chatRoomRepository.findOneBy({id: room_id});
+    const room: ChatRoom = await this.chatRoomRepository.findOneBy({
+      id: room_id,
+    });
     if (!room) {
       return;
     }
 
-    const member = await this.chatMemberRepository.findOneBy({
+    const member: ChatMember = await this.chatMemberRepository.findOneBy({
       chatroomId: room_id,
       userId: user_id,
     });
@@ -242,9 +230,13 @@ export class ChatService {
     }
   }
 
-  async addToAdmin(room_id: number, user_id: string, target_id: string) {
+  async addToAdmin(
+    room_id: number,
+    user_id: string,
+    target_id: string
+  ): Promise<boolean> {
     if (this.isOwner(room_id, user_id)) {
-      const member = await this.isChatMember(target_id);
+      const member: ChatMember = await this.isChatMember(target_id);
       member.permission = 1;
       await this.chatMemberRepository.save(member);
       return true;
@@ -252,9 +244,13 @@ export class ChatService {
     return false;
   }
 
-  async delAdmin(room_id: number, user_id: string, target_id: string) {
+  async delAdmin(
+    room_id: number,
+    user_id: string,
+    target_id: string
+  ): Promise<boolean> {
     if (this.isOwner(room_id, user_id)) {
-      const member = await this.isChatMember(target_id);
+      const member: ChatMember = await this.isChatMember(target_id);
       member.permission = 0;
       await this.chatMemberRepository.save(member);
       return true;
@@ -262,9 +258,13 @@ export class ChatService {
     return false;
   }
 
-  async kickMember(room_id: number, user_id: string, target_id: string) {
-    const admin = await this.isChatMember(user_id);
-    const member = await this.isChatMember(target_id);
+  async kickMember(
+    room_id: number,
+    user_id: string,
+    target_id: string
+  ): Promise<boolean> {
+    const admin: ChatMember = await this.isChatMember(user_id);
+    const member: ChatMember = await this.isChatMember(target_id);
 
     if (admin.permission > member.permission) {
       return true;
@@ -277,9 +277,9 @@ export class ChatService {
     user_id: string,
     target_id: string,
     mute_time: string
-  ) {
-    const admin = await this.isChatMember(user_id);
-    const member = await this.isChatMember(target_id);
+  ): Promise<boolean> {
+    const admin: ChatMember = await this.isChatMember(user_id);
+    const member: ChatMember = await this.isChatMember(target_id);
 
     if (admin.permission > member.permission) {
       member.mute = mute_time;
@@ -290,8 +290,8 @@ export class ChatService {
   }
 
   async banMember(room_id: number, user_id: string, target_id: string) {
-    const admin = await this.isChatMember(user_id);
-    const member = await this.isChatMember(target_id);
+    const admin: ChatMember = await this.isChatMember(user_id);
+    const member: ChatMember = await this.isChatMember(target_id);
 
     if (admin.permission > member.permission) {
       const ban_member = this.chatBanRepository.create({
@@ -305,7 +305,7 @@ export class ChatService {
   }
 
   async blockMember(user_id: string, target_id: string) {
-    const block_list = this.blockRepository.create({
+    const block_list: BlockList = this.blockRepository.create({
       userId: user_id,
       blockId: target_id,
     });
@@ -322,7 +322,7 @@ export class ChatService {
   }
 
   async isOwner(room_id: number, user_id: string) {
-    const member = await this.isChatMember(user_id);
+    const member: ChatMember = await this.isChatMember(user_id);
     if (member.permission === 2) {
       return true;
     }
@@ -342,8 +342,30 @@ export class ChatService {
     return member;
   }
 
-  async getRoom(room_id: number) {
-    const room = await this.chatRoomRepository.findOneBy({id: room_id});
+  async getRoom(room_id: number): Promise<ChatRoom> {
+    const room: ChatRoom = await this.chatRoomRepository.findOneBy({
+      id: room_id,
+    });
+    if (!room) {
+      throw new NotFoundException('해당 채팅방은 존재하지 않습니다.');
+    }
+    if (room.current_nums >= room.max_nums) {
+      throw new ConflictException('해당 채팅방 인원이 꽉 찼습니다.');
+    }
+    return room;
+  }
+
+  async isRoom(room_id: number, user_id: string): Promise<ChatRoom> {
+    const room: ChatRoom = await this.chatRoomRepository.findOneBy({
+      id: room_id,
+    });
+    const ban = await this.chatBanRepository.findOneBy({
+      chatroomId: room_id,
+      userId: user_id,
+    });
+    if (ban) {
+      throw new ConflictException('해당 채팅방에 입장하실 수 없습니다.');
+    }
     if (!room) {
       throw new NotFoundException('해당 채팅방은 존재하지 않습니다.');
     }
@@ -357,7 +379,7 @@ export class ChatService {
     room_id: number,
     userDto: PartialRoomDto
   ): Promise<boolean> {
-    const room = await this.getRoom(room_id);
+    const room: ChatRoom = await this.getRoom(room_id);
     if (
       room &&
       room.is_password === true &&
@@ -368,8 +390,16 @@ export class ChatService {
     return false;
   }
 
-  async updateChatRoomPw(room_id: number, userDto?: PartialRoomDto) {
-    const room = await this.getRoom(room_id);
+  async updateChatRoomPw(
+    room_id: number,
+    userDto?: PartialRoomDto
+  ): Promise<void> {
+    const room: ChatRoom = await this.chatRoomRepository.findOneBy({
+      id: room_id,
+    });
+    if (!room) {
+      throw new NotFoundException('해당 채팅방은 존재하지 않습니다.');
+    }
     if (userDto && userDto.password) {
       const salt = await bcrypt.genSalt();
       const hashedPassword = await bcrypt.hash(userDto.password, salt);
@@ -383,7 +413,7 @@ export class ChatService {
   }
 
   //초대 검색할 때, 채팅방에 있는 사람 제외하고, 차단 유저 제외하고 비슷한 닉네임 다 조회.
-  async inviteChatRoom(user_nickname: string, user_id: string) {
+  async inviteChatRoom(user_nickname: string, user_id: string): Promise<any> {
     if (!user_nickname) {
       throw new BadRequestException('유저닉네임을 제대로 입력해주세요.');
     }
@@ -417,7 +447,7 @@ export class ChatService {
   }
 
   // 자기자신, 차단유저, 친구목록에 있는 유저 빼고.
-  async searchUser(user_id: string, user_nickname: string) {
+  async searchUser(user_id: string, user_nickname: string): Promise<any> {
     if (!user_nickname) {
       throw new BadRequestException('유저닉네임을 제대로 입력해주세요.');
     }
@@ -444,7 +474,7 @@ export class ChatService {
     return users;
   }
 
-  async getBlockList(user_id: string) {
+  async getBlockList(user_id: string): Promise<any> {
     if (!user_id) {
       throw new BadRequestException('유저아이디를 올바르게 업력해주세요');
     }

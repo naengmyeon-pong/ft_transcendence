@@ -5,6 +5,7 @@ import {
   Param,
   Post,
   Query,
+  UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
 import {RecordService} from './record.service';
@@ -12,8 +13,10 @@ import {RecordSummaryDto} from './dto/record-summary.dto';
 import {DetailRecordDto} from './dto/detail-record.dto';
 import {Record} from './record.entity';
 import {ApiOperation, ApiQuery, ApiResponse, ApiTags} from '@nestjs/swagger';
+import {AuthGuard} from '@nestjs/passport';
 
 @Controller('record')
+@UseGuards(AuthGuard('jwt'))
 @ApiTags('Record')
 export class RecordController {
   constructor(private recordService: RecordService) {}
