@@ -76,19 +76,7 @@ export class DmGateway {
       return decodedToken.user_id;
     } catch (e) {
       this.logger.log('token expire');
-      let member: ChatMember = undefined;
-      try {
-        member = await this.dmService.isChatMember(
-          socket.handshake.query.user_id as string
-        );
-      } catch (e) {
-        console.log(e.message);
-      }
-      if (member) {
-        socket.emit('token-expire', member.chatroomId);
-      } else {
-        socket.emit('token-expire');
-      }
+      socket.emit('token-expire');
     }
   }
 }
