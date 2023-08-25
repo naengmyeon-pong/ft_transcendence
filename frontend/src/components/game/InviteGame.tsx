@@ -63,6 +63,7 @@ export default function InviteGame() {
       if (game_info === null) {
         return;
       }
+
       setGameInfo(game_info);
       if (game_info.leftScore === 5 || game_info.rightScore === 5) {
         setIsGameOver(true);
@@ -75,7 +76,6 @@ export default function InviteGame() {
     chat_socket?.emit('update_frame', invite_game_state.inviter_id);
   }, [chat_socket, invite_game_state.inviter_id]);
 
-  // TODO: 게임 대기방에서 초대를 수락하는 경우 생각해볼것
   const exitCancelGame = useCallback(
     (rep: InviteGameInfo) => {
       console.log('rep: ', rep);
@@ -85,29 +85,33 @@ export default function InviteGame() {
     [setInviteGameState]
   );
 
+  const handleUnload = useCallback(() => {
+    chat_socket?.emit('cancel_game', {
+      inviteGameInfo: invite_game_state,
+      is_inviter: false,
+    });
+    setInviteGameState(null);
+  }, [gameInfo, chat_socket, setInviteGameState]);
+
   useEffect(() => {
     sessionStorage.setItem('left_user', invite_game_state.inviter_nickname);
     sessionStorage.setItem('right_user', invite_game_state.invitee_nickname);
     sessionStorage.setItem('room_name', invite_game_state.inviter_id);
+
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
       e.returnValue = '';
     };
 
-    function handleUnload() {
-      chat_socket?.emit('cancel_game', {
-        inviteGameInfo: invite_game_state,
-        is_inviter: false,
-      });
-    }
-
     window.addEventListener('unload', handleUnload);
     window.addEventListener('beforeunload', handleBeforeUnload);
+
     return () => {
-      window.addEventListener('unload', handleUnload);
-      window.addEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('unload', handleUnload);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      setInviteGameState(null);
     };
-  }, [chat_socket, invite_game_state]);
+  }, [chat_socket, invite_game_state, setInviteGameState]);
 
   useEffect(() => {
     chat_socket?.on('enter_game', sendGameStartEvent);
