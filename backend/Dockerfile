@@ -1,18 +1,12 @@
 FROM node:18-alpine
 
-RUN apk add --no-cache dumb-init
-
 WORKDIR /app
 
-COPY package.json .
-COPY entrypoint.sh .
+# COPY package.json .
 
-RUN npm install
+# RUN npm install
+RUN npm run build
 
 EXPOSE 3001
 
-# Start dumb-init for PID 1
-ENTRYPOINT [ "/usr/bin/dumb-init", "--" ]
-
-# Start react in the foreground
-CMD [ "/bin/sh", "./entrypoint.sh" ]
+CMD ["node", "dist/main.js"]

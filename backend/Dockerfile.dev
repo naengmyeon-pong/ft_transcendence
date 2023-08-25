@@ -4,9 +4,9 @@ RUN apk add --no-cache dumb-init
 
 WORKDIR /app
 
-COPY ./entrypoint.sh .
+COPY ./backend/entrypoint.sh .
 
-# RUN npm install
+COPY ./types /app/types
 
 EXPOSE 3001
 

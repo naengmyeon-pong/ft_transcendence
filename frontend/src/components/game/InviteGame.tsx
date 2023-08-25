@@ -72,8 +72,11 @@ export default function InviteGame() {
   );
 
   const sendGameStartEvent = useCallback(() => {
+    if (invite_game_state === null) {
+      return;
+    }
     chat_socket?.emit('update_frame', invite_game_state.inviter_id);
-  }, [chat_socket, invite_game_state.inviter_id]);
+  }, [chat_socket, invite_game_state?.inviter_id]);
 
   // TODO: 게임 대기방에서 초대를 수락하는 경우 생각해볼것
   const exitCancelGame = useCallback(
@@ -86,9 +89,12 @@ export default function InviteGame() {
   );
 
   useEffect(() => {
-    sessionStorage.setItem('left_user', invite_game_state.inviter_nickname);
-    sessionStorage.setItem('right_user', invite_game_state.invitee_nickname);
-    sessionStorage.setItem('room_name', invite_game_state.inviter_id);
+    if (invite_game_state !== null) {
+      sessionStorage.setItem('left_user', invite_game_state.inviter_nickname);
+      sessionStorage.setItem('right_user', invite_game_state.invitee_nickname);
+      sessionStorage.setItem('room_name', invite_game_state.inviter_id);
+    }
+
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
       e.returnValue = '';
@@ -133,7 +139,7 @@ export default function InviteGame() {
   }, [
     chat_socket,
     user_id,
-    invite_game_state.inviter_id,
+    invite_game_state?.inviter_id,
     handleInviteGameInfo,
     sendGameStartEvent,
     invite_game_state,
@@ -141,10 +147,14 @@ export default function InviteGame() {
   ]);
 
   return (
-    <InviteGameView
-      isGameOver={isGameOver}
-      gameInfo={gameInfo}
-      handleReturnMain={handleReturnMain}
-    />
+    <>
+      {gameInfo && (
+        <InviteGameView
+          isGameOver={isGameOver}
+          gameInfo={gameInfo}
+          handleReturnMain={handleReturnMain}
+        />
+      )}
+    </>
   );
 }

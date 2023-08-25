@@ -66,9 +66,12 @@ export default function AlarmEvent() {
   const cancelGameAlarm = useCallback((rep: string) => {
     console.log('rep: ', rep);
     setGameAlarm(prev => {
-      const foundIndex = prev.findIndex(
-        item => item.invite_game_info.inviter_nickname === rep
-      );
+      const foundIndex = prev.findIndex(item => {
+        if (typeof item.invite_game_info !== 'string') {
+          return item.invite_game_info.inviter_nickname === rep;
+        }
+        return false;
+      });
       console.log('foundIndex: ', foundIndex);
 
       if (foundIndex === -1) {
@@ -91,9 +94,12 @@ export default function AlarmEvent() {
   const inviterLogOut = useCallback((rep: string) => {
     setGameAlarm(prev => {
       console.log('초대자 나감rep: ', rep);
-      const foundIndex = prev.findIndex(
-        item => item.invite_game_info.inviter_nickname === rep
-      );
+      const foundIndex = prev.findIndex(item => {
+        if (typeof item.invite_game_info !== 'string') {
+          return item.invite_game_info.inviter_nickname === rep;
+        }
+        return false;
+      });
       console.log('foundIndex: ', foundIndex);
 
       if (foundIndex === -1) {
@@ -116,9 +122,12 @@ export default function AlarmEvent() {
   const inviteeLogOut = useCallback((rep: string) => {
     setGameAlarm(prev => {
       console.log('초대자 나감', rep);
-      const foundIndex = prev.findIndex(
-        item => item.invite_game_info.invitee_nickname === rep
-      );
+      const foundIndex = prev.findIndex(item => {
+        if (typeof item.invite_game_info !== 'string') {
+          return item.invite_game_info.invitee_nickname === rep;
+        }
+        return false;
+      });
       console.log('foundIndex: ', foundIndex);
 
       if (foundIndex === -1) {
