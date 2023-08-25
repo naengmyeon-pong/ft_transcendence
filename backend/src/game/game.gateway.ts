@@ -38,6 +38,7 @@ import {Mode} from '@/record/mode/mode.entity';
 import {SocketArray} from '@/global-variable/global.socket';
 import {ETypeMode} from './types/type-mode.enum';
 import {Payload} from '@/user/payload';
+import {Friend} from '@/global-variable/global.friend';
 
 const waitUserList: GameUser[][] = [[], [], [], []];
 
@@ -60,7 +61,8 @@ export class GameGateway implements OnGatewayDisconnect {
     private modeRepository: ModeRepository,
     private typeRepository: TypeRepository,
     private jwtService: JwtService,
-    private socketArray: SocketArray
+    private socketArray: SocketArray,
+    private friend: Friend
   ) {}
   @WebSocketServer() nsp: Namespace;
 
@@ -559,10 +561,24 @@ export class GameGateway implements OnGatewayDisconnect {
     socket.emit('game_info', {game_info: roomInfo.game_info});
     if (userID === inviteGameInfo.inviter_id) {
       socket.emit('enter_game');
-      this.socketArray.getUserSocket(inviteGameInfo.inviter_id).is_gaming =
-        true;
-      this.socketArray.getUserSocket(inviteGameInfo.invitee_id).is_gaming =
-        true;
+      const inviterInfo = this.socketArray.getUserSocket(
+        inviteGameInfo.inviter_id
+      );
+      inviterInfo.is_gaming = true;
+      const inviteeInfo = this.socketArray.getUserSocket(
+        inviteGameInfo.invitee_id
+      );
+      inviteeInfo.is_gaming = true;
+      this.updateFriendState(
+        inviteGameInfo.inviter_id,
+        inviterInfo.socket,
+        '게임중'
+      );
+      this.updateFriendState(
+        inviteGameInfo.invitee_id,
+        inviteeInfo.socket,
+        '게임중'
+      );
       this.removeUserInWaitlist(userID); // 랜덤 게임 대기자 삭제
       this.removeUserInInviteWaitlist(userID, true);
       this.nsp.to(roomInfo.room_name).emit('start_game');
@@ -656,6 +672,22 @@ export class GameGateway implements OnGatewayDisconnect {
       return false;
     }
   };
+
+  // updateGamerState
+
+  updateFriendState(user_id: string, socket: Socket, state: string) {
+    const friends: Set<string> = this.friend.getFriendUsers(user_id);
+    if (friends) {
+      friends.forEach(e => {
+        const login_user = this.socketArray.getUserSocket(e);
+        if (login_user) {
+          socket
+            .to(login_user.socket_id)
+            .emit('update-friend-state', {userId: user_id, state});
+        }
+      });
+    }
+  }
 }
 
 const findTypeMode = (joinGameInfo: JoinGameInfo): ETypeMode => {
