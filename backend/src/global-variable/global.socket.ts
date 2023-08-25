@@ -4,10 +4,12 @@ import {Socket} from 'socket.io';
 interface UserSocket {
   user_id: string;
   socket_id: string;
+  socket: Socket;
 }
 
 interface UserInfo {
   socket_id: string | null;
+  socket: Socket | null;
   is_gaming: boolean;
 }
 
@@ -33,6 +35,7 @@ export class SocketArray {
     );
     userInfo = {
       socket_id: userSocket.socket_id,
+      socket: userSocket.socket,
       is_gaming: false,
     };
     this.socketArray.set(userSocket.user_id, userInfo);
