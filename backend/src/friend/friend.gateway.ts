@@ -33,17 +33,17 @@ export class FriendGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private logger = new Logger('friendGateway');
 
-  async handleConnection(@ConnectedSocket() socket: Socket) {
+  handleConnection(@ConnectedSocket() socket: Socket) {
     const user_id = socket.handshake.query.user_id as string;
-    await this.updateFriendState(user_id, socket, '온라인');
+    this.updateFriendState(user_id, socket, '온라인');
   }
 
-  async handleDisconnect(@ConnectedSocket() socket: Socket) {
+  handleDisconnect(@ConnectedSocket() socket: Socket) {
     const user_id = socket.handshake.query.user_id as string;
-    await this.updateFriendState(user_id, socket, '오프라인');
+    this.updateFriendState(user_id, socket, '오프라인');
   }
 
-  async updateFriendState(user_id: string, socket: Socket, state: string) {
+  updateFriendState(user_id: string, socket: Socket, state: string) {
     const friends: Set<string> = this.friend.getFriendUsers(user_id);
     if (friends) {
       friends.forEach(e => {
