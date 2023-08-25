@@ -585,6 +585,33 @@ export class GameGateway implements OnGatewayDisconnect {
     }
   }
 
+  @SubscribeMessage('invitee_cancel_game_back')
+  handleInviteeCancelGameBack(
+    @ConnectedSocket() inviteeSocket: Socket,
+    @MessageBody() inviteGameInfo: InviteGameInfo
+  ) {
+    let idx = -1;
+    inviteWaitList.forEach((value, key) => {
+      if (value.inviter_id === inviteGameInfo.inviter_id) {
+        idx = key;
+        return;
+      }
+    });
+    if (idx !== -1) {
+      inviteWaitList.splice(idx, 1);
+    }
+    gameRooms.delete(inviteGameInfo.inviter_id);
+    const inviterSocket = this.socketArray.getUserSocket(
+      inviteGameInfo.inviter_id
+    ).socket;
+    inviterSocket.leave(inviteGameInfo.inviter_id);
+    inviteeSocket.leave(inviteGameInfo.inviter_id);
+    inviterSocket.emit(
+      'invitee_cancel_game_back',
+      inviteGameInfo.invitee_nickname
+    );
+  }
+
   removeUserInInviteWaitlist = (
     userID: string,
     isInviteGameBegin: boolean,
@@ -672,8 +699,6 @@ export class GameGateway implements OnGatewayDisconnect {
       return false;
     }
   };
-
-  // updateGamerState
 
   updateFriendState(user_id: string, socket: Socket, state: string) {
     const friends: Set<string> = this.friend.getFriendUsers(user_id);

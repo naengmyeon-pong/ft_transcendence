@@ -131,7 +131,6 @@ export class UserService {
     userID: string
   ): Promise<void> {
     const user = await this.findUser(userID);
-    // console.log(user, '\n', userDto, file);
     if (!user) {
       throw new UnauthorizedException('유저가 이닙니다.');
     }

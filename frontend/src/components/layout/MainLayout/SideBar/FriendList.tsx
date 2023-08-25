@@ -1,36 +1,22 @@
 'use client';
 import React, {
-  useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
 } from 'react';
 
 import {
   Avatar,
-  Badge,
-  Box,
-  Button,
   ListItem,
   ListItemAvatar,
   ListItemText,
   Menu,
   MenuItem,
   Typography,
-  styled,
 } from '@mui/material';
 import {UserType} from '@/types/UserContext';
 import {UserContext} from '../Context';
 import UserInfoPage from '../../../UserProfileModal';
-
-// const StyledBadge = styled(Badge)(({theme}) => ({
-//   '& .MuiBadge-badge': {
-//     backgroundColor: 'grey',
-//     color: 'grey',
-//     boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
-//   },
-// }));
 
 function FriendList({friend}: {friend: UserType}) {
   const [anchorEl, setAnchorEl] = useState<HTMLLIElement | null>(null);
@@ -49,11 +35,6 @@ function FriendList({friend}: {friend: UserType}) {
     chat_socket?.emit('del-friend', friend.id);
     setAnchorEl(null);
   }
-
-  const OpenUserInfoPage = useMemo(() => {
-    console.log('클릭: OpenUserInfoPage');
-    setAnchorEl(null);
-  }, []);
 
   return (
     <>

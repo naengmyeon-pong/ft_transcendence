@@ -34,7 +34,6 @@ export default function GameAction({
   };
 
   const handleGameStart = () => {
-    console.log(`gameType: ${gameType}, gameMode: ${gameMode}`);
     if (gameType === '') {
       console.error('게임 타입을 선택해주세요!');
       return;

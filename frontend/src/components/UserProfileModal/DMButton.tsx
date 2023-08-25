@@ -23,7 +23,6 @@ export const HandleAddDmList = ({user_info}: {user_info: UserType}) => {
     if (dm_user === null || dm_user.id !== user_info.id) {
       setDmUser(user_info);
     }
-    console.log(dm_list);
     if (dm_list.some(item => item.user2 === user_info.id)) {
       return;
     }
