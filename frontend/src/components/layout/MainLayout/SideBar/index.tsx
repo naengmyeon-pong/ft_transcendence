@@ -46,7 +46,6 @@ import {useSetRecoilState} from 'recoil';
 import {tokenExpiredExit} from '@/states/tokenExpired';
 
 function SideBar() {
-  console.log('SideBar');
 
   // lstState: 0 = 차단 목록, 1 = 친구 목록, 2 = DM
   const [lstState, setLstState] = useState(1);
@@ -144,7 +143,6 @@ function SideBar() {
 
   const handleDMCnt = useCallback(
     (chat: DmChat) => {
-      console.log('lstState: ', lstState);
       if (lstState_ref.current !== 2 || dm_user_id.current !== chat.userId) {
         setDMBadge(prev => prev + 1);
       }
@@ -179,14 +177,17 @@ function SideBar() {
   //friendlist 갱신
   useEffect(() => {
     chat_socket?.on('update-friend-state', ({userId, state}) => {
-      console.log(`userId : ${userId}, state :${state}`);
       setFriendList(prev => {
         const tmp_list: UserType[] = [];
+        if (prev === null || prev === undefined) {
+          return prev;
+        }
         prev.forEach(friend => {
-          if (friend.id === userId) {
-            friend.state = state;
+          const tmp_user: UserType = friend;
+          if (tmp_user.id === userId) {
+            tmp_user.state = state;
           }
-          tmp_list.push(friend);
+          tmp_list.push(tmp_user);
         });
         return tmp_list;
       });
@@ -203,7 +204,6 @@ function SideBar() {
     }
 
     function handleFriendList(res: UserType[]) {
-      console.log('res: ', res);
       setFriendList(res);
     }
     setBlockUsersSize(block_users.size);
@@ -216,7 +216,7 @@ function SideBar() {
       chat_socket?.off('friend-list', handleFriendList);
       chat_socket?.off('block-list', handleBlockList);
     };
-  }, []);
+  }, [chat_socket]);
 
   useEffect(() => {
     if (profile_dm_choise === true) {

@@ -31,7 +31,6 @@ export default function AlarmEvent() {
   // 초대를 받는 이벤트
   const inviteGameEvent = useCallback(
     (inviteGameInfo: InviteGameInfo) => {
-      console.log(inviteGameInfo);
       const tmp: InviteGameInfoProps = {
         invite_game_info: inviteGameInfo,
         event_type: InviteGameEnum.INVITE,
@@ -45,8 +44,6 @@ export default function AlarmEvent() {
   // 초대한 사용자가 응답한 사용자에 대한 결과를 받는 이벤트
   const inviteGameMoveEvent = useCallback(
     (inviteGameInfo: InviteGameInfo) => {
-      console.log(inviteGameInfo);
-      // 거절
       const tmp: InviteGameInfoProps = {
         invite_game_info: inviteGameInfo,
         event_type: '',
@@ -64,7 +61,6 @@ export default function AlarmEvent() {
 
   // 이전 알람에서 제거하고 거절했다는 메세지 추가
   const cancelGameAlarm = useCallback((rep: string) => {
-    console.log('rep: ', rep);
     setGameAlarm(prev => {
       const foundIndex = prev.findIndex(item => {
         if (typeof item.invite_game_info !== 'string') {
@@ -149,17 +145,27 @@ export default function AlarmEvent() {
 
   // 게임 초대 관련 이벤트
   useEffect(() => {
+    // 초대
     chat_socket?.on('invite_game', inviteGameEvent);
+    // 초대 응답
     chat_socket?.on('invite_response', inviteGameMoveEvent);
+    // 초대받은 유저가 게임을 거절
     chat_socket?.on('invitee_cancel_game_out', cancelGameAlarm);
+    // 초대한 유저의 소켓이 끊어짐
     chat_socket?.on('inviter_cancel_game_refresh', inviterLogOut);
+    // 초대받은 유저의 소켓이 끊어짐
     chat_socket?.on('invitee_cancel_game_refresh', inviteeLogOut);
+    // 초대자가 초대를 보내고 B가 수락하기 전에 랜덤게임을 시작한 경우
+    chat_socket?.on('inviter_cancel_invite_betray', inviterLogOut);
+    chat_socket?.on('invitee_cancel_game_back', inviteeLogOut);
     return () => {
       chat_socket?.off('invite_game', inviteGameEvent);
       chat_socket?.off('invite_response', inviteGameMoveEvent);
       chat_socket?.off('invitee_cancel_game_out', cancelGameAlarm);
       chat_socket?.off('inviter_cancel_game_refresh', inviterLogOut);
       chat_socket?.off('invitee_cancel_game_refresh', inviteeLogOut);
+      chat_socket?.off('inviter_cancel_invite_betray', inviterLogOut);
+      chat_socket?.off('invitee_cancel_game_back', inviteeLogOut);
     };
   }, [
     chat_socket,
@@ -172,7 +178,6 @@ export default function AlarmEvent() {
 
   const handleChatAlarm = useCallback(
     (rep: Chatnotificate) => {
-      console.log(rep);
       setChatAlarm(preNotis => [...preNotis, rep]);
       setReadNotificate(true);
     },

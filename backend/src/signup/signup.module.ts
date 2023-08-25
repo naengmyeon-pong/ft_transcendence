@@ -16,7 +16,7 @@ import {SignUpJwtStrategy} from './jwt.strategy';
   imports: [
     PassportModule.register({defaultStrategy: 'signup'}),
     JwtModule.register({
-      secret: 'Intra42',
+      secret: process.env.SIGNUP_JWT_SECRET_KEY,
       signOptions: {
         expiresIn: '2m',
       },

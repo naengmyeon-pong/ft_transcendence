@@ -20,9 +20,7 @@ export class FriendService {
   ) {}
 
   async addFriend(user_id: string, friend_id: string) {
-    // const user = await this.getUser(user_id);
-    // const friend = await this.getUser(friend_id);
-
+    const friend = await this.getUser(friend_id);
     const new_friend = this.friendListRepository.create({
       userId: user_id,
       friendId: friend_id,
@@ -31,12 +29,19 @@ export class FriendService {
   }
 
   async delFriend(user_id: string, friend_id: string) {
-    // const user = await this.getUser(user_id);
-    // const friend = await this.getUser(friend_id);
+    const friend = await this.getUser(friend_id);
     await this.friendListRepository.delete({
       userId: user_id,
       friendId: friend_id,
     });
+  }
+
+  async getUser(user_id: string) {
+    const user = await this.userRepository.findOneBy({user_id});
+    if (!user) {
+      throw new NotFoundException(`${user_id} is not a user.`);
+    }
+    return user;
   }
 
   async getFriendList(user_id: string) {
@@ -77,15 +82,6 @@ export class FriendService {
       } else {
         element.state = '오프라인';
       }
-    });
-    return ret;
-  }
-
-  async getUsersAsFriend(user_id: string) {
-    const ret = await this.friendListRepository.find({
-      where: {
-        friendId: user_id,
-      },
     });
     return ret;
   }

@@ -82,7 +82,6 @@ function RecordTable({intraId, type}: {intraId: string; type: string}) {
     if (data && data.records !== undefined) {
       setRecords(data.records);
       setTotalCounts(data.count);
-      console.log(data.records);
     }
   }, [data]);
 

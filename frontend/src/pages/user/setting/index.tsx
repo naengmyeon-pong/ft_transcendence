@@ -91,7 +91,6 @@ function Setting() {
           </Button>
         ),
       });
-      console.log(response);
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         openAlertSnackbar({message: error.response?.data.message});
@@ -102,7 +101,6 @@ function Setting() {
   const handle2FAoff = async () => {
     try {
       const response = await apiManager.post('/2fa/turn-off');
-      console.log(response);
       if (HTTP_STATUS.CREATED) {
         openAlertSnackbar({
           message: 'OTP 설정이 해제되었습니다.',
@@ -122,7 +120,6 @@ function Setting() {
     try {
       const response = await apiManager.delete('/user/delete');
       const {status} = response;
-      console.log(response);
       if (status) {
         closeGlobalDialog();
         openAlertSnackbar({
@@ -169,14 +166,12 @@ function Setting() {
       formData.append('user_image', uploadFile);
     }
 
-    console.log(formData);
     try {
       const response = await apiManager.patch('/user/update', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
-      console.log(response);
       if (HTTP_STATUS.CREATED) {
         openAlertSnackbar({
           message: '회원정보 수정이 완료되었습니다.',

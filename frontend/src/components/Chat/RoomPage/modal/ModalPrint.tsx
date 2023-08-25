@@ -68,7 +68,6 @@ function ModalPrint({user, menuItem}: ModalPrintInstance) {
   }
   getTitle();
   getDetail();
-  console.log('title: ', title, ' detail:', detail, 'menuItem', menuItem);
   return (
     <>
       <Typography variant="h4">{title}</Typography>

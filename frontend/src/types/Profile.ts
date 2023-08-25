@@ -3,4 +3,5 @@ export type Profile = {
   nickname: string;
   image: string;
   is_2fa_enabled: boolean;
+  rank_score: number;
 };

@@ -3,12 +3,11 @@ import {useContext} from 'react';
 
 import {useRecoilState} from 'recoil';
 
-import {Box, Button} from '@mui/material';
+import {Box, Button, Typography} from '@mui/material';
 
 import {InviteGameEnum, InviteGameInfoProps} from '../AlarmProps';
 import {UserContext} from '../../../Context';
 import {inviteGameState} from '@/states/inviteGame';
-import {InviteGameInfo} from '@/common/types/game';
 
 export default function ActionGameAlarm({
   row,
@@ -85,6 +84,10 @@ export default function ActionGameAlarm({
     }
   }
 
+  function cancelGame() {
+    removeGameNoti();
+  }
+
   return (
     <>
       {row.event_type === InviteGameEnum.INVITE && (
@@ -104,6 +107,12 @@ export default function ActionGameAlarm({
           <Button onClick={inviteResponTrue}>수락</Button>
           <Button onClick={inviteResponFalse}>거절</Button>
         </Box>
+      )}
+      {(row.event_type === InviteGameEnum.INVITER_OFF ||
+        row.event_type === InviteGameEnum.INVITEE_OFF) && (
+        <Typography onClick={cancelGame}>
+          {row.invite_game_info} 님이 게임을 취소하였습니다
+        </Typography>
       )}
     </>
   );

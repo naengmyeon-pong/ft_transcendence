@@ -1,13 +1,21 @@
 'use client';
 
 import {useContext, useEffect, useState} from 'react';
+
+import {useRecoilState} from 'recoil';
+import axios from 'axios';
+
+import {Button, Grid} from '@mui/material';
+
 import {UserContext} from '../layout/MainLayout/Context';
 import {GameInfo, RoomUserInfo, JoinGameInfo} from '@/common/types/game';
-import {Button, Grid} from '@mui/material';
 import GameType from './Choice/GameType';
 import GameMode from './Choice/GameMode';
 import GameAction from './Choice/GameAction';
 import Pong from './Pong';
+import {profileState} from '@/states/profile';
+import apiManager from '@/api/apiManager';
+import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
 
 function Game() {
   const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
@@ -19,6 +27,8 @@ function Game() {
   const [isStartingGame, setIsStartingGame] = useState<boolean>(false);
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
   const socket = useContext(UserContext).chat_socket;
+  const [profileDataState, setProfileDataState] = useRecoilState(profileState);
+  const {openAlertSnackbar} = useAlertSnackbar();
 
   const handleUnload = () => {
     if (isWaitingGame === true) {
@@ -31,7 +41,6 @@ function Game() {
         mode: selectedGameMode,
         type: selectedGameType,
       };
-      console.log('hey');
       socket?.emit('cancel_waiting', joinGameInfo);
     }
   };
@@ -70,13 +79,24 @@ function Game() {
     }
   };
 
-  const handleGameInfo = ({game_info}: {game_info: GameInfo}) => {
+  const handleGameInfo = async ({game_info}: {game_info: GameInfo}) => {
     if (game_info === null) {
       return;
     }
     setGameInfo(game_info);
     if (game_info.leftScore === 5 || game_info.rightScore === 5) {
       setIsGameOver(true);
+      try {
+        const response = await apiManager.get('/user/user-info');
+        const {rank_score} = response.data;
+        setProfileDataState({...profileDataState, rank_score});
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          openAlertSnackbar({
+            message: '프로필 정보를 불러오는데 실패했습니다.',
+          });
+        }
+      }
     }
   };
 

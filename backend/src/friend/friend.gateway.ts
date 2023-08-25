@@ -13,6 +13,7 @@ import {JwtService} from '@nestjs/jwt';
 import {Logger} from '@nestjs/common';
 import {SocketArray} from '@/global-variable/global.socket';
 import {ChatMember} from '@/chat/chat.entity';
+import {Friend} from '@/global-variable/global.friend';
 
 @WebSocketGateway({
   namespace: 'pong',
@@ -24,33 +25,36 @@ export class FriendGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private friendService: FriendService,
     private jwtService: JwtService,
-    private socketArray: SocketArray
+    private socketArray: SocketArray,
+    private friend: Friend
   ) {}
 
   @WebSocketServer() nsp: Namespace;
 
   private logger = new Logger('friendGateway');
 
-  async handleConnection(@ConnectedSocket() socket: Socket) {
+  handleConnection(@ConnectedSocket() socket: Socket) {
     const user_id = socket.handshake.query.user_id as string;
-    await this.updateFriendState(user_id, socket, '온라인');
+    this.updateFriendState(user_id, socket, '온라인');
   }
 
-  async handleDisconnect(@ConnectedSocket() socket: Socket) {
+  handleDisconnect(@ConnectedSocket() socket: Socket) {
     const user_id = socket.handshake.query.user_id as string;
-    await this.updateFriendState(user_id, socket, '오프라인');
+    this.updateFriendState(user_id, socket, '오프라인');
   }
 
-  async updateFriendState(user_id: string, socket: Socket, state: string) {
-    const friends = await this.friendService.getUsersAsFriend(user_id);
-    friends.forEach(friend => {
-      const login_user = this.socketArray.getUserSocket(friend.userId);
-      if (login_user) {
-        socket
-          .to(login_user.socket_id)
-          .emit('update-friend-state', {userId: user_id, state});
-      }
-    });
+  updateFriendState(user_id: string, socket: Socket, state: string) {
+    const friends: Set<string> = this.friend.getFriendUsers(user_id);
+    if (friends) {
+      friends.forEach(e => {
+        const login_user = this.socketArray.getUserSocket(e);
+        if (login_user) {
+          socket
+            .to(login_user.socket_id)
+            .emit('update-friend-state', {userId: user_id, state});
+        }
+      });
+    }
   }
 
   // state 0 = 오프라인, 1 = 온라인, 2 = 게임중
@@ -81,6 +85,7 @@ export class FriendGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
     try {
       await this.friendService.addFriend(user_id, friend_id);
+      this.friend.addFriendUser(user_id, friend_id);
       return await this.handleFriendList(socket);
     } catch (e) {
       this.logger.log(e.message);
@@ -99,6 +104,7 @@ export class FriendGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
     try {
       await this.friendService.delFriend(user_id, friend_id);
+      this.friend.removeFriendUser(user_id, friend_id);
       return await this.handleFriendList(socket);
     } catch (e) {
       this.logger.log(e.message);
@@ -115,19 +121,7 @@ export class FriendGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return decodedToken.user_id;
     } catch (e) {
       this.logger.log('token expire');
-      let member: ChatMember = undefined;
-      try {
-        member = await this.friendService.isChatMember(
-          socket.handshake.query.user_id as string
-        );
-      } catch (e) {
-        console.log(e.message);
-      }
-      if (member) {
-        socket.emit('token-expire', member.chatroomId);
-      } else {
-        socket.emit('token-expire');
-      }
+      socket.emit('token-expire');
     }
   }
 }

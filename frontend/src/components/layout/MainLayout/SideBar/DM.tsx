@@ -95,6 +95,25 @@ export default function Dm() {
     setDmUser(null);
   }
 
+  const callDmList = useCallback(async () => {
+    try {
+      const rep = await apiManager.get('dm/dm_list', {
+        params: {
+          user_id: user_id,
+        },
+      });
+      setDmList(rep.data);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === HTTP_STATUS.UNAUTHORIZED) {
+          setTokenExpiredExit(true);
+          return;
+        }
+        openAlertSnackbar({message: error.response?.data.message});
+      }
+    }
+  }, [setDmList, openAlertSnackbar, setTokenExpiredExit, user_id]);
+
   const onSendMessage = useCallback(
     (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -110,11 +129,12 @@ export default function Dm() {
         {target_id: dm_user_id.current, message},
         (chat: DmChat) => {
           setChats(prevChats => [...prevChats, chat]);
+          callDmList();
         }
       );
       setMessage('');
     },
-    [message, chat_socket, block_users]
+    [callDmList, message, chat_socket, block_users]
   );
 
   const changeUser = useCallback(
@@ -162,55 +182,37 @@ export default function Dm() {
         }
       }
     },
-    [block_users, setDmUser, setNofify]
+    [
+      block_users,
+      setDmUser,
+      setNofify,
+      openAlertSnackbar,
+      setTextFieldDisabled,
+      setTokenExpiredExit,
+    ]
   );
 
-  async function handleDmMessage(chat: DmChat) {
-    if (chat.userId === dm_user_id.current && chat.someoneId === user_id) {
-      setChats(prevChats => [...prevChats, chat]);
-    }
-    try {
-      const rep = await apiManager.get('dm/dm_list', {
-        params: {
-          user_id: user_id,
-        },
-      });
-      setDmList(rep.data);
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === HTTP_STATUS.UNAUTHORIZED) {
-          setTokenExpiredExit(true);
-          return;
-        }
-        openAlertSnackbar({message: error.response?.data.message});
+  const handleDmMessage = useCallback(
+    async (chat: DmChat) => {
+      if (chat.userId === dm_user_id.current && chat.someoneId === user_id) {
+        setChats(prevChats => [...prevChats, chat]);
       }
-    }
-    // setDmList(prev => {
-    //   if (prev.some(item => item.user2 === chat.userId)) {
-    //     return prev;
-    //   }
-    //   return [
-    //     ...prev,
-    //     {
-    //       user1: chat.someoneId,
-    //       user2: chat.userId,
-    //       nickname: chat.nickname,
-    //     },
-    //   ];
-    // });
-  }
+      callDmList();
+    },
+    [user_id, callDmList]
+  );
 
   function onChange(e: ChangeEvent<HTMLInputElement>) {
     setMessage(e.target.value);
   }
 
-  function handleBlock() {
+  const handleBlock = useCallback(() => {
     if (block_users.has(dm_user_id.current)) {
       setTextFieldDisabled(true);
       return;
     }
     setTextFieldDisabled(false);
-  }
+  }, []);
 
   function notiBage(row: DmListData) {
     const cnt = notify.get(row.user2);
@@ -226,6 +228,10 @@ export default function Dm() {
     }
     return <Typography>{`${row.nickname}`}</Typography>;
   }
+  // 시작시 딱 한번 랜더링
+  useEffect(() => {
+    callDmList();
+  }, []);
 
   useEffect(() => {
     chat_socket?.on('block-list', handleBlock);
@@ -235,7 +241,7 @@ export default function Dm() {
       chat_socket?.off('block-list', handleBlock);
       chat_socket?.off('dm-message', handleDmMessage);
     };
-  }, [chat_socket]);
+  }, [chat_socket, handleDmMessage, handleBlock]);
 
   useEffect(() => {
     if (!chat_scroll.current) return;
@@ -260,7 +266,6 @@ export default function Dm() {
   }, [dm_list.length]);
 
   useEffect(() => {
-    console.log('dm 페이지 감지', dm_user);
     if (dm_user !== null && user_id !== null) {
       changeUser({
         user1: user_id,
@@ -355,7 +360,6 @@ export default function Dm() {
           </Table>
         </Box>
       )}
-      {/* </Box> */}
     </>
   );
 }

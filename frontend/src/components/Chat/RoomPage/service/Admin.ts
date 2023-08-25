@@ -8,7 +8,6 @@ export function AddAdmin(
   roomId: string | null
 ) {
   chat_socket?.emit('add-admin', {room_id: roomId, target_id: user?.id});
-  console.log('AddAdmin');
 }
 
 export function DelAdmin(
@@ -17,5 +16,4 @@ export function DelAdmin(
   roomId: string | null
 ) {
   chat_socket?.emit('del-admin', {room_id: roomId, target_id: user?.id});
-  console.log('DelAdmin');
 }

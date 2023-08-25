@@ -47,11 +47,6 @@ const ModalContent = () => {
   const [testInput, setTestInput] = useRecoilState(testInputState);
 
   const changeRoomPasswordTest = (e: ChangeEvent<HTMLInputElement>) => {
-    const check = /^[0-9]+$/;
-    if (!check.test(e.target.value) && e.target.value !== '') {
-      alert('숫자만 입력해주세요.');
-      return;
-    }
     setTestInput(e.target.value);
   };
 
@@ -82,7 +77,7 @@ const ModalAction = () => {
     try {
       await apiManager.post('/chatroom/update_chatroom_pw', {
         room_id: roomId,
-        password: testInput.trim() === '' ? null : Number(testInput),
+        password: testInput.trim() === '' ? null : testInput,
       });
       setTestInput('');
       closeGlobalModal();
@@ -193,7 +188,6 @@ export default function UserList() {
 
   useEffect(() => {
     // 소켓 이벤트 등록해서 들어온 메세지 헨들링
-    console.log('room-member on');
     chat_socket?.on('room-member', handleUserList);
     roomUsers();
   }, []);

@@ -62,13 +62,7 @@ function ChatInvite({inviteModal, handleInviteClose}: CreateModalProps) {
     if (invite_list.has(row.id)) {
       return;
     }
-    chat_socket?.emit(
-      'chatroom-notification',
-      {room_id: convert_page, target_id: row.id},
-      (rep: boolean) => {
-        console.log('chatroom-notification: ', rep);
-      }
-    );
+    chat_socket?.emit('chatroom-notification', {room_id: convert_page, target_id: row.id});
     const new_invite_list = new Set(invite_list);
     new_invite_list.add(row.id);
     setInviteList(new_invite_list);

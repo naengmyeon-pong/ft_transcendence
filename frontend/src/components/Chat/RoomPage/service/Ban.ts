@@ -8,7 +8,6 @@ function Ban(
   roomId: string | null
 ) {
   chat_socket?.emit('ban-member', {room_id: roomId, target_id: user?.id});
-  console.log('Ban');
 }
 
 export default Ban;

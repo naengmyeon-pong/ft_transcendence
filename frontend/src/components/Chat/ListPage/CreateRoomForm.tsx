@@ -76,11 +76,6 @@ function CreateRoomForm({setCreateModal}: CreateModalProps) {
   }, []);
 
   const handlePassword = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    const check = /^[0-9]+$/;
-    if (!check.test(e.target.value) && e.target.value !== '') {
-      alert('숫자만 입력해주세요.');
-      return;
-    }
     setPassword(e.target.value);
   }, []);
 
@@ -95,13 +90,12 @@ function CreateRoomForm({setCreateModal}: CreateModalProps) {
       return;
     }
     try {
-      console.log('password: ', password);
       const rep = await apiManager.post('/chatroom/create_room', {
         room_name: name,
         max_nums: maxUser,
         is_public: !isHide,
         is_password: password.trim() === '' ? false : true,
-        password: password.trim() === '' ? null : Number(password),
+        password: password.trim() === '' ? null : password,
         user_id: user_id,
       });
       setConvertPage(rep?.data?.id);

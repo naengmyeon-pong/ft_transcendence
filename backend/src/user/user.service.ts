@@ -4,39 +4,46 @@ import {
   HttpCode,
   HttpStatus,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
+import {JwtService} from '@nestjs/jwt';
+
+import axios from 'axios';
+import * as bcrypt from 'bcryptjs';
+
+import * as fs from 'fs';
+
 import {User} from './user.entitiy';
 import {UserDto} from './dto/user.dto';
 import {UserAuthDto} from './dto/userAuth.dto';
-import {JwtService} from '@nestjs/jwt';
 import {UserRepository} from './user.repository';
 import {IsUserAuthRepository} from 'src/signup/signup.repository';
-import * as bcrypt from 'bcryptjs';
 import {Payload} from './payload';
 import {UpdateUserDto} from './dto/update-user.dto';
-import * as fs from 'fs';
 import {SocketArray} from '@/global-variable/global.socket';
+import {SignUpService} from '@/signup/signup.service';
+import {OAuthUser} from '@/types/user/oauth';
 
 @Injectable()
 export class UserService {
   constructor(
-    // @InjectRepository(UserRepository)
     private userRepository: UserRepository,
     private userAuthRepository: IsUserAuthRepository,
+    private signupService: SignUpService,
     private jwtService: JwtService,
     private socketArray: SocketArray
   ) {}
 
   async findUser(user_id: string): Promise<User> {
     if (!user_id) {
-      throw new BadRequestException('please, enter your ID');
+      throw new BadRequestException('유저아이디를 입력해주세요.');
     }
     const found = await this.userRepository.findOneBy({user_id});
     if (!found) {
-      throw new NotFoundException(`${user_id} is not a member our site.`);
+      throw new NotFoundException(`${user_id}는 유저가 아닙니다.`);
     }
     return found;
   }
@@ -44,7 +51,7 @@ export class UserService {
   async remove(user_id: string): Promise<void> {
     const result = await this.userRepository.delete(user_id);
     if (result.affected === 0) {
-      throw new NotFoundException(`Can't find user ${user_id}`);
+      throw new NotFoundException(`${user_id}는 유저가 아닙니다.`);
     }
   }
 
@@ -52,23 +59,23 @@ export class UserService {
     const user = await this.findUser(user_id);
     if (user) {
       //TODO: 주석 제거하기
-      // const salt = await bcrypt.genSalt();
-      // const hashedPassword = await bcrypt.hash(userAuthDto.user_pw, salt);
+      const salt = await bcrypt.genSalt();
+      const hashedPassword = await bcrypt.hash(userDto.user_pw, salt);
       // user.user_pw = hashedPassword;
       user.user_pw = userDto.user_pw;
       await this.userRepository.save(user);
     } else {
-      throw new NotFoundException(`${user_id} is not our member.`);
+      throw new NotFoundException(`${user_id}는 유저가 아닙니다.`);
     }
   }
 
-  // 로그인할 때 user pw 암호화 하지않게
   async signIn(userAuthDto: UserAuthDto): Promise<string | number> {
     if (this.socketArray.getUserSocket(userAuthDto.user_id)) {
-      throw new ConflictException('Already login user!');
+      throw new ConflictException('로그인중인 유저입니다.');
     }
     const user = await this.findUser(userAuthDto.user_id);
     if (user && userAuthDto.user_pw === user.user_pw) {
+      // TODO: 주석 제거해서 bcrpyt 적용하기
       // if (user && (await bcrypt.compare(userAuthDto.user_pw, user.user_pw))) {
       // user token create. (secret + Payload)
       if (user.is_2fa_enabled === false) {
@@ -87,7 +94,35 @@ export class UserService {
         return HttpStatus.ACCEPTED;
       }
     }
-    throw new UnauthorizedException('login failed');
+    throw new UnauthorizedException('유저가 아닙니다.');
+  }
+
+  async getOAuthUser(code: string): Promise<string | OAuthUser> {
+    const api_uri = process.env.INTRA_API_URI;
+    const accessToken = await this.signupService.getAccessToken(code);
+
+    const response = await axios.get(api_uri, {
+      headers: {Authorization: `Bearer ${accessToken}`},
+    });
+    const user = await this.userRepository.findOneBy({
+      user_id: response.data.login,
+    });
+    if (user) {
+      if (user.is_2fa_enabled === false) {
+        try {
+          const payload: Payload = {user_id: response.data.login};
+          const accessToken = this.generateAccessToken(payload);
+          return accessToken;
+        } catch (error) {
+          console.log('getOAuthError', error);
+          throw new InternalServerErrorException('서버에러가 발생했습니다.');
+        }
+      } else {
+        return {status: HttpStatus.ACCEPTED, user_id: user.user_id};
+      }
+    } else {
+      throw new NotFoundException('회원가입이 필요합니다.');
+    }
   }
 
   async updateUser(
@@ -96,9 +131,8 @@ export class UserService {
     userID: string
   ): Promise<void> {
     const user = await this.findUser(userID);
-    console.log(user, '\n', userDto, file);
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException('유저가 이닙니다.');
     }
     if (userDto.user_nickname) {
       await this.userRepository.update(
@@ -158,6 +192,7 @@ export class UserService {
       user_nickname: user.user_nickname,
       user_image: user.user_image,
       is_2fa_enabled: user.is_2fa_enabled,
+      rank_score: user.rank_score,
     };
     return userData;
   }

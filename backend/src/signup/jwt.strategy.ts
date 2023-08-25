@@ -9,7 +9,7 @@ import {IsUserAuthRepository} from './signup.repository';
 export class SignUpJwtStrategy extends PassportStrategy(Strategy, 'signup') {
   constructor(private userAuthRepository: IsUserAuthRepository) {
     super({
-      secretOrKey: 'Intra42',
+      secretOrKey: process.env.SIGNUP_JWT_SECRET_KEY,
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
     });
   }

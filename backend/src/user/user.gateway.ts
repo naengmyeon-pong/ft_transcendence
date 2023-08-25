@@ -16,7 +16,7 @@ import {Namespace, Socket} from 'socket.io';
     origin: '*',
   },
 })
-export class UserGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class UserGateway implements OnGatewayConnection {
   private logger = new Logger('UserGateway');
   constructor(
     private jwtService: JwtService,
@@ -32,11 +32,8 @@ export class UserGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.socketArray.addSocketArray({
       user_id: userID,
       socket_id: socket.id,
+      socket,
     });
-  }
-
-  handleDisconnect(@ConnectedSocket() socket: Socket) {
-    this.logger.log(`${socket.id} 웹소켓 연결 해제`);
   }
 
   getUserID = (socket: Socket): string => {

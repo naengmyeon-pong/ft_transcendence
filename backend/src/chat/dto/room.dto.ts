@@ -49,9 +49,9 @@ export class RoomDto {
     description: '채팅방의 비밀번호',
     required: false,
   })
-  @IsNumber()
+  @IsString()
   @IsOptional()
-  password?: number | null;
+  password?: string | null;
 
   @ApiProperty({
     example: 'user_id',
