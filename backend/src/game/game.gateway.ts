@@ -623,14 +623,19 @@ export class GameGateway implements OnGatewayDisconnect {
         } else if (value.invitee_id === userID) {
           idx = key;
           const targetID = value.inviter_id;
-          const targetSocketID =
-            this.socketArray.getUserSocket(targetID).socket_id;
+          const targetSocket = this.socketArray.getUserSocket(targetID).socket;
 
           if (isException) {
             // 피초대자가 게임대기창에서 나간 경우
-            this.nsp
-              .to(targetSocketID)
-              .emit('invitee_cancel_game_out', value.inviter_nickname);
+            const inviterSocket = this.socketArray.getUserSocket(
+              value.inviter_id
+            ).socket;
+            inviterSocket.leave(value.inviter_id);
+            targetSocket.leave(value.inviter_id);
+            targetSocket.emit(
+              'invitee_cancel_game_out',
+              value.inviter_nickname
+            );
           }
         }
       });
