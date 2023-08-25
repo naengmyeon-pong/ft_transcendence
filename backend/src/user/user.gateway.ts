@@ -32,6 +32,7 @@ export class UserGateway implements OnGatewayConnection {
     this.socketArray.addSocketArray({
       user_id: userID,
       socket_id: socket.id,
+      socket,
     });
   }
 
