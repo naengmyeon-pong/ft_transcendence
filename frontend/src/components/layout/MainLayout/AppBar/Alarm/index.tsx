@@ -111,9 +111,9 @@ export default function AlarmEvent() {
       console.log('rep: ', rep);
       const foundIndex = prev.findIndex(
         item => item.invite_game_info.invitee_nickname === rep
-        );
-        
-        console.log('foundIndex: ', foundIndex);
+      );
+
+      console.log('foundIndex: ', foundIndex);
       if (foundIndex === -1) {
         return prev;
       }

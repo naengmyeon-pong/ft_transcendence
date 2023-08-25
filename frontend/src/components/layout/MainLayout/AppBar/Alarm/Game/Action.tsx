@@ -61,7 +61,7 @@ export default function ActionGameAlarm({
     });
   }
 
-  function cancelGame(){
+  function cancelGame() {
     removeGameNoti();
   }
 
@@ -85,10 +85,11 @@ export default function ActionGameAlarm({
         </Box>
       )}
       {(row.event_type === InviteGameEnum.INVITER_OFF ||
-        row.event_type === InviteGameEnum.INVITEE_OFF) &&(
-          <Typography onClick={cancelGame}>
-          `${row.invite_game_info}님이 게임을 취소하였습니다`</Typography>
-          )}
+        row.event_type === InviteGameEnum.INVITEE_OFF) && (
+        <Typography onClick={cancelGame}>
+          {row.invite_game_info} 님이 게임을 취소하였습니다
+        </Typography>
+      )}
     </>
   );
 }

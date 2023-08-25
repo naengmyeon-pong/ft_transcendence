@@ -48,7 +48,7 @@ function MainLayout({children}: MainLayoutProps) {
     }
   }
 
-  const initFunction = useCallback( async () => {
+  const initFunction = useCallback(async () => {
     if (getJwtToken() === null) {
       openAlertSnackbar({message: '로그인이 필요합니다.'});
       router.push('/user/login');
@@ -78,17 +78,14 @@ function MainLayout({children}: MainLayoutProps) {
       if (accessToken === null) {
         router.push('/');
       }
-      const manager = new Manager(
-        `${process.env.NEXT_PUBLIC_BACKEND_SERVER}`,
-        {
-          reconnectionDelayMax: 3000,
-          query: {
-            user_id: response.data.user_id,
-            nickname: response.data.user_nickname,
-            user_image: response.data.user_image,
-          },
-        }
-      );
+      const manager = new Manager(`${process.env.NEXT_PUBLIC_BACKEND_SERVER}`, {
+        reconnectionDelayMax: 3000,
+        query: {
+          user_id: response.data.user_id,
+          nickname: response.data.user_nickname,
+          user_image: response.data.user_image,
+        },
+      });
 
       const socketIo = manager.socket('/pong', {
         auth: {
@@ -129,13 +126,14 @@ function MainLayout({children}: MainLayoutProps) {
         openAlertSnackbar({message: error.response?.data.message});
       }
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
     initFunction();
     return () => {
       socket_tmp.current?.disconnect();
-    }
+      socket_tmp.current = null;
+    };
   }, []);
 
   // 소켓 끊어졌을때
