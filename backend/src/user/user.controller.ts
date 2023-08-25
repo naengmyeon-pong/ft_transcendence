@@ -16,13 +16,14 @@ import {
 } from '@nestjs/common';
 import {AuthGuard} from '@nestjs/passport';
 import {ApiTags, ApiOperation, ApiQuery, ApiResponse} from '@nestjs/swagger';
+import {FileInterceptor} from '@nestjs/platform-express';
 
 import {User} from './user.entitiy';
 import {UserDto} from './dto/user.dto';
 import {UserAuthDto} from './dto/userAuth.dto';
 import {UserService} from './user.service';
 import {UpdateUserDto} from './dto/update-user.dto';
-import {FileInterceptor} from '@nestjs/platform-express';
+import {OAuthUser} from '@/types/user/oauth';
 
 @Controller('user')
 @ApiTags('User')
@@ -89,7 +90,7 @@ export class UserController {
   }
 
   @Get('/oauth')
-  async getUserData(@Query('code') code: string): Promise<string | number> {
+  async getUserData(@Query('code') code: string): Promise<string | OAuthUser> {
     return await this.userService.getOAuthUser(code);
   }
 

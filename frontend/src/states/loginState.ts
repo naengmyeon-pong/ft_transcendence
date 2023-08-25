@@ -15,6 +15,7 @@ export const loginState = atom<LoginStateType>({
   default: {
     isOAuthLogin: false,
     is2faEnabled: false,
+    user_id: '',
   },
   effects_UNSTABLE: [persistAtom],
 });

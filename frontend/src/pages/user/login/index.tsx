@@ -26,12 +26,10 @@ import {loginState} from '@/states/loginState';
 function LoginPage() {
   const router = useRouter();
   const setPasswordReset = useSetRecoilState(passwordResetState);
-  const [{is2faEnabled, isOAuthLogin}, setLoginState] =
+  const [{is2faEnabled, isOAuthLogin, user_id}, setLoginState] =
     useRecoilState(loginState);
   const {openAlertSnackbar} = useAlertSnackbar();
-
   const [intraId, setIntraId] = useState<string>('');
-  const [is2faLogin, setIs2faLogin] = useState<boolean>(false);
 
   const handleResetLinkClick = () => {
     setPasswordReset(true);
@@ -51,7 +49,7 @@ function LoginPage() {
       const response = await apiManager.post('/user/signin', data);
       if (response.data === HTTP_STATUS.ACCEPTED) {
         setIntraId(enteredIntraId);
-        setIs2faLogin(true);
+        setLoginState({user_id, is2faEnabled: true, isOAuthLogin});
       } else {
         sessionStorage.setItem('accessToken', response.data);
         router.push('/main/game');
@@ -89,7 +87,7 @@ function LoginPage() {
   const handleOtpSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = {
-      user_id: intraId,
+      user_id: intraId || user_id,
       code: event.currentTarget.otpPassword.value,
     };
 
@@ -108,11 +106,11 @@ function LoginPage() {
   };
 
   const handleCancelOtpLogin = () => {
-    setIs2faLogin(false);
+    setLoginState({user_id: '', is2faEnabled: false, isOAuthLogin});
   };
 
   const handleOAuthLoginClick = () => {
-    setLoginState({is2faEnabled, isOAuthLogin: true});
+    setLoginState({user_id, is2faEnabled, isOAuthLogin: true});
   };
 
   useEffect(() => {
@@ -132,7 +130,7 @@ function LoginPage() {
         </Typography>
       </Box>
 
-      {is2faLogin === false ? (
+      {is2faEnabled === false ? (
         <Box component="form" onSubmit={handleSubmit} noValidate sx={{mt: 1}}>
           <TextField
             margin="normal"

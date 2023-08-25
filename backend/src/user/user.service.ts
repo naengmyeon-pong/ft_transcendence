@@ -25,6 +25,7 @@ import {Payload} from './payload';
 import {UpdateUserDto} from './dto/update-user.dto';
 import {SocketArray} from '@/global-variable/global.socket';
 import {SignUpService} from '@/signup/signup.service';
+import {OAuthUser} from '@/types/user/oauth';
 
 @Injectable()
 export class UserService {
@@ -97,7 +98,7 @@ export class UserService {
     throw new UnauthorizedException('login failed');
   }
 
-  async getOAuthUser(code: string): Promise<string | number> {
+  async getOAuthUser(code: string): Promise<string | OAuthUser> {
     const api_uri = process.env.INTRA_API_URI;
     const accessToken = await this.signupService.getAccessToken(code);
 
@@ -118,7 +119,7 @@ export class UserService {
           throw new InternalServerErrorException();
         }
       } else {
-        return HttpStatus.ACCEPTED;
+        return {status: HttpStatus.ACCEPTED, user_id: user.user_id};
       }
     } else {
       throw new NotFoundException('회원가입이 필요합니다.');

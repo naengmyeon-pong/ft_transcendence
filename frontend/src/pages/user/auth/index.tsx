@@ -16,6 +16,7 @@ import apiManager from '@/api/apiManager';
 import {useProfileImage} from '@/hooks/useProfileImage';
 import {passwordResetState} from '@/states/passwordReset';
 import {loginState} from '@/states/loginState';
+import {OAuthUser} from '@/common/types/oauth';
 
 export const getServerSideProps: GetServerSideProps = async ({query}) => {
   const {code} = query;
@@ -42,8 +43,9 @@ function AuthPage({
       if (isOAuthLogin) {
         try {
           const response = await apiManager.get(`/user/oauth?code=${code}`);
-          if (response.status === HTTP_STATUS.ACCEPTED) {
-            setLoginState({isOAuthLogin, is2faEnabled: true});
+          const {status, user_id}: OAuthUser = response.data;
+          if (status === HTTP_STATUS.ACCEPTED) {
+            setLoginState({user_id, isOAuthLogin, is2faEnabled: true});
             router.push('/user/login');
           } else {
             const accessToken = response.data;
