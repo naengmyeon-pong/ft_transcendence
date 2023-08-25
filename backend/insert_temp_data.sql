@@ -1,4 +1,4 @@
-INSERT INTO users VALUES 
+INSERT INTO users VALUES
   ('user1', '1234', 'nick1', 'http://localhost:3001/images/logo.jpeg'),
   ('user2', '1234', 'nick2', 'http://localhost:3001/images/logo.jpeg'),
   ('user3', '1234', 'nick3', 'http://localhost:3001/images/logo.jpeg'),
@@ -6,7 +6,11 @@ INSERT INTO users VALUES
   ('user5', '1234', 'nick5', 'http://localhost:3001/images/logo.jpeg'),
   ('user6', '1234', 'nick6', 'http://localhost:3001/images/logo.jpeg'),
   ('user7', '1234', 'nick7', 'http://localhost:3001/images/logo.jpeg'),
-  ('user8', '1234', 'nick8', 'http://localhost:3001/images/logo.jpeg');
+  ('user8', '1234', 'nick8', 'http://localhost:3001/images/logo.jpeg'),
+  ('user9', '1234', 'nick9', 'http://localhost:3001/images/logo.jpeg'),
+  ('user10', '1234', 'nick10', 'http://localhost:3001/images/logo.jpeg'),
+  ('user11', '1234', 'nick11', 'http://localhost:3001/images/logo.jpeg'),
+  ('user12', '1234', 'nick12', 'http://localhost:3001/images/logo.jpeg');
 
 INSERT INTO "chatRoom" (name, current_nums, max_nums, is_public, is_password) VALUES
   ('room1', 1, 4, true, false),
