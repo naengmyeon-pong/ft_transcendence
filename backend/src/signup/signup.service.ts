@@ -7,7 +7,6 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import axios from 'axios';
-import {InjectRepository} from '@nestjs/typeorm';
 import {UserRepository} from 'src/user/user.repository';
 import {IsUserAuthRepository} from './signup.repository';
 import {IsUserAuth} from './signup.entity';
@@ -19,7 +18,6 @@ import * as fs from 'fs';
 @Injectable()
 export class SignUpService {
   constructor(
-    // @InjectRepository(UserRepository)
     private userRepository: UserRepository,
     private userAuthRepository: IsUserAuthRepository,
     private jwtService: JwtService
@@ -125,14 +123,13 @@ export class SignUpService {
     );
   }
 
-  // test를 위해 비밀번호 암호화하지 않음.
   async create(userDto: UserDto, file: Express.Multer.File): Promise<void> {
     const {user_id, user_pw, user_nickname, user_image} = userDto;
     if (!user_id) {
       throw new BadRequestException('enter your ID');
     }
     const salt = await bcrypt.genSalt();
-    // const hashedPassword = await bcrypt.hash(user_pw, salt);
+    const hashedPassword = await bcrypt.hash(user_pw, salt);
     const userSignUpAuth = await this.userAuthRepository.findOneBy({user_id});
     if (!userSignUpAuth || userSignUpAuth.is_nickname_same === false) {
       if (file) {
@@ -149,62 +146,24 @@ export class SignUpService {
       // MEMO: 42이미지, 서버에서 저장하는 이미지가 따로 존재하므로 서버 주소를 붙여야 할듯 싶습니다
       const user = this.userRepository.create({
         user_id,
-        user_pw: user_pw,
-        // user_pw: hashedPassword,
+        user_pw: hashedPassword,
         user_nickname,
         user_image: file
           ? `${process.env.NEXT_PUBLIC_BACKEND_SERVER}` + file.path.substr(11)
           : `${process.env.NEXT_PUBLIC_BACKEND_SERVER}/images/logo.jpeg`,
       });
       await this.userRepository.save(user);
-      // await this.userAuthRepository.delete({user_id: user.user_id});
     } catch (error) {
       throw new InternalServerErrorException();
     }
   }
-  // async create(userDto: UserDto, file: Express.Multer.File): Promise<void> {
-  //   const {user_id, user_pw, user_nickname, user_image, is_2fa_enabled} =
-  //     userDto;
-  //   if (!user_id) {
-  //     throw new BadRequestException('enter your ID');
-  //   }
-  //   const salt = await bcrypt.genSalt();
-  //   const hashedPassword = await bcrypt.hash(user_pw, salt);
-  //   const userSignUpAuth = await this.userAuthRepository.findOneBy({user_id});
-  //   if (!userSignUpAuth || userSignUpAuth.is_nickname_same === false) {
-  //     if (!file) {
-  //       fs.unlink(file.path, err => {
-  //         if (err) throw new InternalServerErrorException();
-  //       });
-  //     }
-  //     throw new UnauthorizedException(
-  //       'Please auth through our main signup page.'
-  //     );
-  //   }
-
-  //   try {
-  //     const user = this.userRepository.create({
-  //       user_id,
-  //       user_pw: hashedPassword,
-  //       user_nickname,
-  //       user_image: file ? file.path.substr(11) : '/images/logo.jpeg',
-  //       is_2fa_enabled,
-  //     });
-  //     await this.userRepository.save(user);
-  //     await this.userAuthRepository.delete({user_id: user.user_id});
-  //   } catch (error) {
-  //     throw new InternalServerErrorException();
-  //   }
-  // }
 
   async changePW(user_id: string, user_pw: string): Promise<void> {
     const user = await this.userRepository.findOneBy({user_id});
     if (user) {
-      //TODO: 주석 제거하기
-      // const salt = await bcrypt.genSalt();
-      // const hashedPassword = await bcrypt.hash(userAuthDto.user_pw, salt);
-      // user.user_pw = hashedPassword;
-      user.user_pw = user_pw;
+      const salt = await bcrypt.genSalt();
+      const hashedPassword = await bcrypt.hash(user_pw, salt);
+      user.user_pw = hashedPassword;
       await this.userRepository.save(user);
     } else {
       throw new NotFoundException(`${user_id} is not our member.`);

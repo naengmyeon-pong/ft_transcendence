@@ -22,12 +22,12 @@ export class UserAuthDto {
     description: '유저의 비밀번호',
     required: true,
   })
-  // @IsNotEmpty()
-  // @IsString()
-  // @MinLength(8)
-  // @MaxLength(20)
-  // @Matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^\d\sa-zA-Z])[\S]{8,}$/, {
-  //   message: 'password only accepts english and number',
-  // })
+  @IsNotEmpty()
+  @IsString()
+  @MinLength(8)
+  @MaxLength(20)
+  @Matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^\d\sa-zA-Z])[\S]{8,}$/, {
+    message: 'password only accepts english and number',
+  })
   user_pw: string;
 }

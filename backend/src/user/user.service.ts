@@ -30,7 +30,6 @@ import {OAuthUser} from '@/types/user/oauth';
 @Injectable()
 export class UserService {
   constructor(
-    // @InjectRepository(UserRepository)
     private userRepository: UserRepository,
     private userAuthRepository: IsUserAuthRepository,
     private signupService: SignUpService,
@@ -60,24 +59,21 @@ export class UserService {
     const user = await this.findUser(user_id);
     if (user) {
       //TODO: 주석 제거하기
-      // const salt = await bcrypt.genSalt();
-      // const hashedPassword = await bcrypt.hash(userAuthDto.user_pw, salt);
-      // user.user_pw = hashedPassword;
-      user.user_pw = userDto.user_pw;
+      const salt = await bcrypt.genSalt();
+      const hashedPassword = await bcrypt.hash(userDto.user_pw, salt);
+      user.user_pw = hashedPassword;
       await this.userRepository.save(user);
     } else {
       throw new NotFoundException(`${user_id} is not our member.`);
     }
   }
 
-  // 로그인할 때 user pw 암호화 하지않게
   async signIn(userAuthDto: UserAuthDto): Promise<string | number> {
     if (this.socketArray.getUserSocket(userAuthDto.user_id)) {
       throw new ConflictException('Already login user!');
     }
     const user = await this.findUser(userAuthDto.user_id);
-    if (user && userAuthDto.user_pw === user.user_pw) {
-      // if (user && (await bcrypt.compare(userAuthDto.user_pw, user.user_pw))) {
+    if (user && (await bcrypt.compare(userAuthDto.user_pw, user.user_pw))) {
       // user token create. (secret + Payload)
       if (user.is_2fa_enabled === false) {
         if (user.two_factor_auth_secret !== null) {
