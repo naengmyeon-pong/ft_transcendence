@@ -88,6 +88,11 @@ export class UserController {
     return await this.userService.signIn(userAuthDto);
   }
 
+  @Get('/oauth')
+  async getUserData(@Query('code') code: string): Promise<string | number> {
+    return await this.userService.getOAuthUser(code);
+  }
+
   @Get('/user-info')
   @UseGuards(AuthGuard('jwt'))
   getUserInfo(@Request() req): Promise<string> {

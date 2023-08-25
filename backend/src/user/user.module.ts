@@ -15,6 +15,7 @@ import {UserGateway} from './user.gateway';
 import {SocketArray} from '@/global-variable/global.socket';
 import {JwtCustomModule} from '@/utils/jwt-custom.module';
 import {GlobalVariableModule} from '@/global-variable/global-variable.module';
+import {SignUpService} from '@/signup/signup.service';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import {GlobalVariableModule} from '@/global-variable/global-variable.module';
   controllers: [UserController],
   providers: [
     UserService,
+    SignUpService,
     JwtStrategy,
     UserRepository,
     IsUserAuthRepository,
