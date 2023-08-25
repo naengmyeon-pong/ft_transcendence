@@ -2,6 +2,7 @@ import {Logger} from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
+  OnGatewayDisconnect,
   OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
@@ -37,7 +38,7 @@ interface MutePayload {
     origin: '*',
   },
 })
-export class ChatGateway implements OnGatewayInit {
+export class ChatGateway implements OnGatewayInit, OnGatewayDisconnect {
   constructor(
     private chatService: ChatService,
     private socketArray: SocketArray,
@@ -53,6 +54,21 @@ export class ChatGateway implements OnGatewayInit {
     this.block.setBlock();
     this.friend.setFriend();
     this.logger.log('웹소켓 서버 초기화');
+  }
+
+  async handleDisconnect(socket: Socket) {
+    const user_id = socket.handshake.query.user_id as string;
+    try {
+      const member: ChatMember = await this.chatService.isChatMember(user_id);
+      if (member) {
+        await this.handleLeaveRoom(socket, {
+          room_id: member.chatroomId,
+          state: true,
+        });
+      }
+    } catch (e) {
+      return;
+    }
   }
 
   @SubscribeMessage('message')
@@ -88,7 +104,6 @@ export class ChatGateway implements OnGatewayInit {
       return {message, user_id, user_nickname, user_image};
     } catch (e) {
       this.logger.log(e.message);
-      // 토큰만료라서 socket끊고 로그인페이지로 옮겨버리기
     }
   }
 
@@ -365,19 +380,7 @@ export class ChatGateway implements OnGatewayInit {
       return decodedToken.user_id;
     } catch (e) {
       this.logger.log('token expire');
-      let member: ChatMember = undefined;
-      try {
-        member = await this.chatService.isChatMember(
-          socket.handshake.query.user_id as string
-        );
-      } catch (e) {
-        console.log(e.message);
-      }
-      if (member) {
-        socket.emit('token-expire', member.chatroomId);
-      } else {
-        socket.emit('token-expire');
-      }
+      socket.emit('token-expire');
     }
   }
 }
