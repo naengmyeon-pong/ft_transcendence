@@ -13,6 +13,7 @@ import {JwtService} from '@nestjs/jwt';
 import {Logger} from '@nestjs/common';
 import {SocketArray} from '@/global-variable/global.socket';
 import {ChatMember} from '@/chat/chat.entity';
+import {Friend} from '@/global-variable/global.friend';
 
 @WebSocketGateway({
   namespace: 'pong',
@@ -24,7 +25,8 @@ export class FriendGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private friendService: FriendService,
     private jwtService: JwtService,
-    private socketArray: SocketArray
+    private socketArray: SocketArray,
+    private friend: Friend
   ) {}
 
   @WebSocketServer() nsp: Namespace;
@@ -42,9 +44,9 @@ export class FriendGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   async updateFriendState(user_id: string, socket: Socket, state: string) {
-    const friends = await this.friendService.getUsersAsFriend(user_id);
-    friends.forEach(friend => {
-      const login_user = this.socketArray.getUserSocket(friend.userId);
+    const friends: Set<string> = this.friend.getFriendUsers(user_id);
+    friends.forEach(e => {
+      const login_user = this.socketArray.getUserSocket(e);
       if (login_user) {
         socket
           .to(login_user.socket_id)
@@ -81,6 +83,7 @@ export class FriendGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
     try {
       await this.friendService.addFriend(user_id, friend_id);
+      this.friend.addFriendUser(user_id, friend_id);
       return await this.handleFriendList(socket);
     } catch (e) {
       this.logger.log(e.message);
@@ -99,6 +102,7 @@ export class FriendGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
     try {
       await this.friendService.delFriend(user_id, friend_id);
+      this.friend.removeFriendUser(user_id, friend_id);
       return await this.handleFriendList(socket);
     } catch (e) {
       this.logger.log(e.message);

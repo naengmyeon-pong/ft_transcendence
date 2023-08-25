@@ -299,6 +299,7 @@ export class ChatService {
   }
 
   async blockMember(user_id: string, target_id: string) {
+    const target = await this.isChatMember(target_id);
     const block_list = this.blockRepository.create({
       userId: user_id,
       blockId: target_id,
@@ -308,6 +309,7 @@ export class ChatService {
   }
 
   async unBlockMember(user_id: string, target_id: string) {
+    const target = await this.isChatMember(target_id);
     await this.blockRepository.delete({
       userId: user_id,
       blockId: target_id,
@@ -335,14 +337,6 @@ export class ChatService {
     }
     return member;
   }
-
-  // async getUser(user_id: string) {
-  //   const user = await this.userRepository.findOneBy({user_id});
-  //   if (!user) {
-  //     throw new NotFoundException(`${user_id} is not a user.`);
-  //   }
-  //   return user;
-  // }
 
   async getRoom(room_id: number) {
     const room = await this.chatRoomRepository.findOneBy({id: room_id});

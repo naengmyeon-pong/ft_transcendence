@@ -77,7 +77,7 @@ export class GameGateway implements OnGatewayDisconnect {
   }
 
   handleConnection(@ConnectedSocket() socket: Socket) {
-    this.logger.log(`${socket.id} 게임 소켓 연결`);
+    // this.logger.log(`${socket.id} 게임 소켓 연결`);
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
@@ -117,12 +117,8 @@ export class GameGateway implements OnGatewayDisconnect {
       const idx = inviteWaitList.indexOf(inviteGameInfo);
       inviteWaitList.splice(idx, 1);
     }
-    try {
-      this.socketArray.removeSocketArray(userID);
-      this.logger.log(`${socket.id} 게임 소켓 연결 해제`);
-    } catch (e) {
-      this.logger.log(e.message);
-    }
+    this.socketArray.removeSocketArray(userID);
+    this.logger.log(`${socket.id} 웹소켓 연결 해제`);
   }
 
   isUserInvited = (userID: string): InviteGameInfo | null => {

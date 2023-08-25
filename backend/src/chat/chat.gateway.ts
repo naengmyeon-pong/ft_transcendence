@@ -13,6 +13,7 @@ import {SocketArray} from '@/global-variable/global.socket';
 import {Block} from '@/global-variable/global.block';
 import {JwtService} from '@nestjs/jwt';
 import {ChatMember} from './chat.entity';
+import {Friend} from '@/global-variable/global.friend';
 
 interface MessagePayload {
   room_id: number;
@@ -41,6 +42,7 @@ export class ChatGateway implements OnGatewayInit {
     private chatService: ChatService,
     private socketArray: SocketArray,
     private block: Block,
+    private friend: Friend,
     private jwtService: JwtService
   ) {}
   @WebSocketServer() nsp: Namespace;
@@ -49,6 +51,7 @@ export class ChatGateway implements OnGatewayInit {
 
   afterInit() {
     this.block.setBlock();
+    this.friend.setFriend();
     this.logger.log('웹소켓 서버 초기화');
   }
 

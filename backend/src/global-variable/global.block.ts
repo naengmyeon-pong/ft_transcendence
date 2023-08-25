@@ -1,6 +1,7 @@
 import {Injectable} from '@nestjs/common';
 import {BlockRepository} from 'src/chat/chat.repository';
 
+// 나를 차단한 사람들 리스트
 @Injectable()
 export class Block {
   private block = new Map<string, Set<string>>();
