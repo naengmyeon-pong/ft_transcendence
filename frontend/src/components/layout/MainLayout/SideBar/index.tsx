@@ -182,6 +182,9 @@ function SideBar() {
       console.log(`userId : ${userId}, state :${state}`);
       setFriendList(prev => {
         const tmp_list: UserType[] = [];
+        if (prev === null || prev === undefined) {
+          return prev;
+        }
         prev.forEach(friend => {
           if (friend.id === userId) {
             friend.state = state;

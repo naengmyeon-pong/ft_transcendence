@@ -129,7 +129,6 @@ export class ChatGateway implements OnGatewayInit {
     @MessageBody() {room_id, state}
   ) {
     let user_id: string;
-    console.log('room_id: ', room_id, ' state: ', state);
     if (state) {
       user_id = socket.handshake.query.user_id as string;
     } else {

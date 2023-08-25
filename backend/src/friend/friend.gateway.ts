@@ -45,14 +45,16 @@ export class FriendGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async updateFriendState(user_id: string, socket: Socket, state: string) {
     const friends: Set<string> = this.friend.getFriendUsers(user_id);
-    friends.forEach(e => {
-      const login_user = this.socketArray.getUserSocket(e);
-      if (login_user) {
-        socket
-          .to(login_user.socket_id)
-          .emit('update-friend-state', {userId: user_id, state});
-      }
-    });
+    if (friends) {
+      friends.forEach(e => {
+        const login_user = this.socketArray.getUserSocket(e);
+        if (login_user) {
+          socket
+            .to(login_user.socket_id)
+            .emit('update-friend-state', {userId: user_id, state});
+        }
+      });
+    }
   }
 
   // state 0 = 오프라인, 1 = 온라인, 2 = 게임중
