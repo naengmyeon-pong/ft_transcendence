@@ -367,12 +367,6 @@ export class GameGateway implements OnGatewayDisconnect {
     @ConnectedSocket() socket: Socket,
     @MessageBody() room_name: string
   ) {
-    console.log(
-      '<update frame>\nid: ',
-      this.getUserID(socket),
-      ', roomname: ',
-      room_name
-    );
     const roomInfo: RoomInfo = gameRooms.get(room_name);
     const gameInfo: GameInfo = roomInfo.game_info;
     const leftUserKeyState: KeyData = roomInfo.users[EUserIndex.LEFT].keys;
@@ -572,7 +566,6 @@ export class GameGateway implements OnGatewayDisconnect {
       this.removeUserInWaitlist(userID); // 랜덤 게임 대기자 삭제
       this.removeUserInInviteWaitlist(userID, true);
       this.nsp.to(roomInfo.room_name).emit('start_game');
-      console.log('game start :', userID);
     }
   }
 
