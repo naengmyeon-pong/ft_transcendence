@@ -41,7 +41,6 @@ function Game() {
         mode: selectedGameMode,
         type: selectedGameType,
       };
-      console.log('hey');
       socket?.emit('cancel_waiting', joinGameInfo);
     }
   };
@@ -85,7 +84,6 @@ function Game() {
       return;
     }
     setGameInfo(game_info);
-    console.log(game_info);
     if (game_info.leftScore === 5 || game_info.rightScore === 5) {
       setIsGameOver(true);
       try {

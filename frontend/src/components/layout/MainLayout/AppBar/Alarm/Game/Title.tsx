@@ -2,7 +2,6 @@ import {Typography} from '@mui/material';
 import {InviteGameEnum, InviteGameInfoProps} from '../AlarmProps';
 
 export default function TitleGameAlarm({row}: {row: InviteGameInfoProps}) {
-  console.log('row: ', row);
   return (
     <Typography>
       {row.event_type === InviteGameEnum.INVITE &&
@@ -11,9 +10,6 @@ export default function TitleGameAlarm({row}: {row: InviteGameInfoProps}) {
         `${row.invite_game_info.invitee_nickname}님이 게임초대를 수락하였습니다. 이동하시겠습니까?`}
       {row.event_type === InviteGameEnum.LEFTWAITINGROOM &&
         `${row.invite_game_info}님이 대기방을 벗어났습니다`}
-      {(row.event_type === InviteGameEnum.INVITER_OFF ||
-        row.event_type === InviteGameEnum.INVITEE_OFF) &&
-        `${row.invite_game_info}님이 게임을 취소하였습니다`}
     </Typography>
   );
 }

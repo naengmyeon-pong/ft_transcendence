@@ -4,7 +4,7 @@ import {UserContext} from '../../../Context';
 import {useRouter} from 'next/router';
 import {useRecoilState} from 'recoil';
 import {inviteGameState} from '@/states/inviteGame';
-import {Box, Button} from '@mui/material';
+import {Box, Button, Typography} from '@mui/material';
 
 export default function ActionGameAlarm({
   row,
@@ -54,11 +54,14 @@ export default function ActionGameAlarm({
   // A가 최종적으로 누르는 거절
   function inviteResponFalse() {
     removeGameNoti();
-    console.log('거절클릭: ');
     chat_socket?.emit('cancel_game', {
       inviteGameInfo: invite_game_state,
       is_inviter: true,
     });
+  }
+
+  function cancelGame() {
+    removeGameNoti();
   }
 
   return (
@@ -79,6 +82,12 @@ export default function ActionGameAlarm({
           <Button onClick={inviteResponTrue}>수락</Button>
           <Button onClick={inviteResponFalse}>거절</Button>
         </Box>
+      )}
+      {(row.event_type === InviteGameEnum.INVITER_OFF ||
+        row.event_type === InviteGameEnum.INVITEE_OFF) && (
+        <Typography onClick={cancelGame}>
+          {row.invite_game_info} 님이 게임을 취소하였습니다
+        </Typography>
       )}
     </>
   );

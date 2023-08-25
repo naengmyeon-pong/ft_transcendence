@@ -14,7 +14,6 @@ export default function GameMode({
   setGameMode: React.Dispatch<React.SetStateAction<string>>;
 }) {
   const handleGameMode = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log(event.currentTarget.value);
     setGameMode(event.currentTarget.value);
   };
 

@@ -31,7 +31,6 @@ function RecordItem({
   isError: boolean;
 }) {
   // const records: DetailRecord[] = data;
-  console.log(data);
   return (
     <>
       {isLoading ? (

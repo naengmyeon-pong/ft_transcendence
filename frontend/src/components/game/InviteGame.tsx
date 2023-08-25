@@ -1,7 +1,7 @@
 'use client';
 
 import {GameInfo, InviteGameInfo} from '@/common/types/game';
-import {useCallback, useContext, useEffect, useState} from 'react';
+import {useCallback, useContext, useEffect, useRef, useState} from 'react';
 import {UserContext} from '../layout/MainLayout/Context';
 import {useRecoilState} from 'recoil';
 import {inviteGameState} from '@/states/inviteGame';
@@ -51,6 +51,7 @@ export default function InviteGame() {
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
   const [invite_game_state, setInviteGameState] =
     useRecoilState(inviteGameState);
+  const start_geme_prev_unload = useRef(true);
 
   const handleReturnMain = () => {
     setIsGameOver(false);
@@ -78,7 +79,6 @@ export default function InviteGame() {
 
   const exitCancelGame = useCallback(
     (rep: InviteGameInfo) => {
-      console.log('rep: ', rep);
       alert(`${rep} 님이 게임을 취소하였습니다`);
       setInviteGameState(null);
     },
@@ -91,7 +91,7 @@ export default function InviteGame() {
       is_inviter: false,
     });
     setInviteGameState(null);
-  }, [gameInfo, chat_socket, setInviteGameState]);
+  }, [chat_socket, setInviteGameState, invite_game_state]);
 
   useEffect(() => {
     sessionStorage.setItem('left_user', invite_game_state.inviter_nickname);
@@ -111,16 +111,21 @@ export default function InviteGame() {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       setInviteGameState(null);
     };
-  }, [chat_socket, invite_game_state, setInviteGameState]);
+  }, [chat_socket, invite_game_state, setInviteGameState, handleUnload]);
 
   useEffect(() => {
+    // 게임 대기방에 들어왔다는 신호
     chat_socket?.on('enter_game', sendGameStartEvent);
     chat_socket?.on('game_info', handleInviteGameInfo);
+    // 초대자가 게임을 거절한 경우
     chat_socket?.on('inviter_cancel_game_refuse', exitCancelGame);
+    // 초대자가 초대 후 게임을 시작한경우
     chat_socket?.on('inviter_cancel_game_betray', exitCancelGame);
+    // 초대자의 소켓이 끊긴경우
     chat_socket?.on('inviter_cancel_game_refresh', exitCancelGame);
-    chat_socket?.on('inviter_cancel_invite_betray', exitCancelGame);
+
     chat_socket?.on('start_game', () => {
+      start_geme_prev_unload.current = false;
       chat_socket?.off('inviter_cancel_game_refuse', exitCancelGame);
       chat_socket?.off('inviter_cancel_game_betray', exitCancelGame);
     });
@@ -131,8 +136,10 @@ export default function InviteGame() {
       chat_socket?.off('game_info', handleInviteGameInfo);
       chat_socket?.off('inviter_cancel_game_refuse', exitCancelGame);
       chat_socket?.off('inviter_cancel_game_betray', exitCancelGame);
-      chat_socket?.off('inviter_cancel_invite_betray', exitCancelGame);
       chat_socket?.off('start_game');
+      if (start_geme_prev_unload.current) {
+        chat_socket?.emit('invitee_cancel_game_back', invite_game_state);
+      }
     };
   }, [
     chat_socket,

@@ -9,7 +9,6 @@ function Kick(
   // roomId: string | undefined
 ) {
   chat_socket?.emit('kick-member', {room_id: roomId, target_id: user?.id});
-  console.log('Kick');
 }
 
 export default Kick;

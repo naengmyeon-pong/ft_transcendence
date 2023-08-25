@@ -78,7 +78,6 @@ export default function Signup() {
       } else {
         setIsUniqueNickname(false);
       }
-      console.log(response.data);
       openGlobalDialog({
         title: '중복 확인',
         content: (
@@ -99,7 +98,6 @@ export default function Signup() {
           </Button>
         ),
       });
-      console.log(response);
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         openAlertSnackbar({message: error.response?.data.message});
@@ -120,14 +118,12 @@ export default function Signup() {
       formData.append('user_image', uploadFile);
     }
 
-    console.log(formData);
     try {
       const response = await apiManager.post('/signup', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
-      console.log(response);
       if (HTTP_STATUS.CREATED) {
         openAlertSnackbar({
           message: '회원가입이 정상적으로 완료되었습니다.',
