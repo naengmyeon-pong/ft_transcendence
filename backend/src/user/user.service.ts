@@ -94,7 +94,7 @@ export class UserService {
         return HttpStatus.ACCEPTED;
       }
     }
-    throw new UnauthorizedException('유저가 아닙니다.');
+    throw new NotFoundException('유저가 아닙니다.');
   }
 
   async getOAuthUser(code: string): Promise<string | OAuthUser> {
@@ -132,7 +132,7 @@ export class UserService {
   ): Promise<void> {
     const user = await this.findUser(userID);
     if (!user) {
-      throw new UnauthorizedException('유저가 이닙니다.');
+      throw new NotFoundException('유저가 아닙니다.');
     }
     if (userDto.user_nickname) {
       await this.userRepository.update(
@@ -151,6 +151,26 @@ export class UserService {
         }
       );
     }
+  }
+
+  async checkUserNickname(
+    userID: string,
+    userNickname: string
+  ): Promise<boolean> {
+    if (
+      !userID ||
+      !userNickname ||
+      (userNickname && userNickname.length > 10)
+    ) {
+      throw new BadRequestException('아이디와 닉네임을 올바르게입력해주세요.');
+    }
+    const existNickname = await this.userRepository.findOneBy({
+      user_nickname: userNickname,
+    });
+    if (!existNickname) {
+      return true;
+    }
+    return false;
   }
 
   generateAccessToken(payload: Payload) {
