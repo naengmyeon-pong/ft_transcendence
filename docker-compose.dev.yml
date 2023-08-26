@@ -21,8 +21,8 @@ services:
   backend:
     container_name: backend
     build:
-      context: .
-      dockerfile: ./backend/Dockerfile.dev
+      context: ./backend
+      dockerfile: ./Dockerfile.dev
     image: backend
     ports:
       - 3001:3001
@@ -31,7 +31,7 @@ services:
       - db
     volumes:
       - ./backend:/app
-      # - ./types:/app/types
+      - ./types:/app/types
     env_file:
       - .env
     networks:
