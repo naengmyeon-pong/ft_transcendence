@@ -7,40 +7,16 @@ import {useRecoilState} from 'recoil';
 import {inviteGameState} from '@/states/inviteGame';
 import {Button, Grid} from '@mui/material';
 import Pong from './Pong';
+import {useGlobalModal} from '@/hooks/useGlobalModal';
 
-interface InviteGameViewType {
-  isGameOver: boolean;
-  gameInfo: GameInfo;
-  handleReturnMain: () => void;
-}
-
-function InviteGameView({
-  isGameOver,
-  gameInfo,
-  handleReturnMain,
-}: InviteGameViewType) {
+function InviteGameView({gameInfo}: {gameInfo: GameInfo}) {
   const {chat_socket} = useContext(UserContext);
 
   return (
     <>
-      {!isGameOver && (
-        <Grid item xs={8}>
-          <Pong socket={chat_socket} gameInfo={gameInfo} />
-        </Grid>
-      )}
-      {isGameOver && gameInfo !== null && (
-        <Grid item>
-          <p>
-            {gameInfo.leftScore > gameInfo.rightScore
-              ? sessionStorage.getItem('left_user')
-              : sessionStorage.getItem('right_user')}
-            승리!
-          </p>
-          <Button variant="contained" onClick={handleReturnMain}>
-            메인으로 돌아가기
-          </Button>
-        </Grid>
-      )}
+      <Grid item xs={8}>
+        <Pong socket={chat_socket} gameInfo={gameInfo} />
+      </Grid>
     </>
   );
 }
@@ -48,29 +24,31 @@ function InviteGameView({
 export default function InviteGame() {
   const {chat_socket, user_id} = useContext(UserContext);
   const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
-  const [isGameOver, setIsGameOver] = useState<boolean>(false);
   const [invite_game_state, setInviteGameState] =
     useRecoilState(inviteGameState);
   const start_geme_prev_unload = useRef(true);
-
-  const handleReturnMain = () => {
-    setIsGameOver(false);
-    setGameInfo(null);
-    setInviteGameState(null);
-  };
+  const {openGlobalModal, closeGlobalModal} = useGlobalModal();
 
   const handleInviteGameInfo = useCallback(
     ({game_info}: {game_info: GameInfo}) => {
       if (game_info === null) {
         return;
       }
-
       setGameInfo(game_info);
       if (game_info.leftScore === 5 || game_info.rightScore === 5) {
-        setIsGameOver(true);
+        const winner =
+          game_info.leftScore > game_info.rightScore
+            ? sessionStorage.getItem('left_user')
+            : sessionStorage.getItem('right_user');
+        openGlobalModal({
+          title: `${winner}님이 승리하였습니다`,
+          content: <></>,
+          action: <Button onClick={closeGlobalModal}>닫기</Button>,
+        });
+        setInviteGameState(null);
       }
     },
-    []
+    [openGlobalModal, setInviteGameState, closeGlobalModal]
   );
 
   const sendGameStartEvent = useCallback(() => {
@@ -107,6 +85,9 @@ export default function InviteGame() {
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
+      sessionStorage.removeItem('left_user');
+      sessionStorage.removeItem('right_user');
+      sessionStorage.removeItem('room_name');
       window.removeEventListener('unload', handleUnload);
       window.removeEventListener('beforeunload', handleBeforeUnload);
       setInviteGameState(null);
@@ -151,11 +132,5 @@ export default function InviteGame() {
     exitCancelGame,
   ]);
 
-  return (
-    <InviteGameView
-      isGameOver={isGameOver}
-      gameInfo={gameInfo}
-      handleReturnMain={handleReturnMain}
-    />
-  );
+  return <InviteGameView gameInfo={gameInfo} />;
 }
