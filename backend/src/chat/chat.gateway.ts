@@ -51,9 +51,13 @@ export class ChatGateway implements OnGatewayInit, OnGatewayDisconnect {
   private logger = new Logger('ChatGateway');
 
   afterInit() {
-    this.block.setBlock();
-    this.friend.setFriend();
-    this.logger.log('웹소켓 서버 초기화');
+    try {
+      this.block.setBlock();
+      this.friend.setFriend();
+      this.logger.log('웹소켓 서버 초기화');
+    } catch (e) {
+      this.logger.log('서버 실행 오류 : ', e.message);
+    }
   }
 
   async handleDisconnect(socket: Socket) {
@@ -344,10 +348,11 @@ export class ChatGateway implements OnGatewayInit, OnGatewayDisconnect {
     if (!user_id) {
       return false;
     }
+    const user_nickname = socket.handshake.query.nickname as string;
     const login_user = this.socketArray.getUserSocket(target_id);
     socket
       .to(`${login_user.socket_id}`)
-      .emit('chatroom-notification', {room_id, user_id});
+      .emit('chatroom-notification', {room_id, user_nickname});
     return true;
   }
 

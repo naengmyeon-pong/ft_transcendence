@@ -2,6 +2,10 @@
 
 import {useEffect, useState} from 'react';
 
+import axios from 'axios';
+import {useSetRecoilState} from 'recoil';
+import * as HTTP_STATUS from 'http-status';
+
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Chip from '@mui/material/Chip';
@@ -9,11 +13,14 @@ import Typography from '@mui/material/Typography';
 
 import apiManager from '@/api/apiManager';
 import {UserType} from '@/types/UserContext';
-import axios from 'axios';
 import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
+import {tokenExpiredExit} from '@/states/tokenExpired';
+import {useGlobalDialog} from '@/hooks/useGlobalDialog';
 
 function RecordSummary({user_info}: {user_info: UserType}) {
   const {openAlertSnackbar} = useAlertSnackbar();
+  const {closeGlobalDialog} = useGlobalDialog();
+  const setTokenExpiredExit = useSetRecoilState(tokenExpiredExit);
   const [recentRecord, setRecentRecord] = useState<string[]>([]);
   const [win, setWin] = useState<number>(0);
   const [lose, setLose] = useState<number>(0);
@@ -68,6 +75,10 @@ function RecordSummary({user_info}: {user_info: UserType}) {
         console.log(error);
         if (axios.isAxiosError(error)) {
           openAlertSnackbar({message: error.response?.data.message});
+          if (HTTP_STATUS.UNAUTHORIZED) {
+            closeGlobalDialog();
+            setTokenExpiredExit(true);
+          }
         }
       }
     };

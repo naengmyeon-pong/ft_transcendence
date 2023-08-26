@@ -3,8 +3,10 @@ import {
   Controller,
   Get,
   Param,
+  ParseIntPipe,
   Post,
   Query,
+  Request,
   UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
@@ -22,6 +24,7 @@ import {
 import {AuthGuard} from '@nestjs/passport';
 import {PartialRoomDto} from './dto/partial-room.dto';
 import {UserDto} from '@/user/dto/user.dto';
+import {ChatRoom} from './chat.entity';
 
 @Controller('chatroom')
 @UseGuards(AuthGuard('jwt'))
@@ -40,7 +43,7 @@ export class ChatController {
     다른 status code는 없고, 없으면 빈 배열을 반환한다.`,
   })
   @Get('room_list')
-  async getRoomList() {
+  async getRoomList(): Promise<any> {
     return await this.chatService.getRoomList();
   }
 
@@ -64,7 +67,9 @@ export class ChatController {
     description: '채팅방의 id',
   })
   @Get('room_members')
-  async getRoomMembers(@Query('room_id') room_id: number) {
+  async getRoomMembers(
+    @Query('room_id', ParseIntPipe) room_id: number
+  ): Promise<any> {
     return await this.chatService.getRoomMembers(room_id);
   }
 
@@ -89,7 +94,7 @@ export class ChatController {
     description: '채팅방을 생성하는 유저가 이미 다른 채팅방의 owner인 경우',
   })
   @Post('create_room')
-  async createRoom(@Body() roomDto: RoomDto) {
+  async createRoom(@Body(ValidationPipe) roomDto: RoomDto): Promise<ChatRoom> {
     return await this.chatService.createRoom(roomDto);
   }
 
@@ -112,8 +117,11 @@ export class ChatController {
     description: '채팅방의 id',
   })
   @Get('isRoom')
-  async isRoom(@Query('room_id') room_id: number) {
-    return await this.chatService.getRoom(room_id);
+  async isRoom(
+    @Query('room_id', ParseIntPipe) room_id: number,
+    @Request() req: any
+  ): Promise<ChatRoom> {
+    return await this.chatService.isRoom(room_id, req.user.user_id);
   }
 
   @ApiOperation({
@@ -147,7 +155,7 @@ export class ChatController {
   async inviteChatRoom(
     @Param('user_nickname') user_nickname: string,
     @Param('user_id') user_id: string
-  ) {
+  ): Promise<any> {
     const member = await this.chatService.inviteChatRoom(
       user_nickname,
       user_id
@@ -173,7 +181,7 @@ export class ChatController {
     description: '현재 유저의 id',
   })
   @Get('block_list/:user_id')
-  async getBlockList(@Param('user_id') user_id: string) {
+  async getBlockList(@Param('user_id') user_id: string): Promise<any> {
     return await this.chatService.getBlockList(user_id);
   }
 
@@ -213,7 +221,7 @@ export class ChatController {
   })
   @Post('chatroom_pw')
   async checkChatRoomPw(
-    @Body('room_id') room_id: number,
+    @Body('room_id', ParseIntPipe) room_id: number,
     @Body(ValidationPipe) userDto: PartialRoomDto
   ): Promise<boolean> {
     return await this.chatService.checkChatRoomPw(room_id, userDto);
@@ -245,9 +253,9 @@ export class ChatController {
   })
   @Post('update_chatroom_pw')
   async updateChatRoomPw(
-    @Body('room_id') room_id: number,
+    @Body('room_id', ParseIntPipe) room_id: number,
     @Body(ValidationPipe) UserDto?: PartialRoomDto
-  ) {
+  ): Promise<void> {
     return await this.chatService.updateChatRoomPw(room_id, UserDto);
   }
 
@@ -282,7 +290,7 @@ export class ChatController {
   async searchUser(
     @Query('user_id') user_id: string,
     @Query('user_nickname') user_nickname: string
-  ) {
+  ): Promise<any> {
     return await this.chatService.searchUser(user_id, user_nickname);
   }
 }

@@ -61,7 +61,7 @@ function Setting() {
     }
 
     const response = await apiManager.get(
-      `/signup/nickname?user_id=${userId}&nickname=${nickname}`
+      `/user/nickname?user_id=${userId}&nickname=${nickname}`
     );
     try {
       const result = response.data;

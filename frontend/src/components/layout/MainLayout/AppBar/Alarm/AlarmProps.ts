@@ -1,7 +1,7 @@
 import {InviteGameInfo} from '@/common/types/game';
 
 export interface Chatnotificate {
-  user_id: string;
+  user_nickname: string;
   room_id: string;
 }
 

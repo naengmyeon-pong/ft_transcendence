@@ -77,8 +77,9 @@ export class FriendService {
       if (state) {
         if (state.is_gaming) {
           element.state = '게임 중';
+        } else {
+          element.state = '온라인';
         }
-        element.state = '온라인';
       } else {
         element.state = '오프라인';
       }

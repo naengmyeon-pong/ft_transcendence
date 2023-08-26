@@ -58,16 +58,16 @@ export default function UserInfoPage({
 
         <ListItemText
           primary={user_info.nickName}
-          secondary={
-            <Typography
-              sx={{display: 'inline'}}
-              component="span"
-              variant="body2"
-              color="text.primary"
-            >
-              {'오프라인'}
-            </Typography>
-          }
+          // secondary={
+          //   <Typography
+          //     sx={{display: 'inline'}}
+          //     component="span"
+          //     variant="body2"
+          //     color="text.primary"
+          //   >
+          //     {'오프라인'}
+          //   </Typography>
+          // }
         />
       </ListItem>
     );
