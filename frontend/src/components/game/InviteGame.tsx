@@ -137,15 +137,5 @@ export default function InviteGame() {
     exitCancelGame,
   ]);
 
-  return (
-    <>
-      {gameInfo && (
-        <InviteGameView
-          isGameOver={isGameOver}
-          gameInfo={gameInfo}
-          handleReturnMain={handleReturnMain}
-        />
-      )}
-    </>
-  );
+  return <>{gameInfo && <InviteGameView gameInfo={gameInfo} />}</>;
 }

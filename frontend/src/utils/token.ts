@@ -1,4 +1,5 @@
 import * as jsonwebtoken from 'jsonwebtoken';
+import {JwtPayload} from 'jsonwebtoken';
 
 export const getJwtToken = (): string | null => {
   const jwtToken: string | null = sessionStorage.getItem('accessToken');
@@ -13,12 +14,18 @@ export const getExpirationTimeInMilliseconds = () => {
   if (token === null) {
     return 0;
   }
-  const decodedToken = jsonwebtoken.decode(token);
+  const decodedToken: string | JwtPayload | null = jsonwebtoken.decode(token);
   if (decodedToken === null) {
     return 0;
   }
-  const expirationTime = decodedToken.exp;
-  return expirationTime * 1000;
+  if (typeof decodedToken === 'string') {
+    return 0;
+  }
+  if (typeof decodedToken.exp === 'number') {
+    const expirationTime = decodedToken.exp;
+    return expirationTime * 1000;
+  }
+  return 0;
 };
 
 export const getRemainedTime = (start: number): string => {
