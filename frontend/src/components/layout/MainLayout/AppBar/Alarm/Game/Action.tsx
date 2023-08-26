@@ -29,11 +29,15 @@ export default function ActionGameAlarm({
 
   // B가 누르는 수락
   function inviteTrue() {
-    removeGameNoti();
     row.invite_game_info.state = true;
-    chat_socket?.emit('invite_response', row.invite_game_info);
-    setInviteGameState(row.invite_game_info);
-    router.push('/main/game');
+    chat_socket?.emit('invite_response', row.invite_game_info, (res: Boolean) => {
+      console.log(res);
+      if (res === true){
+        setInviteGameState(row.invite_game_info);
+        router.push('/main/game');
+        removeGameNoti();
+      }
+    });
   }
 
   // B가 누르는 거절
