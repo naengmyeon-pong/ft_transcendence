@@ -575,7 +575,12 @@ export class GameGateway implements OnGatewayDisconnect {
     const roomInfo: RoomInfo = gameRooms.get(inviteGameInfo.inviter_id);
     const {userID} = this.getUserID(socket);
     socket.emit('game_info', {game_info: roomInfo.game_info});
-    if (userID === inviteGameInfo.inviter_id) {
+    if (userID === inviteGameInfo.invitee_id) {
+      // 첫 번재로 들어온 유저 (피초대자)
+      this.removeUserInWaitlist(userID); // 랜덤 게임 대기자 삭제
+      this.checkPreviousInvitation(userID);
+    } else if (userID === inviteGameInfo.inviter_id) {
+      // 두 번째로 들어온 유저 (초대자)
       socket.emit('enter_game');
       this.updateState(
         true,
@@ -587,6 +592,25 @@ export class GameGateway implements OnGatewayDisconnect {
       this.nsp.to(roomInfo.room_name).emit('start_game');
     }
   }
+
+  checkPreviousInvitation = (userID: string) => {
+    let idx = -1;
+    inviteWaitList.forEach((value, key) => {
+      if (value.inviter_id === userID) {
+        idx = key;
+        const targetSocket = this.socketArray.getUserSocket(
+          value.invitee_id
+        ).socket;
+        targetSocket.emit(
+          'inviter_cancel_invite_betray',
+          value.inviter_nickname
+        );
+      }
+    });
+    if (idx !== -1) {
+      inviteWaitList.splice(idx, 1);
+    }
+  };
 
   @SubscribeMessage('invitee_cancel_game_back')
   handleInviteeCancelGameBack(
