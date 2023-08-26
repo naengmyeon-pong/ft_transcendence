@@ -515,7 +515,7 @@ export class GameGateway implements OnGatewayDisconnect {
     const targetSocketID = this.socketArray.getUserSocket(
       inviteGameInfo.inviter_id
     ).socket_id;
-    const {isExpired} = this.getUserID(inviteeSocket);
+    const {userID, isExpired} = this.getUserID(inviteeSocket);
     if (isExpired) {
       this.changeInviteGameState(inviteGameInfo.inviter_id, false);
       inviteeSocket
@@ -525,13 +525,30 @@ export class GameGateway implements OnGatewayDisconnect {
     }
 
     if (inviteGameInfo.state === true) {
+      if (this.isInviteeIntWaitingPage(userID)) {
+        return false;
+      }
       this.changeInviteGameState(inviteGameInfo.inviter_id, true);
       this.createInviteGameRoom(inviteGameInfo);
     }
     inviteeSocket
       .to(`${targetSocketID}`)
       .emit('invite_response', inviteGameInfo);
+    return true;
   }
+
+  isInviteeIntWaitingPage = (userID: string): boolean => {
+    let isWaitingPage = false;
+    inviteWaitList.forEach((value, key) => {
+      if (value.invitee_id === userID) {
+        if (value.state === true) {
+          isWaitingPage = true;
+          return;
+        }
+      }
+    });
+    return isWaitingPage;
+  };
 
   changeInviteGameState = (inviterID: string, state: boolean) => {
     inviteWaitList.forEach((value, key) => {
@@ -552,6 +569,7 @@ export class GameGateway implements OnGatewayDisconnect {
     }: {inviteGameInfo: InviteGameInfo; is_inviter: boolean}
   ) {
     const {userID} = this.getUserID(socket);
+    console.log('gg');
     if (is_inviter === true) {
       // 초대자가 최종 거절해서 게임을 취소한 경우
       gameRooms.delete(userID);
@@ -593,8 +611,7 @@ export class GameGateway implements OnGatewayDisconnect {
       );
       this.removeUserInWaitlist(userID); // 랜덤 게임 대기자 삭제
       console.log(inviteWaitList);
-      this.removeUserInInviteWaitlist(userID, true);
-      this.checkPreviousInvitation(userID);
+      this.removeInviteWaitlistEnterGame(userID, inviteGameInfo.invitee_id);
       this.nsp.to(roomInfo.room_name).emit('start_game');
     }
   }
@@ -648,34 +665,63 @@ export class GameGateway implements OnGatewayDisconnect {
     );
   }
 
+  removeInviteWaitlistEnterGame = (userID: string, inviteeID: string) => {
+    let idx = -1;
+    const canceled: number[] = [];
+    inviteWaitList.forEach((value, key) => {
+      if (value.inviter_id === userID) {
+        if (value.invitee_id === inviteeID) {
+          idx = key;
+        } else {
+          canceled.push(key);
+          const targetSocket = this.socketArray.getUserSocket(
+            value.invitee_id
+          ).socket;
+          targetSocket.emit(
+            'inviter_cancel_game_refuse',
+            value.inviter_nickname
+          );
+          targetSocket.leave(value.inviter_id);
+        }
+      }
+    });
+    if (idx !== -1) {
+      inviteWaitList.splice(idx, 1);
+    }
+    canceled.forEach(value => {
+      inviteWaitList.splice(value, 1);
+    });
+  };
+
   removeUserInInviteWaitlist = (
     userID: string,
     isInviteGameBegin: boolean,
     isException = true
   ): boolean => {
-    let idx = -1;
+    // let idx = -1;
+    const idxArr: number[] = [];
     if (isInviteGameBegin === true) {
       // 초대매칭이 시작된 경우
       inviteWaitList.forEach((value, key) => {
         if (value.inviter_id === userID) {
-          idx = key;
+          idxArr.push(key);
+          // idx = key;
         }
       });
     } else if (isInviteGameBegin === false) {
       // 초대매칭이 시작되기 전에 취소된 경우
       inviteWaitList.forEach((value, key) => {
         if (value.inviter_id === userID) {
-          idx = key;
+          // idx = key;
+          idxArr.push(key);
           const targetID = value.invitee_id;
           const targetSocket = this.socketArray.getUserSocket(targetID).socket;
           if (isException) {
             if (value.state === undefined) {
-              // if (value.state === false) {
               // 피초대자가 수락하기 전
               targetSocket.leave(value.inviter_id);
               targetSocket.emit(
                 'inviter_cancel_invite_betray',
-                // value.invitee_nickname
                 value.inviter_nickname
               );
             } else {
@@ -695,7 +741,8 @@ export class GameGateway implements OnGatewayDisconnect {
             );
           }
         } else if (value.invitee_id === userID) {
-          idx = key;
+          idxArr.push(key);
+          // idx = key;
           const targetID = value.inviter_id;
           const targetSocket = this.socketArray.getUserSocket(targetID).socket;
 
@@ -714,10 +761,16 @@ export class GameGateway implements OnGatewayDisconnect {
         }
       });
     }
-    if (idx !== -1) {
-      console.log(inviteWaitList[idx]);
-      inviteWaitList.splice(idx, 1);
-      return true;
+    // if (idx !== -1) {
+    //   console.log(inviteWaitList[idx]);
+    //   inviteWaitList.splice(idx, 1);
+    //   return true;
+    // }
+    if (idxArr.length !== 0) {
+      idxArr.forEach(value => {
+        inviteWaitList.splice(value, 1);
+        return true;
+      });
     }
     return false;
   };
