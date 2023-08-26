@@ -42,22 +42,24 @@ export default function GameAction({
       console.error('게임 난이도를 선택해주세요!');
       return;
     }
-    const jwtToken = sessionStorage.getItem('accessToken');
-    // TODO: 에러 처리 추가하기
-    // TODO: 토큰 만료 시간 확인 추가하기
-    if (jwtToken === null) {
-      return;
+    if (isWaitingGame === false) {
+      const jwtToken = sessionStorage.getItem('accessToken');
+      // TODO: 에러 처리 추가하기
+      // TODO: 토큰 만료 시간 확인 추가하기
+      if (jwtToken === null) {
+        return;
+      }
+      setSelectedGameMode(gameMode);
+      setSelectedGameType(gameType);
+      const joinGameInfo: JoinGameInfo = {
+        jwt: jwtToken,
+        mode: gameMode,
+        type: gameType,
+      };
+      chat_socket?.emit('join_game', joinGameInfo);
+      setIsWaitingGame(true);
+      window.addEventListener('beforeunload', handleBeforeUnload);
     }
-    setSelectedGameMode(gameMode);
-    setSelectedGameType(gameType);
-    const joinGameInfo: JoinGameInfo = {
-      jwt: jwtToken,
-      mode: gameMode,
-      type: gameType,
-    };
-    chat_socket?.emit('join_game', joinGameInfo);
-    setIsWaitingGame(true);
-    window.addEventListener('beforeunload', handleBeforeUnload);
   };
 
   const handleStopWaiting = () => {
