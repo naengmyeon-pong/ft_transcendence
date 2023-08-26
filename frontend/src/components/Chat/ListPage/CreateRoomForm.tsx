@@ -68,7 +68,7 @@ function CreateRoomForm({setCreateModal}: CreateModalProps) {
 
   const handleClose = useCallback(() => {
     setCreateModal(false);
-  }, []);
+  }, [setCreateModal]);
 
   const handleName = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     setIsName(false);
@@ -110,7 +110,7 @@ function CreateRoomForm({setCreateModal}: CreateModalProps) {
     }
   }
 
-  function handleHideRoom(event: MouseEvent<HTMLElement>) {
+  function handleHideRoom() {
     setIsHide(!isHide);
   }
 
