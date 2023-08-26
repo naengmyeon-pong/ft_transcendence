@@ -8,12 +8,12 @@ services:
       dockerfile: Dockerfile
     image: frontend
     ports:
-      - 80:80
+      - 3000:3000
     restart: on-failure:3
     networks:
       - naengmyeon_pong_network
     volumes:
-      - ./frontend:/app
+      # - ./frontend:/app
       - ./types:/app/types
     env_file:
       - .env
@@ -26,11 +26,13 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     image: backend
+    ports:
+      - 3001:3001
     restart: on-failure:3
     networks:
       - naengmyeon_pong_network
     volumes:
-      - ./backend:/app
+      # - ./backend:/app
       - ./types:/app/types
     env_file:
       - .env

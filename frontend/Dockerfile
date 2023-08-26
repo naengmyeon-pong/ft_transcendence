@@ -1,14 +1,15 @@
-FROM node:18-alpine AS builder
+FROM node:18-alpine
+
+RUN apk add --no-cache dumb-init
 
 WORKDIR /app
 
-COPY package.json .
+COPY . .
 
-# RUN npm install
 RUN npm run build
 
-COPY my.conf /etc/nginx/http.d
+EXPOSE 3000
 
-FROM nginx:stable-alpine3.17
+ENTRYPOINT [ "/usr/bin/dumb-init", "--" ]
 
-COPY --from=builder /app/build /usr/share/nginx/html
+CMD ["npm", "run", "start"]
