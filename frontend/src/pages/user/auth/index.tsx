@@ -16,7 +16,7 @@ import apiManager from '@/api/apiManager';
 import {useProfileImage} from '@/hooks/useProfileImage';
 import {passwordResetState} from '@/states/passwordReset';
 import {loginState} from '@/states/loginState';
-import {OAuthUser} from '@/common/types/oauth';
+import {OAuthUser} from '@/common/types/user/oauth.interface';
 
 export const getServerSideProps: GetServerSideProps = async ({query}) => {
   const {code} = query;
