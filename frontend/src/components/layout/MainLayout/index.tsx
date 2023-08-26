@@ -62,7 +62,7 @@ function MainLayout({children}: MainLayoutProps) {
       return;
     }
     try {
-      const response = await apiManager.get('/user/user-info');
+      const response = await apiManager.get('/user');
       const {user_id, user_image, user_nickname, is_2fa_enabled, rank_score} =
         response.data;
       const cacheBuster = new Date().getTime();

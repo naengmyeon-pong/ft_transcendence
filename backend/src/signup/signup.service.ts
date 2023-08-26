@@ -15,12 +15,14 @@ import {Payload} from 'src/user/payload';
 import {UserDto} from 'src/user/dto/user.dto';
 import * as bcrypt from 'bcryptjs';
 import * as fs from 'fs';
+import {DataSource, QueryRunner} from 'typeorm';
 @Injectable()
 export class SignUpService {
   constructor(
     private userRepository: UserRepository,
     private userAuthRepository: IsUserAuthRepository,
-    private jwtService: JwtService
+    private jwtService: JwtService,
+    private dataSource: DataSource
   ) {}
 
   async getAccessToken(code: string): Promise<string> {
@@ -55,11 +57,15 @@ export class SignUpService {
       user_id: response.data.login,
     });
     if (!user) {
+      const query_runner: QueryRunner = this.dataSource.createQueryRunner();
+      await query_runner.connect();
+      await query_runner.startTransaction();
       try {
         const userAuth: IsUserAuth = this.userAuthRepository.create({
           user_id: response.data.login,
         });
-        await this.userAuthRepository.save(userAuth);
+        // await this.userAuthRepository.save(userAuth);
+        await query_runner.manager.getRepository(IsUserAuth).save(userAuth);
         const payload: Payload = {
           user_id: userAuth.user_id,
         };
@@ -70,10 +76,13 @@ export class SignUpService {
           is_already_signup: false,
           signup_jwt: signupJwt,
         };
+        await query_runner.commitTransaction();
         return JSON.stringify(ret);
       } catch (error) {
-        console.log('error', error);
+        await query_runner.rollbackTransaction();
         throw new InternalServerErrorException('서버에러가 발생했습니다.');
+      } finally {
+        await query_runner.release();
       }
     } else {
       const userAuth: IsUserAuth = await this.userAuthRepository.findOneBy({
@@ -138,22 +147,18 @@ export class SignUpService {
       throw new UnauthorizedException('올바른 페이지를 통해 가입해주세요.');
     }
 
-    try {
-      // MEMO: 42이미지, 서버에서 저장하는 이미지가 따로 존재하므로 서버 주소를 붙여야 할듯 싶습니다
-      const user = this.userRepository.create({
-        user_id,
-        // TODO : hashed로 바꾸기
-        // user_pw: hashedPassword,
-        user_pw,
-        user_nickname,
-        user_image: file
-          ? `${process.env.NEXT_PUBLIC_BACKEND_SERVER}` + file.path.substr(11)
-          : `${process.env.NEXT_PUBLIC_BACKEND_SERVER}/images/logo.jpeg`,
-      });
-      await this.userRepository.save(user);
-    } catch (error) {
-      throw new InternalServerErrorException('서버에러가 발생했습니다.');
-    }
+    // MEMO: 42이미지, 서버에서 저장하는 이미지가 따로 존재하므로 서버 주소를 붙여야 할듯 싶습니다
+    const user = this.userRepository.create({
+      user_id,
+      // TODO : hashed로 바꾸기
+      // user_pw: hashedPassword,
+      user_pw,
+      user_nickname,
+      user_image: file
+        ? `${process.env.NEXT_PUBLIC_BACKEND_SERVER}` + file.path.substr(11)
+        : `${process.env.NEXT_PUBLIC_BACKEND_SERVER}/images/logo.jpeg`,
+    });
+    await this.userRepository.save(user);
   }
 
   async changePW(user_id: string, user_pw: string): Promise<void> {
