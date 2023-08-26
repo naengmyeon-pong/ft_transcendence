@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseIntPipe,
   Post,
   Query,
   Request,
@@ -66,7 +67,9 @@ export class ChatController {
     description: '채팅방의 id',
   })
   @Get('room_members')
-  async getRoomMembers(@Query('room_id') room_id: number): Promise<any> {
+  async getRoomMembers(
+    @Query('room_id', ParseIntPipe) room_id: number
+  ): Promise<any> {
     return await this.chatService.getRoomMembers(room_id);
   }
 
@@ -91,7 +94,7 @@ export class ChatController {
     description: '채팅방을 생성하는 유저가 이미 다른 채팅방의 owner인 경우',
   })
   @Post('create_room')
-  async createRoom(@Body() roomDto: RoomDto): Promise<ChatRoom> {
+  async createRoom(@Body(ValidationPipe) roomDto: RoomDto): Promise<ChatRoom> {
     return await this.chatService.createRoom(roomDto);
   }
 
@@ -115,7 +118,7 @@ export class ChatController {
   })
   @Get('isRoom')
   async isRoom(
-    @Query('room_id') room_id: number,
+    @Query('room_id', ParseIntPipe) room_id: number,
     @Request() req: any
   ): Promise<ChatRoom> {
     return await this.chatService.isRoom(room_id, req.user.user_id);
@@ -218,7 +221,7 @@ export class ChatController {
   })
   @Post('chatroom_pw')
   async checkChatRoomPw(
-    @Body('room_id') room_id: number,
+    @Body('room_id', ParseIntPipe) room_id: number,
     @Body(ValidationPipe) userDto: PartialRoomDto
   ): Promise<boolean> {
     return await this.chatService.checkChatRoomPw(room_id, userDto);
@@ -250,7 +253,7 @@ export class ChatController {
   })
   @Post('update_chatroom_pw')
   async updateChatRoomPw(
-    @Body('room_id') room_id: number,
+    @Body('room_id', ParseIntPipe) room_id: number,
     @Body(ValidationPipe) UserDto?: PartialRoomDto
   ): Promise<void> {
     return await this.chatService.updateChatRoomPw(room_id, UserDto);

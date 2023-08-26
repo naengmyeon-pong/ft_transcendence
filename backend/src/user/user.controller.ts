@@ -128,4 +128,14 @@ export class UserController {
   ): Promise<void> {
     return this.userService.updateUser(user, file, req.user.user_id);
   }
+
+  @Get('/nickname')
+  @UseGuards(AuthGuard('jwt'))
+  async checkUserNickname(
+    @Query('user_id') userID: string,
+    @Query('nickname') nickname: string
+  ): Promise<boolean> {
+    console.log(userID, nickname);
+    return await this.userService.checkUserNickname(userID, nickname);
+  }
 }

@@ -3,7 +3,7 @@ import {FriendService} from './friend.service';
 import {ApiOperation, ApiQuery, ApiResponse, ApiTags} from '@nestjs/swagger';
 import {AuthGuard} from '@nestjs/passport';
 
-@Controller('frien')
+@Controller('friend')
 @ApiTags('Friend')
 @UseGuards(AuthGuard('jwt'))
 export class FriendController {

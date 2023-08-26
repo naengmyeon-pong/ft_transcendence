@@ -5,7 +5,7 @@ import {UserContext} from '../../../Context';
 import {MenuItem, Typography} from '@mui/material';
 
 export interface Chatnotificate {
-  user_id: string;
+  user_nickname: string;
   room_id: string;
 }
 
@@ -28,7 +28,7 @@ export default function ChatAlarm({chat_noti, setChatAlarm}: AlarmChatProps) {
           {chat_noti.map((row, index) => (
             <MenuItem key={index} onClick={() => handleSendRoom(row, index)}>
               <Typography>
-                {`${row.user_id}님이 채팅방으로 초대하였습니다`}
+                {`${row.user_nickname}님이 채팅방으로 초대하였습니다`}
               </Typography>
             </MenuItem>
           ))}
