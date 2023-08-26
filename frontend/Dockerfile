@@ -4,7 +4,9 @@ RUN apk add --no-cache dumb-init
 
 WORKDIR /app
 
-COPY . .
+COPY ./frontend /app
+COPY ./types /app/types
+COPY ./.env .
 
 RUN npm run build
 

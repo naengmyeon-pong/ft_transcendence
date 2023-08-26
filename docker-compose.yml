@@ -4,19 +4,14 @@ services:
   frontend:
     container_name: frontend
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./frontend/Dockerfile
     image: frontend
     ports:
       - 3000:3000
     restart: on-failure:3
     networks:
       - naengmyeon_pong_network
-    volumes:
-      # - ./frontend:/app
-      - ./types:/app/types
-    env_file:
-      - .env
 
   backend:
     container_name: backend
