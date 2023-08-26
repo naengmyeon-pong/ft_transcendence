@@ -48,7 +48,7 @@ export default function InviteGame() {
         setInviteGameState(null);
       }
     },
-    [openGlobalModal, setInviteGameState, closeGlobalModal]
+    [openGlobalModal, closeGlobalModal, setInviteGameState]
   );
 
   const sendGameStartEvent = useCallback(() => {
@@ -100,9 +100,15 @@ export default function InviteGame() {
   }, [chat_socket, invite_game_state, setInviteGameState, handleUnload]);
 
   useEffect(() => {
+    chat_socket?.on('game_info', handleInviteGameInfo);
+    return () => {
+      chat_socket?.off('game_info', handleInviteGameInfo);
+    };
+  }, [chat_socket, handleInviteGameInfo]);
+
+  useEffect(() => {
     // 게임 대기방에 들어왔다는 신호
     chat_socket?.on('enter_game', sendGameStartEvent);
-    chat_socket?.on('game_info', handleInviteGameInfo);
     // 초대자가 게임을 거절한 경우
     chat_socket?.on('inviter_cancel_game_refuse', exitCancelGame);
     // 초대자가 초대 후 게임을 시작한경우
@@ -119,11 +125,11 @@ export default function InviteGame() {
     return () => {
       chat_socket?.off('inviter_cancel_game_refresh', exitCancelGame);
       chat_socket?.off('enter_game', sendGameStartEvent);
-      chat_socket?.off('game_info', handleInviteGameInfo);
       chat_socket?.off('inviter_cancel_game_refuse', exitCancelGame);
       chat_socket?.off('inviter_cancel_game_betray', exitCancelGame);
       chat_socket?.off('start_game');
       if (start_geme_prev_unload.current) {
+        console.log('??');
         chat_socket?.emit('invitee_cancel_game_back', invite_game_state);
       }
     };
