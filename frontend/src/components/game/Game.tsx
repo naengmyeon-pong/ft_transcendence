@@ -87,7 +87,7 @@ function Game() {
     if (game_info.leftScore === 5 || game_info.rightScore === 5) {
       setIsGameOver(true);
       try {
-        const response = await apiManager.get('/user/user-info');
+        const response = await apiManager.get('/user');
         const {rank_score} = response.data;
         setProfileDataState({...profileDataState, rank_score});
       } catch (error) {
