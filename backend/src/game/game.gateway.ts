@@ -634,12 +634,14 @@ export class GameGateway implements OnGatewayDisconnect {
           const targetID = value.invitee_id;
           const targetSocket = this.socketArray.getUserSocket(targetID).socket;
           if (isException) {
-            if (value.state === false) {
+            if (value.state === undefined) {
+              // if (value.state === false) {
               // 피초대자가 수락하기 전
               targetSocket.leave(value.inviter_id);
               targetSocket.emit(
                 'inviter_cancel_invite_betray',
-                value.invitee_nickname
+                // value.invitee_nickname
+                value.inviter_nickname
               );
             } else {
               // 피초대자가 수락한 후 초대자가 랜덤매칭으로 이동
