@@ -573,7 +573,11 @@ export class GameGateway implements OnGatewayDisconnect {
     @MessageBody() inviteGameInfo: InviteGameInfo
   ) {
     const roomInfo: RoomInfo = gameRooms.get(inviteGameInfo.inviter_id);
-    const {userID} = this.getUserID(socket);
+    const {userID, isExpired} = this.getUserID(socket);
+    if (isExpired) {
+      this.removeUserInInviteWaitlist(userID, false);
+      return;
+    }
     socket.emit('game_info', {game_info: roomInfo.game_info});
     if (userID === inviteGameInfo.invitee_id) {
       // 첫 번재로 들어온 유저 (피초대자)
