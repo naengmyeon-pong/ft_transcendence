@@ -49,9 +49,10 @@ export class FriendGateway implements OnGatewayConnection, OnGatewayDisconnect {
       friends.forEach(e => {
         const login_user = this.socketArray.getUserSocket(e);
         if (login_user) {
-          socket
-            .to(login_user.socket_id)
-            .emit('update-friend-state', {userId: user_id, state});
+          socket.to(login_user.socket_id).emit('update-friend-list');
+          // socket
+          //   .to(login_user.socket_id)
+          //   .emit('update-friend-state', {userId: user_id, state});
         }
       });
     }

@@ -46,7 +46,6 @@ import {useSetRecoilState} from 'recoil';
 import {tokenExpiredExit} from '@/states/tokenExpired';
 
 function SideBar() {
-
   // lstState: 0 = 차단 목록, 1 = 친구 목록, 2 = DM
   const [lstState, setLstState] = useState(1);
   const {chat_socket, block_users, user_id} = useContext(UserContext);
@@ -208,6 +207,9 @@ function SideBar() {
     }
     setBlockUsersSize(block_users.size);
 
+    chat_socket?.on('update-friend-list', () => {
+      chat_socket?.emit('friend-list');
+    });
     chat_socket?.on('friend-list', handleFriendList);
     chat_socket?.on('block-list', handleBlockList);
     chat_socket?.emit('friend-list');
@@ -215,6 +217,7 @@ function SideBar() {
     return () => {
       chat_socket?.off('friend-list', handleFriendList);
       chat_socket?.off('block-list', handleBlockList);
+      chat_socket?.off('update-friend-list');
     };
   }, [chat_socket]);
 
