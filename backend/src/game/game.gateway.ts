@@ -479,6 +479,8 @@ export class GameGateway implements OnGatewayDisconnect {
     const target = this.socketArray.getUserSocket(inviteGameInfo.invitee_id);
     if (target === undefined) {
       return '유저가 로그인 상태가 아닙니다.';
+    } else if (target.is_gaming === true) {
+      return '유저가 게임중입니다.';
     }
     // 유저 아이디를 조회해서 타겟에 전송
     const userA = await this.userRepository.findOneBy({
