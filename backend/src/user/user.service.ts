@@ -26,6 +26,8 @@ import {UpdateUserDto} from './dto/update-user.dto';
 import {SocketArray} from '@/global-variable/global.socket';
 import {SignUpService} from '@/signup/signup.service';
 import {OAuthUser} from '@/types/user/oauth';
+import {Friend} from '@/global-variable/global.friend';
+import {DataSource, QueryRunner} from 'typeorm';
 
 @Injectable()
 export class UserService {
@@ -34,7 +36,9 @@ export class UserService {
     private userAuthRepository: IsUserAuthRepository,
     private signupService: SignUpService,
     private jwtService: JwtService,
-    private socketArray: SocketArray
+    private socketArray: SocketArray,
+    private friend: Friend,
+    private dataSource: DataSource
   ) {}
 
   async findUser(user_id: string): Promise<User> {
@@ -134,22 +138,48 @@ export class UserService {
     if (!user) {
       throw new NotFoundException('유저가 아닙니다.');
     }
-    if (userDto.user_nickname) {
-      await this.userRepository.update(
-        {user_id: userID},
-        {
-          user_nickname: userDto.user_nickname,
-        }
-      );
-    }
-    if (file) {
-      await this.userRepository.update(
-        {user_id: userID},
-        {
-          user_image:
-            `${process.env.NEXT_PUBLIC_BACKEND_SERVER}` + file.path.substr(11),
-        }
-      );
+    const query_runner: QueryRunner = this.dataSource.createQueryRunner();
+    await query_runner.connect();
+    await query_runner.startTransaction();
+    try {
+      if (userDto.user_nickname) {
+        // await this.userRepository.update(
+        //   {user_id: userID},
+        //   {
+        //     user_nickname: userDto.user_nickname,
+        //   }
+        // );
+        await query_runner.manager.getRepository(User).update(
+          {user_id: userID},
+          {
+            user_nickname: userDto.user_nickname,
+          }
+        );
+      }
+      if (file) {
+        // await this.userRepository.update(
+        //   {user_id: userID},
+        //   {
+        //     user_image:
+        //       `${process.env.NEXT_PUBLIC_BACKEND_SERVER}` +
+        //       file.path.substr(11),
+        //   }
+        // );
+        await query_runner.manager.getRepository(User).update(
+          {user_id: userID},
+          {
+            user_image:
+              `${process.env.NEXT_PUBLIC_BACKEND_SERVER}` +
+              file.path.substr(11),
+          }
+        );
+      }
+      await query_runner.commitTransaction();
+    } catch (e) {
+      await query_runner.rollbackTransaction();
+      throw new InternalServerErrorException('서버에러가 발생했습니다.');
+    } finally {
+      await query_runner.release();
     }
   }
 
@@ -157,17 +187,17 @@ export class UserService {
     userID: string,
     userNickname: string
   ): Promise<boolean> {
-    if (
-      !userID ||
-      !userNickname ||
-      (userNickname && userNickname.length > 10)
-    ) {
-      throw new BadRequestException('아이디와 닉네임을 올바르게입력해주세요.');
+    if (!userID) {
+      throw new BadRequestException('아이디를 입력해주세요.');
+    } else if (!userNickname) {
+      throw new BadRequestException('닉네임을 입력해주세요.');
+    } else if (userNickname.length > 8 || userNickname.length < 2) {
+      throw new BadRequestException('닉네임의 길이를 확인해주세요.');
     }
     const existNickname = await this.userRepository.findOneBy({
       user_nickname: userNickname,
     });
-    if (!existNickname) {
+    if (!existNickname || existNickname.user_id === userID) {
       return true;
     }
     return false;

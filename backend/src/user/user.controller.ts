@@ -94,6 +94,7 @@ export class UserController {
     return await this.userService.getOAuthUser(code);
   }
 
+  // req.user 를 그대로 반환했을 때, password까지 가는중. 수정해야할듯.
   @Get('/user-info')
   @UseGuards(AuthGuard('jwt'))
   getUserInfo(@Request() req): Promise<string> {
@@ -135,7 +136,6 @@ export class UserController {
     @Query('user_id') userID: string,
     @Query('nickname') nickname: string
   ): Promise<boolean> {
-    console.log(userID, nickname);
     return await this.userService.checkUserNickname(userID, nickname);
   }
 }
