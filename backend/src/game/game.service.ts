@@ -53,7 +53,7 @@ export class GameService {
       if (arg === 'type') {
         findData = await this.typeRepository.findOneBy({type: elem});
         if (findData !== null) {
-          break;
+          continue;
         }
         newData = this.typeRepository.create({
           type: elem,
@@ -62,7 +62,7 @@ export class GameService {
       } else {
         findData = await this.modeRepository.findOneBy({mode: elem});
         if (findData !== null) {
-          break;
+          continue;
         }
         newData = this.modeRepository.create({
           mode: elem,
