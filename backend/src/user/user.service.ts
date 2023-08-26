@@ -25,7 +25,7 @@ import {Payload} from './payload';
 import {UpdateUserDto} from './dto/update-user.dto';
 import {SocketArray} from '@/global-variable/global.socket';
 import {SignUpService} from '@/signup/signup.service';
-import {OAuthUser} from '@/types/user/oauth';
+import {OAuthUser} from '@/types/user/oauth.interface';
 import {Friend} from '@/global-variable/global.friend';
 import {DataSource, QueryRunner} from 'typeorm';
 
