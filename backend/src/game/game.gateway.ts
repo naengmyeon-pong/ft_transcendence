@@ -483,28 +483,28 @@ export class GameGateway implements OnGatewayDisconnect {
       return '유저가 게임중입니다.';
     }
     // 유저 아이디를 조회해서 타겟에 전송
-    const userA = await this.userRepository.findOneBy({
+    const inviter = await this.userRepository.findOneBy({
       user_id: inviteGameInfo.inviter_id,
     });
-    if (!userA) {
+    if (!inviter) {
       return '잘못된 요청입니다.'; // 유저의 정보가 존재하지 않는 경우
     }
-    inviteGameInfo.inviter_nickname = userA.user_nickname;
-    const userB = await this.userRepository.findOneBy({
+    inviteGameInfo.inviter_nickname = inviter.user_nickname;
+    const invitee = await this.userRepository.findOneBy({
       user_id: inviteGameInfo.invitee_id,
     });
-    if (!userB) {
+    if (!invitee) {
       return '잘못된 요청입니다.';
     }
-    // 임시로 기존에 있으면 패스
-    inviteGameInfo.invitee_nickname = userB.user_nickname;
+    inviteGameInfo.invitee_nickname = invitee.user_nickname;
+    // 초대자가 같은 유저에게 초대를 중복으로 보낸 경우
     const tmp = (item: InviteGameInfo) =>
       item.invitee_id === inviteGameInfo.invitee_id &&
       item.inviter_id === inviteGameInfo.inviter_id;
     if (!inviteWaitList.some(tmp)) {
       inviteWaitList.push(inviteGameInfo);
+      inviterSocket.to(target.socket_id).emit('invite_game', inviteGameInfo);
     }
-    inviterSocket.to(target.socket_id).emit('invite_game', inviteGameInfo);
   }
 
   @SubscribeMessage('invite_response')
