@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseIntPipe,
   Post,
   Query,
   UseGuards,
@@ -94,8 +95,8 @@ export class RecordController {
   async getDetailRecord(
     @Query('id') userID: string,
     @Query('type') type: string,
-    @Query('page') pageNo: number,
-    @Query('size') pageSize: number
+    @Query('page', ParseIntPipe) pageNo: number,
+    @Query('size', ParseIntPipe) pageSize: number
   ): Promise<{
     records: Record[];
     pageNo: number;
