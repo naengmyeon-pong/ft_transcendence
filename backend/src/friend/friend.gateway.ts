@@ -14,6 +14,10 @@ import {Logger} from '@nestjs/common';
 import {SocketArray} from '@/global-variable/global.socket';
 import {ChatMember} from '@/chat/chat.entity';
 import {Friend} from '@/global-variable/global.friend';
+import {FriendListRepository} from '@/chat/chat.repository';
+import {UserRepository} from '@/user/user.repository';
+import {DataSource, QueryRunner} from 'typeorm';
+import {User} from '@/user/user.entitiy';
 
 @WebSocketGateway({
   namespace: 'pong',
@@ -26,24 +30,41 @@ export class FriendGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private friendService: FriendService,
     private jwtService: JwtService,
     private socketArray: SocketArray,
-    private friend: Friend
+    private friend: Friend,
+    private userRepository: UserRepository,
+    private dataSource: DataSource
   ) {}
 
   @WebSocketServer() nsp: Namespace;
 
   private logger = new Logger('friendGateway');
 
-  handleConnection(@ConnectedSocket() socket: Socket) {
+  async handleConnection(@ConnectedSocket() socket: Socket) {
     const user_id = socket.handshake.query.user_id as string;
-    this.updateFriendState(user_id, socket, '온라인');
+    await this.updateFriendState(user_id, socket, '온라인');
   }
 
-  handleDisconnect(@ConnectedSocket() socket: Socket) {
+  async handleDisconnect(@ConnectedSocket() socket: Socket) {
     const user_id = socket.handshake.query.user_id as string;
-    this.updateFriendState(user_id, socket, '오프라인');
+    await this.updateFriendState(user_id, socket, '오프라인');
   }
 
-  updateFriendState(user_id: string, socket: Socket, state: string) {
+  async updateFriendState(user_id: string, socket: Socket, state: string) {
+    const query_runner: QueryRunner = this.dataSource.createQueryRunner();
+    await query_runner.connect();
+    await query_runner.startTransaction('SERIALIZABLE');
+    let user: User;
+    try {
+      // const user = await this.userRepository.findOneBy({user_id});
+      user = await query_runner.manager
+        .getRepository(User)
+        .findOneBy({user_id});
+      console.log('user: ', user);
+    } catch (e) {
+      console.log(e.message);
+    } finally {
+      query_runner.release();
+    }
     const friends: Set<string> = this.friend.getFriendUsers(user_id);
     if (friends) {
       friends.forEach(e => {
@@ -56,18 +77,23 @@ export class FriendGateway implements OnGatewayConnection, OnGatewayDisconnect {
         }
       });
     }
+    if (!user) {
+      this.friend.removeUser(user_id);
+    }
   }
 
   // state 0 = 오프라인, 1 = 온라인, 2 = 게임중
   @SubscribeMessage('friend-list')
   async handleFriendList(@ConnectedSocket() socket: Socket) {
     const user_id = await this.getUserID(socket);
+    // console.log(user_id, ' get friend_list');
     if (!user_id) {
       return false;
     }
     try {
       const friend_list = await this.friendService.getFriendList(user_id);
       socket.emit('friend-list', friend_list);
+      // console.log(friend_list);
       return true;
     } catch (e) {
       this.logger.log(e.message);

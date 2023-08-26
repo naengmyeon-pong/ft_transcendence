@@ -35,4 +35,12 @@ export class Friend {
       user.delete(user_id);
     }
   }
+
+  removeUser(user_id: string): void {
+    if (this.friend.get(user_id)) {
+      console.log('before: ', this.friend.get(user_id));
+      this.friend.delete(user_id);
+      console.log('after: ', this.friend.get(user_id));
+    }
+  }
 }

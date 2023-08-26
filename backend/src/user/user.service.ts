@@ -53,9 +53,32 @@ export class UserService {
   }
 
   async remove(user_id: string): Promise<void> {
-    const result = await this.userRepository.delete(user_id);
-    if (result.affected === 0) {
+    const query_runner: QueryRunner = this.dataSource.createQueryRunner();
+    await query_runner.connect();
+    await query_runner.startTransaction('SERIALIZABLE');
+    try {
+      // const result = await this.userRepository.delete(user_id, {
+      //   lock: {mode: 'pessimistic_write'},
+      // });
+      const result = await query_runner.manager
+        .getRepository(User)
+        .createQueryBuilder('user')
+        .setLock('pessimistic_write')
+        .delete()
+        .where('user_id = :user_id', {user_id})
+        .execute();
+
+      if (result.affected === 0) {
+        throw new NotFoundException(`${user_id}는 유저가 아닙니다.`);
+      }
+      await query_runner.commitTransaction();
+      console.log('remove');
+    } catch (e) {
+      await query_runner.rollbackTransaction();
+      console.log(e);
       throw new NotFoundException(`${user_id}는 유저가 아닙니다.`);
+    } finally {
+      await query_runner.release();
     }
   }
 
