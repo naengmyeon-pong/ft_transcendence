@@ -592,28 +592,33 @@ export class GameGateway implements OnGatewayDisconnect {
         inviteGameInfo.invitee_id
       );
       this.removeUserInWaitlist(userID); // 랜덤 게임 대기자 삭제
+      console.log(inviteWaitList);
       this.removeUserInInviteWaitlist(userID, true);
+      this.checkPreviousInvitation(userID);
       this.nsp.to(roomInfo.room_name).emit('start_game');
     }
   }
 
   checkPreviousInvitation = (userID: string) => {
-    let idx = -1;
+    const idxArr: number[] = [];
     inviteWaitList.forEach((value, key) => {
       if (value.inviter_id === userID) {
-        idx = key;
+        idxArr.push(key);
         const targetSocket = this.socketArray.getUserSocket(
           value.invitee_id
         ).socket;
-        targetSocket.emit(
-          'inviter_cancel_invite_betray',
-          value.inviter_nickname
-        );
+        targetSocket.emit('inviter_cancel_game_refuse', value.inviter_nickname);
+        targetSocket.leave(value.inviter_id);
       }
     });
-    if (idx !== -1) {
-      inviteWaitList.splice(idx, 1);
+    if (idxArr.length === 0) {
+      return;
     }
+    console.log(inviteWaitList);
+    console.log(idxArr);
+    idxArr.forEach(value => {
+      inviteWaitList.splice(value, 1);
+    });
   };
 
   @SubscribeMessage('invitee_cancel_game_back')
@@ -710,6 +715,7 @@ export class GameGateway implements OnGatewayDisconnect {
       });
     }
     if (idx !== -1) {
+      console.log(inviteWaitList[idx]);
       inviteWaitList.splice(idx, 1);
       return true;
     }
