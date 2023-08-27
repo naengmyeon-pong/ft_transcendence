@@ -14,31 +14,32 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import {Namespace, Socket, Server} from 'socket.io';
-import {User} from 'src/user/user.entitiy';
+import { Namespace, Socket, Server } from 'socket.io';
+import { User } from 'src/user/user.entitiy';
 import {
   GameInfo,
   RoomUserInfo,
   JoinGameInfo,
   InviteGameInfo,
 } from '@/types/game';
-import {GameUser} from './types/game-user.interface';
-import {KeyData} from './types/key-data.interface';
-import {RoomInfo} from './types/room-info.interface';
-import {EUserIndex} from './types/user-index.enum';
-import {UserRepository} from 'src/user/user.repository';
-import {RecordRepository} from 'src/record/record.repository';
-import {ModeRepository} from 'src/record/mode/mode.repository';
-import {TypeRepository} from 'src/record/type/type.repository';
-import {JwtService} from '@nestjs/jwt';
-import {GameService} from './game.service';
-import {GlobalVariableModule} from '@/global-variable/global-variable.module';
-import {Type} from '@/record/type/type.entity';
-import {Mode} from '@/record/mode/mode.entity';
-import {SocketArray} from '@/global-variable/global.socket';
-import {ETypeMode} from './types/type-mode.enum';
-import {Payload} from '@/user/payload';
-import {Friend} from '@/global-variable/global.friend';
+import { GameUser } from './types/game-user.interface';
+import { KeyData } from './types/key-data.interface';
+import { RoomInfo } from './types/room-info.interface';
+import { EUserIndex } from './types/user-index.enum';
+import { UserRepository } from 'src/user/user.repository';
+import { RecordRepository } from 'src/record/record.repository';
+import { ModeRepository } from 'src/record/mode/mode.repository';
+import { TypeRepository } from 'src/record/type/type.repository';
+import { JwtService } from '@nestjs/jwt';
+import { GameService } from './game.service';
+import { GlobalVariableModule } from '@/global-variable/global-variable.module';
+import { Type } from '@/record/type/type.entity';
+import { Mode } from '@/record/mode/mode.entity';
+import { SocketArray } from '@/global-variable/global.socket';
+import { ETypeMode } from './types/type-mode.enum';
+import { Payload } from '@/user/payload';
+import { Friend } from '@/global-variable/global.friend';
+import { AuthGuard } from '@nestjs/passport';
 
 const waitUserList: GameUser[][] = [[], [], [], []];
 
@@ -63,7 +64,7 @@ export class GameGateway implements OnGatewayDisconnect {
     private jwtService: JwtService,
     private socketArray: SocketArray,
     private friend: Friend
-  ) {}
+  ) { }
   @WebSocketServer() nsp: Namespace;
 
   async afterInit() {
@@ -80,7 +81,7 @@ export class GameGateway implements OnGatewayDisconnect {
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
     let inviteGameInfo: InviteGameInfo | null;
-    const {userID} = this.getUserID(socket);
+    const { userID } = this.getUserID(socket);
     if (this.isUserGaming(userID)) {
       // 유저가 게임 중인 경우
       const roomName: string | null = this.gameService.isForfeit(userID);
@@ -158,7 +159,7 @@ export class GameGateway implements OnGatewayDisconnect {
   @SubscribeMessage('exit_game') // 유저가 게임 중에 페이지를 이탈한 경우
   handleExitGame(@ConnectedSocket() socket: Socket) {
     // TODO: 토큰이 만료됐을 때,
-    const {userID} = this.getUserID(socket);
+    const { userID } = this.getUserID(socket);
     const roomName: string | null = this.gameService.isForfeit(userID);
     if (roomName) {
       const roomInfo = gameRooms.get(roomName);
@@ -182,7 +183,7 @@ export class GameGateway implements OnGatewayDisconnect {
   ) {
     const typeMode = findTypeMode(joinGameInfo);
     const waitUsers: GameUser[] = waitUserList[typeMode];
-    const {userID} = this.getUserID(socket);
+    const { userID } = this.getUserID(socket);
     let isFound = false;
     let index = -1;
     waitUsers.forEach((value, key) => {
@@ -204,11 +205,11 @@ export class GameGateway implements OnGatewayDisconnect {
     @ConnectedSocket() socket: Socket,
     @MessageBody() joinGameInfo: JoinGameInfo
   ) {
-    const {userID, isExpired} = this.getUserID(socket);
+    const { userID, isExpired } = this.getUserID(socket);
     if (isExpired) {
       return;
     }
-    const keys: KeyData = {up: false, down: false};
+    const keys: KeyData = { up: false, down: false };
     const waitingUser: GameUser = {
       user_id: userID,
       socket_id: socket.id,
@@ -218,16 +219,16 @@ export class GameGateway implements OnGatewayDisconnect {
     if (this.isGameMatched(joinGameInfo, waitingUser) === false) {
       return;
     } else {
-      const {firstUserId, secondUserId} = await this.createRoom(waitingUser);
+      const { firstUserId, secondUserId } = await this.createRoom(waitingUser);
       this.updateState(true, firstUserId, secondUserId);
-      this.removeUserInInviteWaitlist(firstUserId, false);
-      this.removeUserInInviteWaitlist(secondUserId, false);
+      this.removeInviteWaitlistJoinGame(firstUserId);
+      this.removeInviteWaitlistJoinGame(secondUserId);
     }
   }
 
   createRoom = async (
     userSocket: GameUser
-  ): Promise<{firstUserId: string; secondUserId: string}> => {
+  ): Promise<{ firstUserId: string; secondUserId: string }> => {
     const gameUsers: GameUser[] = [];
     const firstUser = waitUserList[userSocket.type_mode].shift();
     const secondUser = userSocket;
@@ -244,7 +245,7 @@ export class GameGateway implements OnGatewayDisconnect {
       secondUser.user_id
     );
     const firstInfo = this.socketArray.getUserSocket(firstUser.user_id);
-    firstInfo.socket.emit('notice', {notice: `${right_user}이 입장했습니다.`});
+    firstInfo.socket.emit('notice', { notice: `${right_user}이 입장했습니다.` });
 
     const roomInfo: RoomInfo = gameRooms.get(roomName);
     const gameInfo: GameInfo = roomInfo.game_info;
@@ -260,15 +261,15 @@ export class GameGateway implements OnGatewayDisconnect {
       gameInfo.ball.speed *= 1.5;
     }
     this.nsp.to(roomName).emit('room_name', roomUserInfo);
-    this.nsp.to(roomName).emit('game_info', {game_info: gameInfo});
+    this.nsp.to(roomName).emit('game_info', { game_info: gameInfo });
 
-    return {firstUserId, secondUserId};
+    return { firstUserId, secondUserId };
   };
 
   createInviteGameRoom = (inviteGameInfo: InviteGameInfo) => {
     const gameUsers: GameUser[] = [];
-    const leftKeys: KeyData = {up: false, down: false};
-    const rightKeys: KeyData = {up: false, down: false};
+    const leftKeys: KeyData = { up: false, down: false };
+    const rightKeys: KeyData = { up: false, down: false };
     const inviterSocketID = this.socketArray.getUserSocket(
       inviteGameInfo.inviter_id
     ).socket_id;
@@ -329,12 +330,12 @@ export class GameGateway implements OnGatewayDisconnect {
     leftUserID: string,
     rightUserID: string
   ): Promise<[string, string]> => {
-    const left = await this.userRepository.findOneBy({user_id: leftUserID});
+    const left = await this.userRepository.findOneBy({ user_id: leftUserID });
     if (left === null) {
       throw new InternalServerErrorException();
     }
     const leftUser = left.user_nickname;
-    const right = await this.userRepository.findOneBy({user_id: rightUserID});
+    const right = await this.userRepository.findOneBy({ user_id: rightUserID });
     if (left === null) {
       throw new InternalServerErrorException();
     }
@@ -365,7 +366,7 @@ export class GameGateway implements OnGatewayDisconnect {
   handleKeyDown(
     @ConnectedSocket() socket: Socket,
     @MessageBody()
-    {room_name, up, down}: {room_name: string; up: boolean; down: boolean}
+    { room_name, up, down }: { room_name: string; up: boolean; down: boolean }
   ) {
     const roomInfo: RoomInfo = gameRooms.get(room_name);
     if (this.gameService.isLeftUser(roomInfo, socket.id) === true) {
@@ -435,22 +436,22 @@ export class GameGateway implements OnGatewayDisconnect {
   sendGameInfo = (roomInfo: RoomInfo) => {
     this.nsp
       .to(roomInfo.room_name)
-      .emit('game_info', {game_info: roomInfo.game_info});
+      .emit('game_info', { game_info: roomInfo.game_info });
   };
 
-  getUserID = (socket: Socket): {userID: string; isExpired: boolean} => {
+  getUserID = (socket: Socket): { userID: string; isExpired: boolean } => {
     const jwt: string = socket.handshake.auth.token;
     try {
       const decodedToken = this.jwtService.verify(jwt, {
         secret: process.env.SIGNIN_JWT_SECRET_KEY,
       });
-      return {userID: decodedToken.user_id, isExpired: false};
+      return { userID: decodedToken.user_id, isExpired: false };
     } catch (e) {
       this.logger.log('token expire');
       socket.emit('token-expire');
       const decodedToken: any = this.jwtService.decode(jwt);
       if (decodedToken !== null) {
-        return {userID: decodedToken.user_id, isExpired: true};
+        return { userID: decodedToken.user_id, isExpired: true };
       }
     }
   };
@@ -468,7 +469,7 @@ export class GameGateway implements OnGatewayDisconnect {
     @ConnectedSocket() inviterSocket: Socket,
     @MessageBody() inviteGameInfo: InviteGameInfo
   ): Promise<string | null> {
-    const {userID, isExpired} = this.getUserID(inviterSocket);
+    const { userID, isExpired } = this.getUserID(inviterSocket);
     if (isExpired) {
       return;
     }
@@ -515,7 +516,7 @@ export class GameGateway implements OnGatewayDisconnect {
     const targetSocketID = this.socketArray.getUserSocket(
       inviteGameInfo.inviter_id
     ).socket_id;
-    const {userID, isExpired} = this.getUserID(inviteeSocket);
+    const { userID, isExpired } = this.getUserID(inviteeSocket);
     if (isExpired) {
       this.changeInviteGameState(inviteGameInfo.inviter_id, false);
       inviteeSocket
@@ -566,21 +567,21 @@ export class GameGateway implements OnGatewayDisconnect {
     {
       inviteGameInfo,
       is_inviter,
-    }: {inviteGameInfo: InviteGameInfo; is_inviter: boolean}
+    }: { inviteGameInfo: InviteGameInfo; is_inviter: boolean }
   ) {
-    const {userID} = this.getUserID(socket);
-    console.log('gg');
+    const { userID } = this.getUserID(socket);
     if (is_inviter === true) {
       // 초대자가 최종 거절해서 게임을 취소한 경우
       gameRooms.delete(userID);
-      this.removeUserInInviteWaitlist(userID, false, false);
+      this.removeInviteWaitlistCancelGame(userID, inviteGameInfo.invitee_id, true);
     } else if (inviteGameInfo !== undefined && is_inviter === false) {
       // 피초대자가 수락한 뒤에 게임방에서 나간 경우
       if (userID !== inviteGameInfo.invitee_id) {
         return false;
       }
       gameRooms.delete(inviteGameInfo.inviter_id);
-      this.removeUserInInviteWaitlist(userID, false);
+      this.removeInviteWaitlistCancelGame(userID, inviteGameInfo.inviter_id, false);
+
     }
   }
 
@@ -591,12 +592,12 @@ export class GameGateway implements OnGatewayDisconnect {
     @MessageBody() inviteGameInfo: InviteGameInfo
   ) {
     const roomInfo: RoomInfo = gameRooms.get(inviteGameInfo.inviter_id);
-    const {userID, isExpired} = this.getUserID(socket);
-    if (isExpired) {
-      this.removeUserInInviteWaitlist(userID, false);
+    const { userID, isExpired } = this.getUserID(socket);
+    if (isExpired === true) {
+      this.removeInviteWaitlistEnterGameExpired(userID, inviteGameInfo); // jwt 만료된 경우
       return;
     }
-    socket.emit('game_info', {game_info: roomInfo.game_info});
+    socket.emit('game_info', { game_info: roomInfo.game_info });
     if (userID === inviteGameInfo.invitee_id) {
       // 첫 번재로 들어온 유저 (피초대자)
       this.removeUserInWaitlist(userID); // 랜덤 게임 대기자 삭제
@@ -610,7 +611,6 @@ export class GameGateway implements OnGatewayDisconnect {
         inviteGameInfo.invitee_id
       );
       this.removeUserInWaitlist(userID); // 랜덤 게임 대기자 삭제
-      console.log(inviteWaitList);
       this.removeInviteWaitlistEnterGame(userID, inviteGameInfo.invitee_id);
       this.nsp.to(roomInfo.room_name).emit('start_game');
     }
@@ -631,8 +631,6 @@ export class GameGateway implements OnGatewayDisconnect {
     if (idxArr.length === 0) {
       return;
     }
-    console.log(inviteWaitList);
-    console.log(idxArr);
     idxArr.forEach(value => {
       inviteWaitList.splice(value, 1);
     });
@@ -665,6 +663,135 @@ export class GameGateway implements OnGatewayDisconnect {
     );
   }
 
+  // 랜덤 매칭 시작 시, 기존에 주고받은 초대를 리스트에서 제거
+  removeInviteWaitlistJoinGame = (userID: string) => {
+    const canceled: number[] = [];
+    inviteWaitList.forEach((value, key) => {
+      if (value.inviter_id === userID) {
+        // 자신이 초대한 경우
+        canceled.push(key);
+        const targetSocket = this.socketArray.getUserSocket(value.invitee_id).socket;
+        targetSocket.leave(value.inviter_id);
+        targetSocket.emit(
+          'inviter_cancel_invite_betray',
+          value.inviter_nickname
+        );
+      } else if (value.invitee_id === userID) {
+        // 자신이 초대받은 경우
+        canceled.push(key);
+        const targetSocket = this.socketArray.getUserSocket(value.inviter_id).socket;
+        targetSocket.leave(value.inviter_id);
+        targetSocket.emit(
+          'inviter_cancel_invite_betray',
+          value.invitee_nickname
+        );
+      }
+    });
+    canceled.forEach(value => {
+      inviteWaitList.splice(value, 1);
+    });
+  }
+
+  // 유저가 게임을 취소한 경우
+  removeInviteWaitlistCancelGame = (userID: string, otherID: string, isInviter: boolean) => {
+    let idx = -1;
+    // 리스트에서 해당 게임을 찾는다
+    inviteWaitList.forEach((value, key) => {
+      if (isInviter === true) {
+        if (value.inviter_id === userID && value.invitee_id === otherID) {
+          // 초대자가 최종거절한 경우
+          idx = key;
+          const userSocket = this.socketArray.getUserSocket(userID).socket;
+          const targetSocket = this.socketArray.getUserSocket(otherID).socket;
+          userSocket.leave(inviteWaitList[idx].inviter_id);
+          targetSocket.leave(inviteWaitList[idx].inviter_id);
+          targetSocket.emit(
+            'inviter_cancel_game_refuse',
+            inviteWaitList[idx].inviter_nickname
+          );
+          return;
+        }
+      } else {
+        if (value.invitee_id === userID && value.inviter_id === otherID) {
+          // 피초대자가 게임대기창에서 나간 경우
+          idx = key;
+          const userSocket = this.socketArray.getUserSocket(userID).socket;
+          const targetSocket = this.socketArray.getUserSocket(otherID).socket;
+          userSocket.leave(inviteWaitList[idx].inviter_id);
+          targetSocket.leave(inviteWaitList[idx].inviter_id);
+          targetSocket.emit(
+            'invitee_cancel_game_out',
+            inviteWaitList[idx].invitee_nickname
+          );
+          return;
+        }
+      }
+    });
+    if (idx === -1) {
+      return;
+    }
+    inviteWaitList.splice(idx, 1);
+  };
+
+  // 유저가 초대에 수락하여 게임에 들어갈 때 토큰이 만료된 경우
+  removeInviteWaitlistEnterGameExpired = (userID: string, inviteGameInfo: InviteGameInfo) => {
+    let idx = -1;
+    const canceled: number[] = [];
+    inviteWaitList.forEach((value, key) => {
+      if (value.inviter_id === userID && value.invitee_id === inviteGameInfo.invitee_id) {
+        // 초대자가 최종수락한 시점에 토큰이 만료된 경우
+        idx = key;
+        const targetSocket = this.socketArray.getUserSocket(inviteGameInfo.invitee_id).socket;
+        targetSocket.leave(value.inviter_id);
+        targetSocket.emit(
+          'inviter_cancel_game_betray',
+          value.inviter_nickname
+        );
+      } else if (value.invitee_id === userID && value.inviter_id === inviteGameInfo.inviter_id) {
+        // 피초대자가 초대를 수락한 시점에 토큰이 만료된 경우
+        idx = key;
+        const targetSocket = this.socketArray.getUserSocket(inviteGameInfo.inviter_id).socket;
+        targetSocket.leave(value.inviter_id);
+        targetSocket.emit(
+          'inviter_cancel_game_betray',
+          value.invitee_nickname
+        );
+      } else if (value.inviter_id === userID || value.invitee_id === userID) {
+        canceled.push(key);
+        if (value.inviter_id === userID) {
+          // 자신이 초대한 다른 게임 유저
+          const targetSocket = this.socketArray.getUserSocket(
+            value.invitee_id
+          ).socket;
+          targetSocket.emit(
+            'inviter_cancel_game_refuse',
+            value.inviter_nickname
+          );
+          targetSocket.leave(value.inviter_id);
+        } else {
+          // 자신이 초대받은 다른 게임 유저
+          const targetSocket = this.socketArray.getUserSocket(
+            value.inviter_id).socket;
+          targetSocket.emit(
+            'inviter_cancel_game_refuse',
+            value.invitee_nickname
+          );
+          targetSocket.leave(value.inviter_id);
+        }
+
+        const targetSocket = this.socketArray.getUserSocket(
+          value.invitee_id
+        ).socket;
+        targetSocket.emit(
+          'inviter_cancel_game_refuse',
+          value.inviter_nickname
+        );
+        targetSocket.leave(value.inviter_id);
+      }
+    });
+  };
+
+  // 게임을 시작할 때, 해당 게임을 대기 리스트에서 지우고 다른 유저와 주고받은 게임 초대를 지우는 함수
   removeInviteWaitlistEnterGame = (userID: string, inviteeID: string) => {
     let idx = -1;
     const canceled: number[] = [];
@@ -691,88 +818,6 @@ export class GameGateway implements OnGatewayDisconnect {
     canceled.forEach(value => {
       inviteWaitList.splice(value, 1);
     });
-  };
-
-  removeUserInInviteWaitlist = (
-    userID: string,
-    isInviteGameBegin: boolean,
-    isException = true
-  ): boolean => {
-    // let idx = -1;
-    const idxArr: number[] = [];
-    if (isInviteGameBegin === true) {
-      // 초대매칭이 시작된 경우
-      inviteWaitList.forEach((value, key) => {
-        if (value.inviter_id === userID) {
-          idxArr.push(key);
-          // idx = key;
-        }
-      });
-    } else if (isInviteGameBegin === false) {
-      // 초대매칭이 시작되기 전에 취소된 경우
-      inviteWaitList.forEach((value, key) => {
-        if (value.inviter_id === userID) {
-          // idx = key;
-          idxArr.push(key);
-          const targetID = value.invitee_id;
-          const targetSocket = this.socketArray.getUserSocket(targetID).socket;
-          if (isException) {
-            if (value.state === undefined) {
-              // 피초대자가 수락하기 전
-              targetSocket.leave(value.inviter_id);
-              targetSocket.emit(
-                'inviter_cancel_invite_betray',
-                value.inviter_nickname
-              );
-            } else {
-              // 피초대자가 수락한 후 초대자가 랜덤매칭으로 이동
-              targetSocket.leave(value.inviter_id);
-              targetSocket.emit(
-                'inviter_cancel_game_betray',
-                value.invitee_nickname
-              );
-            }
-          } else {
-            // 초대자가 최종거절한 경우
-            targetSocket.leave(value.inviter_id);
-            targetSocket.emit(
-              'inviter_cancel_game_refuse',
-              value.inviter_nickname
-            );
-          }
-        } else if (value.invitee_id === userID) {
-          idxArr.push(key);
-          // idx = key;
-          const targetID = value.inviter_id;
-          const targetSocket = this.socketArray.getUserSocket(targetID).socket;
-
-          if (isException) {
-            // 피초대자가 게임대기창에서 나간 경우
-            const inviterSocket = this.socketArray.getUserSocket(
-              value.inviter_id
-            ).socket;
-            inviterSocket.leave(value.inviter_id);
-            targetSocket.leave(value.inviter_id);
-            targetSocket.emit(
-              'invitee_cancel_game_out',
-              value.inviter_nickname
-            );
-          }
-        }
-      });
-    }
-    // if (idx !== -1) {
-    //   console.log(inviteWaitList[idx]);
-    //   inviteWaitList.splice(idx, 1);
-    //   return true;
-    // }
-    if (idxArr.length !== 0) {
-      idxArr.forEach(value => {
-        inviteWaitList.splice(value, 1);
-        return true;
-      });
-    }
-    return false;
   };
 
   removeUserInWaitlist = (userID: string): boolean => {
@@ -820,7 +865,7 @@ export class GameGateway implements OnGatewayDisconnect {
         if (friend) {
           this.nsp
             .to(friend.socket_id)
-            .emit('update-friend-state', {userId: userID, state});
+            .emit('update-friend-state', { userId: userID, state });
         }
       });
     }
