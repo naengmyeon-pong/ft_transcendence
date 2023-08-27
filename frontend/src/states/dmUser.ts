@@ -6,11 +6,6 @@ export const dmUserInfo = atom<UserType | null>({
   default: null,
 });
 
-export const dmNotify = atom<Map<string, number>>({
-  key: 'dmNotify',
-  default: new Map<string, number>(),
-});
-
 export const dmList = atom<DmListData[]>({
   key: 'dmList',
   default: [],
