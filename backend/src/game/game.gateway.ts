@@ -80,6 +80,7 @@ export class GameGateway implements OnGatewayDisconnect {
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
+    console.log('invite list: ', inviteWaitList);
     let inviteGameInfo: InviteGameInfo | null;
     const { userID } = this.getUserID(socket);
     if (this.isUserGaming(userID)) {
@@ -531,6 +532,8 @@ export class GameGateway implements OnGatewayDisconnect {
       }
       this.changeInviteGameState(inviteGameInfo.inviter_id, true);
       this.createInviteGameRoom(inviteGameInfo);
+    } else {
+      this.removeInviteWaitlistInviteResponse(userID);
     }
     inviteeSocket
       .to(`${targetSocketID}`)
@@ -662,6 +665,17 @@ export class GameGateway implements OnGatewayDisconnect {
       inviteGameInfo.invitee_nickname
     );
   }
+
+  removeInviteWaitlistInviteResponse = (userID: string) => {
+    let idx = -1;
+    inviteWaitList.forEach((value, key) => {
+      if (value.invitee_id === userID) {
+        idx = key;
+        return;
+      }
+    });
+    inviteWaitList.splice(idx, 1);
+  };
 
   // 랜덤 매칭 시작 시, 기존에 주고받은 초대를 리스트에서 제거
   removeInviteWaitlistJoinGame = (userID: string) => {
