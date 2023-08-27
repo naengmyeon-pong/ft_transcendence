@@ -26,8 +26,9 @@ export default function InviteGame() {
   const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
   const [invite_game_state, setInviteGameState] =
     useRecoilState(inviteGameState);
-  const start_geme_prev_unload = useRef(true);
   const {openGlobalModal, closeGlobalModal} = useGlobalModal();
+  const start_geme_prev_unload = useRef(true);
+  const is_game_over_ref = useRef(false);
 
   const handleInviteGameInfo = useCallback(
     ({game_info}: {game_info: GameInfo}) => {
@@ -36,6 +37,7 @@ export default function InviteGame() {
       }
       setGameInfo(game_info);
       if (game_info.leftScore === 5 || game_info.rightScore === 5) {
+        is_game_over_ref.current = true;
         const winner =
           game_info.leftScore > game_info.rightScore
             ? sessionStorage.getItem('left_user')
@@ -124,7 +126,6 @@ export default function InviteGame() {
       chat_socket?.off('inviter_cancel_game_betray', exitCancelGame);
       chat_socket?.off('start_game');
       if (start_geme_prev_unload.current) {
-        console.log('??');
         chat_socket?.emit('invitee_cancel_game_back', invite_game_state);
       }
     };
@@ -136,6 +137,19 @@ export default function InviteGame() {
     invite_game_state,
     exitCancelGame,
   ]);
+
+  useEffect(() => {
+    is_game_over_ref.current = false;
+    start_geme_prev_unload.current = true;
+    return () => {
+      if (
+        start_geme_prev_unload.current === false &&
+        is_game_over_ref.current === false
+      ) {
+        chat_socket?.emit('exit_game');
+      }
+    };
+  }, [chat_socket]);
 
   return <InviteGameView gameInfo={gameInfo} />;
 }

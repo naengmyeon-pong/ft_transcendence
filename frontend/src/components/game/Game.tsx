@@ -1,6 +1,6 @@
 'use client';
 
-import {useContext, useEffect, useState} from 'react';
+import {useContext, useEffect, useRef, useState} from 'react';
 
 import {useRecoilState} from 'recoil';
 import axios from 'axios';
@@ -29,6 +29,8 @@ function Game() {
   const socket = useContext(UserContext).chat_socket;
   const [profileDataState, setProfileDataState] = useRecoilState(profileState);
   const {openAlertSnackbar} = useAlertSnackbar();
+  const is_game_over_ref = useRef(false);
+  const is_game_start_ref = useRef(false);
 
   const handleUnload = () => {
     if (isWaitingGame === true) {
@@ -76,6 +78,7 @@ function Game() {
       socket?.emit('update_frame', room_name);
       setIsStartingGame(true);
       setIsWaitingGame(false);
+      is_game_start_ref.current = true;
     }
   };
 
@@ -86,6 +89,7 @@ function Game() {
     setGameInfo(game_info);
     if (game_info.leftScore === 5 || game_info.rightScore === 5) {
       setIsGameOver(true);
+      is_game_over_ref.current = true;
       try {
         const response = await apiManager.get('/user/user-info');
         const {rank_score} = response.data;
@@ -99,6 +103,19 @@ function Game() {
       }
     }
   };
+
+  useEffect(() => {
+    is_game_start_ref.current = false;
+    is_game_over_ref.current = false;
+    return () => {
+      if (
+        is_game_start_ref.current === true &&
+        is_game_over_ref.current === false
+      ) {
+        socket?.emit('exit_game');
+      }
+    };
+  }, [socket]);
 
   useEffect(() => {
     socket?.on('notice', handleNotice);
