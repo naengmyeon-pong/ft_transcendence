@@ -81,6 +81,7 @@ export class GameGateway implements OnGatewayDisconnect {
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
     console.log('invite list: ', inviteWaitList);
+    console.log('game rooms: ', gameRooms);
     let inviteGameInfo: InviteGameInfo | null;
     const { userID } = this.getUserID(socket);
     if (this.isUserGaming(userID)) {
@@ -119,7 +120,14 @@ export class GameGateway implements OnGatewayDisconnect {
         targetSocket.leave(inviteGameInfo.inviter_id);
         targetSocket.emit('invitee_cancel_game_refresh', targetNickname);
       }
-      const idx = inviteWaitList.indexOf(inviteGameInfo);
+      let idx = -1;
+      inviteWaitList.forEach((value, key) => {
+        if ((value.inviter_id === userID && value.invitee_id == inviteGameInfo.invitee_id) 
+          || (value.invitee_id === userID && value.inviter_id === inviteGameInfo.invitee_id)) {
+            idx = key;
+            return;
+          }
+      });
       inviteWaitList.splice(idx, 1);
     }
     this.socketArray.removeSocketArray(userID);
@@ -576,14 +584,15 @@ export class GameGateway implements OnGatewayDisconnect {
     if (is_inviter === true) {
       // 초대자가 최종 거절해서 게임을 취소한 경우
       gameRooms.delete(userID);
-      this.removeInviteWaitlistCancelGame(userID, inviteGameInfo.invitee_id, true);
+      // this.removeInviteWaitlistCancelGame(true, userID, inviteGameInfo.invitee_id);
+      this.removeInviteWaitlistCancelGame(true, userID); // inviteGameInfo가 null로 와서 임시로 사용
     } else if (inviteGameInfo !== undefined && is_inviter === false) {
       // 피초대자가 수락한 뒤에 게임방에서 나간 경우
       if (userID !== inviteGameInfo.invitee_id) {
         return false;
       }
       gameRooms.delete(inviteGameInfo.inviter_id);
-      this.removeInviteWaitlistCancelGame(userID, inviteGameInfo.inviter_id, false);
+      this.removeInviteWaitlistCancelGame(false, userID, inviteGameInfo.inviter_id);
 
     }
   }
@@ -639,14 +648,16 @@ export class GameGateway implements OnGatewayDisconnect {
     });
   };
 
+  // 피초대자가 대기페이지를 뒤로가기하여 이탈한 경우
   @SubscribeMessage('invitee_cancel_game_back')
   handleInviteeCancelGameBack(
     @ConnectedSocket() inviteeSocket: Socket,
     @MessageBody() inviteGameInfo: InviteGameInfo
   ) {
+    const {userID} = this.getUserID(inviteeSocket);
     let idx = -1;
     inviteWaitList.forEach((value, key) => {
-      if (value.inviter_id === inviteGameInfo.inviter_id) {
+      if (value.invitee_id === userID && value.inviter_id === inviteGameInfo.inviter_id) {
         idx = key;
         return;
       }
@@ -664,6 +675,7 @@ export class GameGateway implements OnGatewayDisconnect {
       'invitee_cancel_game_back',
       inviteGameInfo.invitee_nickname
     );
+    console.log('game canceled');
   }
 
   removeInviteWaitlistInviteResponse = (userID: string) => {
@@ -674,7 +686,9 @@ export class GameGateway implements OnGatewayDisconnect {
         return;
       }
     });
-    inviteWaitList.splice(idx, 1);
+    if (idx !== -1) {
+      inviteWaitList.splice(idx, 1);
+    }
   };
 
   // 랜덤 매칭 시작 시, 기존에 주고받은 초대를 리스트에서 제거
@@ -707,25 +721,29 @@ export class GameGateway implements OnGatewayDisconnect {
   }
 
   // 유저가 게임을 취소한 경우
-  removeInviteWaitlistCancelGame = (userID: string, otherID: string, isInviter: boolean) => {
+  removeInviteWaitlistCancelGame = (isInviter: boolean, userID: string, otherID?: string) => {
     let idx = -1;
     // 리스트에서 해당 게임을 찾는다
-    inviteWaitList.forEach((value, key) => {
-      if (isInviter === true) {
-        if (value.inviter_id === userID && value.invitee_id === otherID) {
+    if (isInviter === true) {
+      inviteWaitList.forEach((value, key) => {
+        // if (value.inviter_id === userID && value.invitee_id === otherID) {
+        if (value.inviter_id === userID) { // 임시
           // 초대자가 최종거절한 경우
           idx = key;
           const userSocket = this.socketArray.getUserSocket(userID).socket;
-          const targetSocket = this.socketArray.getUserSocket(otherID).socket;
+          // const targetSocket = this.socketArray.getUserSocket(otherID).socket;
+          const targetSocket = this.socketArray.getUserSocket(value.invitee_id).socket; // 임시
           userSocket.leave(inviteWaitList[idx].inviter_id);
           targetSocket.leave(inviteWaitList[idx].inviter_id);
           targetSocket.emit(
             'inviter_cancel_game_refuse',
             inviteWaitList[idx].inviter_nickname
-          );
-          return;
-        }
+            );
+            return;
+          }
+        });
       } else {
+        inviteWaitList.forEach((value, key) => {
         if (value.invitee_id === userID && value.inviter_id === otherID) {
           // 피초대자가 게임대기창에서 나간 경우
           idx = key;
@@ -739,12 +757,12 @@ export class GameGateway implements OnGatewayDisconnect {
           );
           return;
         }
+      });
       }
-    });
-    if (idx === -1) {
+    if (idx !== -1) {
+      inviteWaitList.splice(idx, 1);
       return;
     }
-    inviteWaitList.splice(idx, 1);
   };
 
   // 유저가 초대에 수락하여 게임에 들어갈 때 토큰이 만료된 경우
