@@ -7,17 +7,17 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { FriendService } from './friend.service';
-import { Namespace, Socket } from 'socket.io';
-import { JwtService } from '@nestjs/jwt';
-import { Logger } from '@nestjs/common';
-import { SocketArray } from '@/global-variable/global.socket';
-import { ChatMember } from '@/chat/chat.entity';
-import { Friend } from '@/global-variable/global.friend';
-import { FriendListRepository } from '@/chat/chat.repository';
-import { UserRepository } from '@/user/user.repository';
-import { DataSource, QueryRunner } from 'typeorm';
-import { User } from '@/user/user.entitiy';
+import {FriendService} from './friend.service';
+import {Namespace, Socket} from 'socket.io';
+import {JwtService} from '@nestjs/jwt';
+import {Logger} from '@nestjs/common';
+import {SocketArray} from '@/global-variable/global.socket';
+import {ChatMember} from '@/chat/chat.entity';
+import {Friend} from '@/global-variable/global.friend';
+import {FriendListRepository} from '@/chat/chat.repository';
+import {UserRepository} from '@/user/user.repository';
+import {DataSource, QueryRunner} from 'typeorm';
+import {User} from '@/user/user.entitiy';
 
 @WebSocketGateway({
   namespace: 'pong',
@@ -30,24 +30,24 @@ export class FriendGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private friendService: FriendService,
     private jwtService: JwtService,
     private socketArray: SocketArray,
-    private friend: Friend,
-  ) { }
+    private friend: Friend
+  ) {}
 
   @WebSocketServer() nsp: Namespace;
 
   private logger = new Logger('friendGateway');
 
-  async handleConnection(@ConnectedSocket() socket: Socket) {
+  handleConnection(@ConnectedSocket() socket: Socket) {
     const user_id = socket.handshake.query.user_id as string;
-    await this.updateFriendState(user_id, socket, '온라인');
+    this.updateFriendState(user_id, socket, '온라인');
   }
 
-  async handleDisconnect(@ConnectedSocket() socket: Socket) {
+  handleDisconnect(@ConnectedSocket() socket: Socket) {
     const user_id = socket.handshake.query.user_id as string;
-    await this.updateFriendState(user_id, socket, '오프라인');
+    this.updateFriendState(user_id, socket, '오프라인');
   }
 
-  async updateFriendState(user_id: string, socket: Socket, state: string) {
+  updateFriendState(user_id: string, socket: Socket, state: string) {
     const friends: Set<string> = this.friend.getFriendUsers(user_id);
     if (friends) {
       friends.forEach(e => {
