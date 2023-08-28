@@ -42,8 +42,8 @@ export default function ActionGameAlarm({
         if (res === true){
           setInviteGameState(row.invite_game_info);
           router.push('/main/game');
-          removeGameNoti();
         }
+        removeGameNoti();
       });
     }
   }

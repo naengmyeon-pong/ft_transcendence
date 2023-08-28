@@ -91,6 +91,7 @@ export default function AlarmEvent() {
     setGameAlarm(prev => {
       console.log('초대자 나감rep: ', rep);
       const foundIndex = prev.findIndex(item => {
+        console.log('item : ', item);
         if (typeof item.invite_game_info !== 'string') {
           return item.invite_game_info.inviter_nickname === rep;
         }
@@ -143,6 +144,14 @@ export default function AlarmEvent() {
     });
   }, []);
 
+  const inviteeIsGameing = useCallback((rep: string) => {
+    const tmp: InviteGameInfoProps = {
+      invite_game_info: rep,
+      event_type: InviteGameEnum.INVITEE_OFF,
+    };
+    setGameAlarm(prev => [...prev, tmp]);
+  }, []);
+
   // 게임 초대 관련 이벤트
   useEffect(() => {
     // 초대
@@ -158,6 +167,7 @@ export default function AlarmEvent() {
     // 초대자가 초대를 보내고 B가 수락하기 전에 랜덤게임을 시작한 경우
     chat_socket?.on('inviter_cancel_invite_betray', inviterLogOut);
     chat_socket?.on('invitee_cancel_game_back', inviteeLogOut);
+    chat_socket?.on('invitee_cancel_invite_betray', inviteeIsGameing);
     return () => {
       chat_socket?.off('invite_game', inviteGameEvent);
       chat_socket?.off('invite_response', inviteGameMoveEvent);
@@ -166,6 +176,7 @@ export default function AlarmEvent() {
       chat_socket?.off('invitee_cancel_game_refresh', inviteeLogOut);
       chat_socket?.off('inviter_cancel_invite_betray', inviterLogOut);
       chat_socket?.off('invitee_cancel_game_back', inviteeLogOut);
+      chat_socket?.on('invitee_cancel_invite_betray', inviteeIsGameing);
     };
   }, [
     chat_socket,
@@ -174,6 +185,7 @@ export default function AlarmEvent() {
     cancelGameAlarm,
     inviterLogOut,
     inviteeLogOut,
+    inviteeIsGameing,
   ]);
 
   const handleChatAlarm = useCallback(

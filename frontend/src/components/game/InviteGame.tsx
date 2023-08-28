@@ -29,6 +29,7 @@ export default function InviteGame() {
   const {openGlobalModal, closeGlobalModal} = useGlobalModal();
   const start_geme_prev_unload = useRef(true);
   const is_game_over_ref = useRef(false);
+  const is_inviter_game_cancel = useRef(false);
 
   const handleInviteGameInfo = useCallback(
     ({game_info}: {game_info: GameInfo}) => {
@@ -63,6 +64,7 @@ export default function InviteGame() {
   const exitCancelGame = useCallback(
     (rep: InviteGameInfo) => {
       alert(`${rep} 님이 게임을 취소하였습니다`);
+      is_inviter_game_cancel.current = true;
       setInviteGameState(null);
     },
     [setInviteGameState]
@@ -130,7 +132,7 @@ export default function InviteGame() {
       chat_socket?.off('inviter_cancel_game_refuse', exitCancelGame);
       chat_socket?.off('inviter_cancel_game_betray', exitCancelGame);
       chat_socket?.off('start_game');
-      if (start_geme_prev_unload.current) {
+      if (start_geme_prev_unload.current && !is_inviter_game_cancel.current) {
         console.log('??');
         chat_socket?.emit('invitee_cancel_game_back', invite_game_state);
       }
