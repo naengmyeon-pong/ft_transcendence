@@ -88,7 +88,9 @@ export class GameGateway implements OnGatewayDisconnect {
       // 유저가 게임 중인 경우
       const roomName: string | null = this.gameService.isForfeit(userID);
       if (roomName) {
+        console.log('roomname: ', roomName);
         const roomInfo = gameRooms.get(roomName);
+        console.log('info: ', roomInfo);
         this.sendGameInfo(roomInfo);
         clearInterval(roomInfo.interval);
         gameRooms.delete(roomName);
@@ -184,7 +186,7 @@ export class GameGateway implements OnGatewayDisconnect {
       } else {
         targetID = roomInfo.users[0].user_id;
       }
-      this.updateState(false, targetID);
+      this.updateState(false, userID, targetID);
       gameRooms.delete(roomName);
     }
   }
@@ -715,10 +717,17 @@ export class GameGateway implements OnGatewayDisconnect {
           value.invitee_id
         ).socket;
         targetSocket.leave(value.inviter_id);
-        targetSocket.emit(
-          'inviter_cancel_invite_betray',
-          value.inviter_nickname
-        );
+        targetSocket.emit('inviter_cancel_game_betray', value.inviter_nickname);
+        const userSocket = this.socketArray.getUserSocket(userID).socket;
+        userSocket.emit('inviter_cancel_game_refresh', value.inviter_nickname);
+        if (value.state === true) {
+          // room이 생성된 경우
+          const roomInfo = gameRooms.get(value.inviter_id);
+          if (roomInfo.users[1].user_id === value.invitee_id) {
+            // 기존에 존재하던 room
+            gameRooms.delete(value.inviter_id);
+          }
+        }
       } else if (value.invitee_id === userID) {
         // 자신이 초대받은 경우
         canceled.push(key);
@@ -726,10 +735,7 @@ export class GameGateway implements OnGatewayDisconnect {
           value.inviter_id
         ).socket;
         targetSocket.leave(value.inviter_id);
-        targetSocket.emit(
-          'inviter_cancel_invite_betray',
-          value.invitee_nickname
-        );
+        targetSocket.emit('inviter_cancel_game_betray', value.invitee_nickname);
       }
     });
     canceled.forEach(value => {
@@ -915,6 +921,8 @@ export class GameGateway implements OnGatewayDisconnect {
       state = '온라인';
     }
     const friends: Set<string> = this.friend.getFriendUsers(userID);
+    console.log(state);
+    console.log(friends);
     if (friends) {
       friends.forEach(e => {
         const friend = this.socketArray.getUserSocket(e);
