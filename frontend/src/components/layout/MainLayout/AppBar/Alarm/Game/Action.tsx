@@ -32,15 +32,19 @@ export default function ActionGameAlarm({
 
   // B가 누르는 수락
   function inviteTrue() {
-    removeGameNoti();
     if (
       typeof row.invite_game_info === 'object' &&
       row.invite_game_info !== null
     ) {
       row.invite_game_info.state = true;
-      chat_socket?.emit('invite_response', row.invite_game_info);
-      setInviteGameState(row.invite_game_info);
-      router.push('/main/game');
+      chat_socket?.emit('invite_response', row.invite_game_info, (res: Boolean) => {
+        console.log(res);
+        if (res === true){
+          setInviteGameState(row.invite_game_info);
+          router.push('/main/game');
+        }
+        removeGameNoti();
+      });
     }
   }
 
@@ -63,24 +67,25 @@ export default function ActionGameAlarm({
       row.invite_game_info !== null
     ) {
       row.invite_game_info.state = true;
-      removeGameNoti();
+      console.log('row: ', row.invite_game_info);
       setInviteGameState(row.invite_game_info);
+      removeGameNoti();
       router.push('/main/game');
     }
   }
 
   // A가 최종적으로 누르는 거절
   function inviteResponFalse() {
-    removeGameNoti();
     if (
       typeof row.invite_game_info === 'object' &&
       row.invite_game_info !== null
     ) {
-      console.log('거절클릭: ');
+      console.log('row: ', row.invite_game_info);
       chat_socket?.emit('cancel_game', {
-        inviteGameInfo: invite_game_state,
+        inviteGameInfo: row.invite_game_info,
         is_inviter: true,
       });
+      removeGameNoti();
     }
   }
 

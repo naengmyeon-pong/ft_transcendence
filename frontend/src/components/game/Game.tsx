@@ -1,6 +1,6 @@
 'use client';
 
-import {useContext, useEffect, useState} from 'react';
+import {useCallback, useContext, useEffect, useRef, useState} from 'react';
 
 import {useRecoilState, useSetRecoilState} from 'recoil';
 import axios from 'axios';
@@ -30,8 +30,11 @@ function Game() {
   const socket = useContext(UserContext).chat_socket;
   const [profileDataState, setProfileDataState] = useRecoilState(profileState);
   const {openAlertSnackbar} = useAlertSnackbar();
+  const is_game_over_ref = useRef(false);
+  const is_game_start_ref = useRef(false);
   const setTokenExpiredExit = useSetRecoilState(tokenExpiredExit);
 
+  // 게임이 시작전에 나가면 cancel_waiting
   const handleUnload = () => {
     if (isWaitingGame === true) {
       const jwtToken = sessionStorage.getItem('accessToken');
@@ -46,6 +49,29 @@ function Game() {
       socket?.emit('cancel_waiting', joinGameInfo);
     }
   };
+
+  const sendCancelWaiting = useCallback(() => {
+    if (isWaitingGame === true) {
+      const jwtToken = sessionStorage.getItem('accessToken');
+      if (jwtToken === null) {
+        return;
+      }
+      const joinGameInfo: JoinGameInfo = {
+        jwt: jwtToken,
+        mode: selectedGameMode,
+        type: selectedGameType,
+      };
+      socket?.emit('cancel_waiting', joinGameInfo);
+    }
+  }, [socket, selectedGameMode, selectedGameType, isWaitingGame]);
+
+  useEffect(() => {
+    return () => {
+      if (is_game_start_ref.current === false) {
+        sendCancelWaiting();
+      }
+    };
+  }, [sendCancelWaiting]);
 
   const handleReturnMain = () => {
     setIsGameOver(false);
@@ -78,6 +104,7 @@ function Game() {
       socket?.emit('update_frame', room_name);
       setIsStartingGame(true);
       setIsWaitingGame(false);
+      is_game_start_ref.current = true;
     }
   };
 
@@ -88,6 +115,7 @@ function Game() {
     setGameInfo(game_info);
     if (game_info.leftScore === 5 || game_info.rightScore === 5) {
       setIsGameOver(true);
+      is_game_over_ref.current = true;
       try {
         const response = await apiManager.get('/user');
         const {rank_score} = response.data;
@@ -105,6 +133,19 @@ function Game() {
       }
     }
   };
+
+  useEffect(() => {
+    is_game_start_ref.current = false;
+    is_game_over_ref.current = false;
+    return () => {
+      if (
+        is_game_start_ref.current === true &&
+        is_game_over_ref.current === false
+      ) {
+        socket?.emit('exit_game');
+      }
+    };
+  }, [socket]);
 
   useEffect(() => {
     socket?.on('notice', handleNotice);

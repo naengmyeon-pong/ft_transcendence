@@ -72,7 +72,7 @@ export default function GameAction({
       mode: selectedGameMode,
       type: selectedGameType,
     };
-    chat_socket?.emit('cancel_waiting', joinGameInfo);
+    // chat_socket?.emit('cancel_waiting', joinGameInfo);
     setIsWaitingGame(false);
     setSelectedGameMode('');
     setSelectedGameType('');

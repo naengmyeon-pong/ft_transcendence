@@ -39,6 +39,7 @@ import {SocketArray} from '@/global-variable/global.socket';
 import {ETypeMode} from './types/type-mode.enum';
 import {Payload} from '@/user/payload';
 import {Friend} from '@/global-variable/global.friend';
+import {AuthGuard} from '@nestjs/passport';
 
 const waitUserList: GameUser[][] = [[], [], [], []];
 
@@ -79,6 +80,8 @@ export class GameGateway implements OnGatewayDisconnect {
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
+    console.log('invite list: ', inviteWaitList);
+    console.log('game rooms: ', gameRooms);
     let inviteGameInfo: InviteGameInfo | null;
     const {userID} = this.getUserID(socket);
     if (this.isUserGaming(userID)) {
@@ -117,7 +120,18 @@ export class GameGateway implements OnGatewayDisconnect {
         targetSocket.leave(inviteGameInfo.inviter_id);
         targetSocket.emit('invitee_cancel_game_refresh', targetNickname);
       }
-      const idx = inviteWaitList.indexOf(inviteGameInfo);
+      let idx = -1;
+      inviteWaitList.forEach((value, key) => {
+        if (
+          (value.inviter_id === userID &&
+            value.invitee_id === inviteGameInfo.invitee_id) ||
+          (value.invitee_id === userID &&
+            value.inviter_id === inviteGameInfo.invitee_id)
+        ) {
+          idx = key;
+          return;
+        }
+      });
       inviteWaitList.splice(idx, 1);
     }
     this.socketArray.removeSocketArray(userID);
@@ -170,7 +184,7 @@ export class GameGateway implements OnGatewayDisconnect {
       } else {
         targetID = roomInfo.users[0].user_id;
       }
-      this.updateState(false, targetID);
+      this.updateState(false, userID, targetID);
       gameRooms.delete(roomName);
     }
   }
@@ -220,8 +234,8 @@ export class GameGateway implements OnGatewayDisconnect {
     } else {
       const {firstUserId, secondUserId} = await this.createRoom(waitingUser);
       this.updateState(true, firstUserId, secondUserId);
-      this.removeUserInInviteWaitlist(firstUserId, false);
-      this.removeUserInInviteWaitlist(secondUserId, false);
+      this.removeInviteWaitlistJoinGame(firstUserId);
+      this.removeInviteWaitlistJoinGame(secondUserId);
     }
   }
 
@@ -515,9 +529,9 @@ export class GameGateway implements OnGatewayDisconnect {
     const targetSocketID = this.socketArray.getUserSocket(
       inviteGameInfo.inviter_id
     ).socket_id;
-    const {isExpired} = this.getUserID(inviteeSocket);
+    const {userID, isExpired} = this.getUserID(inviteeSocket);
     if (isExpired) {
-      this.changeInviteGameState(inviteGameInfo.inviter_id, false);
+      this.changeInviteGameState(inviteGameInfo, false);
       inviteeSocket
         .to(`${targetSocketID}`)
         .emit('invite_response', inviteGameInfo);
@@ -525,17 +539,44 @@ export class GameGateway implements OnGatewayDisconnect {
     }
 
     if (inviteGameInfo.state === true) {
-      this.changeInviteGameState(inviteGameInfo.inviter_id, true);
+      if (this.isInviteeIntWaitingPage(userID)) {
+        return false;
+      }
+      this.changeInviteGameState(inviteGameInfo, true);
       this.createInviteGameRoom(inviteGameInfo);
+    } else {
+      this.removeInviteWaitlistInviteResponse(userID);
     }
     inviteeSocket
       .to(`${targetSocketID}`)
       .emit('invite_response', inviteGameInfo);
+    return true;
   }
 
-  changeInviteGameState = (inviterID: string, state: boolean) => {
+  // 유저가 대기방에 있는지를 확인
+  isInviteeIntWaitingPage = (userID: string): boolean => {
+    let isWaitingPage = false;
+    const userInfo = this.socketArray.getUserSocket(userID);
+    if (userInfo.is_gaming === true) {
+      return true;
+    }
     inviteWaitList.forEach((value, key) => {
-      if (value.inviter_id === inviterID) {
+      console.log(value);
+      if (value.invitee_id === userID) {
+        if (value.state !== undefined && value.state === true) {
+          isWaitingPage = true;
+          return;
+        }
+      }
+    });
+    return isWaitingPage;
+  };
+
+  changeInviteGameState = (inviteGameInfo: InviteGameInfo, state: boolean) => {
+    const inviterID = inviteGameInfo.inviter_id;
+    const inviteeID = inviteGameInfo.invitee_id;
+    inviteWaitList.forEach((value, key) => {
+      if (value.inviter_id === inviterID && value.invitee_id === inviteeID) {
         value.state = state;
         return;
       }
@@ -555,14 +596,22 @@ export class GameGateway implements OnGatewayDisconnect {
     if (is_inviter === true) {
       // 초대자가 최종 거절해서 게임을 취소한 경우
       gameRooms.delete(userID);
-      this.removeUserInInviteWaitlist(userID, false, false);
+      this.removeInviteWaitlistCancelGame(
+        true,
+        userID,
+        inviteGameInfo.invitee_id
+      );
     } else if (inviteGameInfo !== undefined && is_inviter === false) {
       // 피초대자가 수락한 뒤에 게임방에서 나간 경우
       if (userID !== inviteGameInfo.invitee_id) {
         return false;
       }
       gameRooms.delete(inviteGameInfo.inviter_id);
-      this.removeUserInInviteWaitlist(userID, false);
+      this.removeInviteWaitlistCancelGame(
+        false,
+        userID,
+        inviteGameInfo.inviter_id
+      );
     }
   }
 
@@ -573,9 +622,18 @@ export class GameGateway implements OnGatewayDisconnect {
     @MessageBody() inviteGameInfo: InviteGameInfo
   ) {
     const roomInfo: RoomInfo = gameRooms.get(inviteGameInfo.inviter_id);
-    const {userID} = this.getUserID(socket);
+    const {userID, isExpired} = this.getUserID(socket);
+    if (isExpired === true) {
+      this.removeInviteWaitlistEnterGameExpired(userID, inviteGameInfo); // jwt 만료된 경우
+      return;
+    }
     socket.emit('game_info', {game_info: roomInfo.game_info});
-    if (userID === inviteGameInfo.inviter_id) {
+    if (userID === inviteGameInfo.invitee_id) {
+      // 첫 번재로 들어온 유저 (피초대자)
+      this.removeUserInWaitlist(userID); // 랜덤 게임 대기자 삭제
+      this.checkPreviousInvitation(userID);
+    } else if (userID === inviteGameInfo.inviter_id) {
+      // 두 번째로 들어온 유저 (초대자)
       socket.emit('enter_game');
       this.updateState(
         true,
@@ -583,19 +641,44 @@ export class GameGateway implements OnGatewayDisconnect {
         inviteGameInfo.invitee_id
       );
       this.removeUserInWaitlist(userID); // 랜덤 게임 대기자 삭제
-      this.removeUserInInviteWaitlist(userID, true);
+      this.removeInviteWaitlistEnterGame(userID, inviteGameInfo.invitee_id);
       this.nsp.to(roomInfo.room_name).emit('start_game');
     }
   }
 
+  checkPreviousInvitation = (userID: string) => {
+    const idxArr: number[] = [];
+    inviteWaitList.forEach((value, key) => {
+      if (value.inviter_id === userID) {
+        idxArr.push(key);
+        const targetSocket = this.socketArray.getUserSocket(
+          value.invitee_id
+        ).socket;
+        targetSocket.emit('inviter_cancel_game_refuse', value.inviter_nickname);
+        targetSocket.leave(value.inviter_id);
+      }
+    });
+    if (idxArr.length === 0) {
+      return;
+    }
+    idxArr.forEach(value => {
+      inviteWaitList.splice(value, 1);
+    });
+  };
+
+  // 피초대자가 대기페이지를 뒤로가기하여 이탈한 경우
   @SubscribeMessage('invitee_cancel_game_back')
   handleInviteeCancelGameBack(
     @ConnectedSocket() inviteeSocket: Socket,
     @MessageBody() inviteGameInfo: InviteGameInfo
   ) {
+    const {userID} = this.getUserID(inviteeSocket);
     let idx = -1;
     inviteWaitList.forEach((value, key) => {
-      if (value.inviter_id === inviteGameInfo.inviter_id) {
+      if (
+        value.invitee_id === userID &&
+        value.inviter_id === inviteGameInfo.inviter_id
+      ) {
         idx = key;
         return;
       }
@@ -613,79 +696,201 @@ export class GameGateway implements OnGatewayDisconnect {
       'invitee_cancel_game_back',
       inviteGameInfo.invitee_nickname
     );
+    console.log('game canceled');
   }
 
-  removeUserInInviteWaitlist = (
-    userID: string,
-    isInviteGameBegin: boolean,
-    isException = true
-  ): boolean => {
+  removeInviteWaitlistInviteResponse = (userID: string) => {
     let idx = -1;
-    if (isInviteGameBegin === true) {
-      // 초대매칭이 시작된 경우
+    inviteWaitList.forEach((value, key) => {
+      if (value.invitee_id === userID) {
+        idx = key;
+        return;
+      }
+    });
+    if (idx !== -1) {
+      inviteWaitList.splice(idx, 1);
+    }
+  };
+
+  // 랜덤 매칭 시작 시, 기존에 주고받은 초대를 리스트에서 제거
+  removeInviteWaitlistJoinGame = (userID: string) => {
+    const canceled: number[] = [];
+    inviteWaitList.forEach((value, key) => {
+      if (value.inviter_id === userID) {
+        // 자신이 초대한 경우
+        canceled.push(key);
+        const targetSocket = this.socketArray.getUserSocket(
+          value.invitee_id
+        ).socket;
+        targetSocket.leave(value.inviter_id);
+        targetSocket.emit('inviter_cancel_game_betray', value.inviter_nickname);
+        const userSocket = this.socketArray.getUserSocket(userID).socket;
+        userSocket.emit('inviter_cancel_game_refresh', value.inviter_nickname);
+        if (value.state === true) {
+          // room이 생성된 경우
+          const roomInfo = gameRooms.get(value.inviter_id);
+          if (roomInfo.users[1].user_id === value.invitee_id) {
+            // 기존에 존재하던 room
+            gameRooms.delete(value.inviter_id);
+          }
+        }
+      } else if (value.invitee_id === userID) {
+        // 자신이 초대받은 경우
+        canceled.push(key);
+        const targetSocket = this.socketArray.getUserSocket(
+          value.inviter_id
+        ).socket;
+        targetSocket.leave(value.inviter_id);
+        targetSocket.emit(
+          'invitee_cancel_invite_betray',
+          value.invitee_nickname
+        );
+        const userSocket = this.socketArray.getUserSocket(userID).socket;
+        userSocket.emit('invitee_cancel_game_refresh', value.invitee_nickname);
+      }
+    });
+    canceled.forEach(value => {
+      inviteWaitList.splice(value, 1);
+    });
+  };
+
+  // 유저가 게임을 취소한 경우
+  removeInviteWaitlistCancelGame = (
+    isInviter: boolean,
+    userID: string,
+    otherID?: string
+  ) => {
+    let idx = -1;
+    // 리스트에서 해당 게임을 찾는다
+    if (isInviter === true) {
       inviteWaitList.forEach((value, key) => {
-        if (value.inviter_id === userID) {
+        if (value.inviter_id === userID && value.invitee_id === otherID) {
+          // 초대자가 최종거절한 경우
           idx = key;
+          const userSocket = this.socketArray.getUserSocket(userID).socket;
+          const targetSocket = this.socketArray.getUserSocket(otherID).socket;
+          userSocket.leave(inviteWaitList[idx].inviter_id);
+          targetSocket.leave(inviteWaitList[idx].inviter_id);
+          targetSocket.emit(
+            'inviter_cancel_game_refuse',
+            inviteWaitList[idx].inviter_nickname
+          );
+          return;
         }
       });
-    } else if (isInviteGameBegin === false) {
-      // 초대매칭이 시작되기 전에 취소된 경우
+    } else {
       inviteWaitList.forEach((value, key) => {
-        if (value.inviter_id === userID) {
+        if (value.invitee_id === userID && value.inviter_id === otherID) {
+          // 피초대자가 게임대기창에서 나간 경우
           idx = key;
-          const targetID = value.invitee_id;
-          const targetSocket = this.socketArray.getUserSocket(targetID).socket;
-          if (isException) {
-            if (value.state === undefined) {
-              // if (value.state === false) {
-              // 피초대자가 수락하기 전
-              targetSocket.leave(value.inviter_id);
-              targetSocket.emit(
-                'inviter_cancel_invite_betray',
-                // value.invitee_nickname
-                value.inviter_nickname
-              );
-            } else {
-              // 피초대자가 수락한 후 초대자가 랜덤매칭으로 이동
-              targetSocket.leave(value.inviter_id);
-              targetSocket.emit(
-                'inviter_cancel_game_betray',
-                value.invitee_nickname
-              );
-            }
-          } else {
-            // 초대자가 최종거절한 경우
-            targetSocket.leave(value.inviter_id);
-            targetSocket.emit(
-              'inviter_cancel_game_refuse',
-              value.inviter_nickname
-            );
-          }
-        } else if (value.invitee_id === userID) {
-          idx = key;
-          const targetID = value.inviter_id;
-          const targetSocket = this.socketArray.getUserSocket(targetID).socket;
-
-          if (isException) {
-            // 피초대자가 게임대기창에서 나간 경우
-            const inviterSocket = this.socketArray.getUserSocket(
-              value.inviter_id
-            ).socket;
-            inviterSocket.leave(value.inviter_id);
-            targetSocket.leave(value.inviter_id);
-            targetSocket.emit(
-              'invitee_cancel_game_out',
-              value.inviter_nickname
-            );
-          }
+          const userSocket = this.socketArray.getUserSocket(userID).socket;
+          const targetSocket = this.socketArray.getUserSocket(otherID).socket;
+          userSocket.leave(inviteWaitList[idx].inviter_id);
+          targetSocket.leave(inviteWaitList[idx].inviter_id);
+          targetSocket.emit(
+            'invitee_cancel_game_out',
+            inviteWaitList[idx].invitee_nickname
+          );
+          return;
         }
       });
     }
     if (idx !== -1) {
       inviteWaitList.splice(idx, 1);
-      return true;
+      return;
     }
-    return false;
+  };
+
+  // 유저가 초대에 수락하여 게임에 들어갈 때 토큰이 만료된 경우
+  removeInviteWaitlistEnterGameExpired = (
+    userID: string,
+    inviteGameInfo: InviteGameInfo
+  ) => {
+    let idx = -1;
+    const canceled: number[] = [];
+    inviteWaitList.forEach((value, key) => {
+      if (
+        value.inviter_id === userID &&
+        value.invitee_id === inviteGameInfo.invitee_id
+      ) {
+        // 초대자가 최종수락한 시점에 토큰이 만료된 경우
+        idx = key;
+        const targetSocket = this.socketArray.getUserSocket(
+          inviteGameInfo.invitee_id
+        ).socket;
+        targetSocket.leave(value.inviter_id);
+        targetSocket.emit('inviter_cancel_game_betray', value.inviter_nickname);
+      } else if (
+        value.invitee_id === userID &&
+        value.inviter_id === inviteGameInfo.inviter_id
+      ) {
+        // 피초대자가 초대를 수락한 시점에 토큰이 만료된 경우
+        idx = key;
+        const targetSocket = this.socketArray.getUserSocket(
+          inviteGameInfo.inviter_id
+        ).socket;
+        targetSocket.leave(value.inviter_id);
+        targetSocket.emit('inviter_cancel_game_betray', value.invitee_nickname);
+      } else if (value.inviter_id === userID || value.invitee_id === userID) {
+        canceled.push(key);
+        if (value.inviter_id === userID) {
+          // 자신이 초대한 다른 게임 유저
+          const targetSocket = this.socketArray.getUserSocket(
+            value.invitee_id
+          ).socket;
+          targetSocket.emit(
+            'inviter_cancel_game_refuse',
+            value.inviter_nickname
+          );
+          targetSocket.leave(value.inviter_id);
+        } else {
+          // 자신이 초대받은 다른 게임 유저
+          const targetSocket = this.socketArray.getUserSocket(
+            value.inviter_id
+          ).socket;
+          targetSocket.emit(
+            'inviter_cancel_game_refuse',
+            value.invitee_nickname
+          );
+          targetSocket.leave(value.inviter_id);
+        }
+
+        const targetSocket = this.socketArray.getUserSocket(
+          value.invitee_id
+        ).socket;
+        targetSocket.emit('inviter_cancel_game_refuse', value.inviter_nickname);
+        targetSocket.leave(value.inviter_id);
+      }
+    });
+  };
+
+  // 게임을 시작할 때, 해당 게임을 대기 리스트에서 지우고 다른 유저와 주고받은 게임 초대를 지우는 함수
+  removeInviteWaitlistEnterGame = (userID: string, inviteeID: string) => {
+    let idx = -1;
+    const canceled: number[] = [];
+    inviteWaitList.forEach((value, key) => {
+      if (value.inviter_id === userID) {
+        if (value.invitee_id === inviteeID) {
+          idx = key;
+        } else {
+          canceled.push(key);
+          const targetSocket = this.socketArray.getUserSocket(
+            value.invitee_id
+          ).socket;
+          targetSocket.emit(
+            'inviter_cancel_game_refuse',
+            value.inviter_nickname
+          );
+          targetSocket.leave(value.inviter_id);
+        }
+      }
+    });
+    if (idx !== -1) {
+      inviteWaitList.splice(idx, 1);
+    }
+    canceled.forEach(value => {
+      inviteWaitList.splice(value, 1);
+    });
   };
 
   removeUserInWaitlist = (userID: string): boolean => {
