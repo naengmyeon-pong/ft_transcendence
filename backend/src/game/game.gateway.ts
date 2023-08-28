@@ -80,8 +80,6 @@ export class GameGateway implements OnGatewayDisconnect {
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
-    console.log('invite list: ', inviteWaitList);
-    console.log('game rooms: ', gameRooms);
     let inviteGameInfo: InviteGameInfo | null;
     const {userID} = this.getUserID(socket);
     if (this.isUserGaming(userID)) {
