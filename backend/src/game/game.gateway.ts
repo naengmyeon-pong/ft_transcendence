@@ -88,9 +88,7 @@ export class GameGateway implements OnGatewayDisconnect {
       // 유저가 게임 중인 경우
       const roomName: string | null = this.gameService.isForfeit(userID);
       if (roomName) {
-        console.log('roomname: ', roomName);
         const roomInfo = gameRooms.get(roomName);
-        console.log('info: ', roomInfo);
         this.sendGameInfo(roomInfo);
         clearInterval(roomInfo.interval);
         gameRooms.delete(roomName);
@@ -533,7 +531,7 @@ export class GameGateway implements OnGatewayDisconnect {
     ).socket_id;
     const {userID, isExpired} = this.getUserID(inviteeSocket);
     if (isExpired) {
-      this.changeInviteGameState(inviteGameInfo.inviter_id, false);
+      this.changeInviteGameState(inviteGameInfo, false);
       inviteeSocket
         .to(`${targetSocketID}`)
         .emit('invite_response', inviteGameInfo);
@@ -544,7 +542,7 @@ export class GameGateway implements OnGatewayDisconnect {
       if (this.isInviteeIntWaitingPage(userID)) {
         return false;
       }
-      this.changeInviteGameState(inviteGameInfo.inviter_id, true);
+      this.changeInviteGameState(inviteGameInfo, true);
       this.createInviteGameRoom(inviteGameInfo);
     } else {
       this.removeInviteWaitlistInviteResponse(userID);
@@ -555,11 +553,17 @@ export class GameGateway implements OnGatewayDisconnect {
     return true;
   }
 
+  // 유저가 대기방에 있는지를 확인
   isInviteeIntWaitingPage = (userID: string): boolean => {
     let isWaitingPage = false;
+    const userInfo = this.socketArray.getUserSocket(userID);
+    if (userInfo.is_gaming === true) {
+      return true;
+    }
     inviteWaitList.forEach((value, key) => {
+      console.log(value);
       if (value.invitee_id === userID) {
-        if (value.state === true) {
+        if (value.state !== undefined && value.state === true) {
           isWaitingPage = true;
           return;
         }
@@ -568,9 +572,11 @@ export class GameGateway implements OnGatewayDisconnect {
     return isWaitingPage;
   };
 
-  changeInviteGameState = (inviterID: string, state: boolean) => {
+  changeInviteGameState = (inviteGameInfo: InviteGameInfo, state: boolean) => {
+    const inviterID = inviteGameInfo.inviter_id;
+    const inviteeID = inviteGameInfo.invitee_id;
     inviteWaitList.forEach((value, key) => {
-      if (value.inviter_id === inviterID) {
+      if (value.inviter_id === inviterID && value.invitee_id === inviteeID) {
         value.state = state;
         return;
       }
@@ -735,7 +741,12 @@ export class GameGateway implements OnGatewayDisconnect {
           value.inviter_id
         ).socket;
         targetSocket.leave(value.inviter_id);
-        targetSocket.emit('inviter_cancel_game_betray', value.invitee_nickname);
+        targetSocket.emit(
+          'invitee_cancel_invite_betray',
+          value.invitee_nickname
+        );
+        const userSocket = this.socketArray.getUserSocket(userID).socket;
+        userSocket.emit('invitee_cancel_game_refresh', value.invitee_nickname);
       }
     });
     canceled.forEach(value => {
@@ -921,8 +932,6 @@ export class GameGateway implements OnGatewayDisconnect {
       state = '온라인';
     }
     const friends: Set<string> = this.friend.getFriendUsers(userID);
-    console.log(state);
-    console.log(friends);
     if (friends) {
       friends.forEach(e => {
         const friend = this.socketArray.getUserSocket(e);
