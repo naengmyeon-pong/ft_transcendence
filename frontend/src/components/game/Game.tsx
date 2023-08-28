@@ -1,6 +1,6 @@
 'use client';
 
-import {useContext, useEffect, useRef, useState} from 'react';
+import {useCallback, useContext, useEffect, useRef, useState} from 'react';
 
 import {useRecoilState} from 'recoil';
 import axios from 'axios';
@@ -32,6 +32,7 @@ function Game() {
   const is_game_over_ref = useRef(false);
   const is_game_start_ref = useRef(false);
 
+  // 게임이 시작전에 나가면 cancel_waiting
   const handleUnload = () => {
     if (isWaitingGame === true) {
       const jwtToken = sessionStorage.getItem('accessToken');
@@ -46,6 +47,29 @@ function Game() {
       socket?.emit('cancel_waiting', joinGameInfo);
     }
   };
+
+  const sendCancelWaiting = useCallback(() => {
+    if (isWaitingGame === true) {
+      const jwtToken = sessionStorage.getItem('accessToken');
+      if (jwtToken === null) {
+        return;
+      }
+      const joinGameInfo: JoinGameInfo = {
+        jwt: jwtToken,
+        mode: selectedGameMode,
+        type: selectedGameType,
+      };
+      socket?.emit('cancel_waiting', joinGameInfo);
+    }
+  }, [socket, selectedGameMode, selectedGameType, isWaitingGame]);
+
+  useEffect(() => {
+    return () => {
+      if (is_game_start_ref.current === false) {
+        sendCancelWaiting();
+      }
+    };
+  }, [sendCancelWaiting]);
 
   const handleReturnMain = () => {
     setIsGameOver(false);
