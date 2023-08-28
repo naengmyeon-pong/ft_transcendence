@@ -8,6 +8,7 @@ COPY ./frontend /app
 COPY ./types /app/types
 COPY ./.env .
 
+RUN npm ci
 RUN npm run build
 
 EXPOSE 3000

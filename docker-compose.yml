@@ -15,26 +15,25 @@ services:
 
   backend:
     container_name: backend
-    depends_on:
-      - db
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./backend/Dockerfile
     image: backend
     ports:
       - 3001:3001
     restart: on-failure:3
     networks:
       - naengmyeon_pong_network
-    volumes:
-      # - ./backend:/app
-      - ./types:/app/types
     env_file:
       - .env
+    depends_on:
+      - db
 
   db:
     container_name: postgres
     image: postgres:15.3-alpine3.18
+    ports:
+      - 5432:5432
     restart: on-failure:3
     networks:
       - naengmyeon_pong_network

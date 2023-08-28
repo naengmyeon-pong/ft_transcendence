@@ -4,7 +4,12 @@ RUN apk add --no-cache dumb-init
 
 WORKDIR /app
 
-COPY . .
+COPY ./backend .
+COPY ./types ./types
+COPY ./.env ./.env
+
+RUN npm ci
+RUN npm run build
 
 EXPOSE 3001
 
