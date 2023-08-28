@@ -28,7 +28,6 @@ export default function DMList() {
 
   const changeUser = useCallback(
     async (row: DmListData) => {
-      console.log(row);
       setDmUser({
         nickName: row.nickname,
         id: row.user2,
@@ -45,7 +44,6 @@ export default function DMList() {
           user_id: user_id,
         },
       });
-      // console.log('리스닝: ', rep);
       setDmList(rep.data);
     } catch (error) {
       if (axios.isAxiosError(error)) {

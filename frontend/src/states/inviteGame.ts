@@ -12,7 +12,7 @@ export const InviteGameUserType = {
   INVITER: 2,
 };
 
-export const inviteGameState = atom<InviteGameInfo | null>({
+export const inviteGameState = atom<InviteGameInfo | string | null>({
   key: 'inviteGameState',
   default: null,
 });
