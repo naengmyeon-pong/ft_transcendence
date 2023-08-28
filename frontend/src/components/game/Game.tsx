@@ -2,7 +2,7 @@
 
 import {useContext, useEffect, useState} from 'react';
 
-import {useRecoilState} from 'recoil';
+import {useRecoilState, useSetRecoilState} from 'recoil';
 import axios from 'axios';
 
 import {Button, Grid} from '@mui/material';
@@ -16,7 +16,8 @@ import Pong from './Pong';
 import {profileState} from '@/states/profile';
 import apiManager from '@/api/apiManager';
 import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
-
+import {tokenExpiredExit} from '@/states/tokenExpired';
+import * as HTTP_STATUS from 'http-status';
 function Game() {
   const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
   const [gameType, setGameType] = useState<string>('');
@@ -29,6 +30,7 @@ function Game() {
   const socket = useContext(UserContext).chat_socket;
   const [profileDataState, setProfileDataState] = useRecoilState(profileState);
   const {openAlertSnackbar} = useAlertSnackbar();
+  const setTokenExpiredExit = useSetRecoilState(tokenExpiredExit);
 
   const handleUnload = () => {
     if (isWaitingGame === true) {
@@ -92,6 +94,10 @@ function Game() {
         setProfileDataState({...profileDataState, rank_score});
       } catch (error) {
         if (axios.isAxiosError(error)) {
+          if (error.response?.status === HTTP_STATUS.UNAUTHORIZED) {
+            setTokenExpiredExit(true);
+            return;
+          }
           openAlertSnackbar({
             message: '프로필 정보를 불러오는데 실패했습니다.',
           });

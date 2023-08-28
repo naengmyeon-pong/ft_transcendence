@@ -25,19 +25,20 @@ import {Payload} from './payload';
 import {UpdateUserDto} from './dto/update-user.dto';
 import {SocketArray} from '@/global-variable/global.socket';
 import {SignUpService} from '@/signup/signup.service';
-import {OAuthUser} from '@/types/user/oauth.interface';
+import {OAuthUser} from '@/types/user/oauth';
 import {Friend} from '@/global-variable/global.friend';
 import {DataSource, QueryRunner} from 'typeorm';
+import {Block} from '@/global-variable/global.block';
 
 @Injectable()
 export class UserService {
   constructor(
     private userRepository: UserRepository,
-    private userAuthRepository: IsUserAuthRepository,
     private signupService: SignUpService,
     private jwtService: JwtService,
     private socketArray: SocketArray,
     private friend: Friend,
+    private block: Block,
     private dataSource: DataSource
   ) {}
 
@@ -57,6 +58,17 @@ export class UserService {
     if (result.affected === 0) {
       throw new NotFoundException(`${user_id}는 유저가 아닙니다.`);
     }
+    const friends: Set<string> = this.friend.getFriendUsers(user_id);
+    if (friends) {
+      friends.forEach(e => {
+        const login_user = this.socketArray.getUserSocket(e);
+        if (login_user) {
+          login_user.socket.emit('update-friend-list');
+        }
+      });
+    }
+    this.friend.removeUser(user_id);
+    this.block.removeUser(user_id);
   }
 
   async changePW(user_id: string, userDto: UpdateUserDto): Promise<void> {

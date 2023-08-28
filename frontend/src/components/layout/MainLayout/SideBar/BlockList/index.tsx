@@ -9,11 +9,11 @@ import {
   MenuItem,
   Typography,
 } from '@mui/material';
-import {UserContext} from '../Context';
+import {UserContext} from '../../Context';
 import {UserType} from '@/types/UserContext';
 import {DelBlock} from '@/components/Chat/RoomPage/service/Block';
 
-export default function BlockUserList({block_user}: {block_user: UserType}) {
+export default function BlockUser({block_user}: {block_user: UserType}) {
   const [anchorEl, setAnchorEl] = useState<HTMLLIElement | null>(null);
   const {chat_socket, block_users} = useContext(UserContext);
   const open = Boolean(anchorEl);

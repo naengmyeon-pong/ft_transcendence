@@ -1,9 +1,5 @@
 'use client';
-import React, {
-  useContext,
-  useMemo,
-  useState,
-} from 'react';
+import React, {useContext, useMemo, useState} from 'react';
 
 import {
   Avatar,
@@ -15,10 +11,10 @@ import {
   Typography,
 } from '@mui/material';
 import {UserType} from '@/types/UserContext';
-import {UserContext} from '../Context';
-import UserInfoPage from '../../../UserProfileModal';
+import {UserContext} from '../../Context';
+import UserInfoPage from '../../../../UserProfileModal';
 
-function FriendList({friend}: {friend: UserType}) {
+function Friend({friend}: {friend: UserType}) {
   const [anchorEl, setAnchorEl] = useState<HTMLLIElement | null>(null);
   const {chat_socket} = useContext(UserContext);
   const open = Boolean(anchorEl);
@@ -83,4 +79,4 @@ function FriendList({friend}: {friend: UserType}) {
     </>
   );
 }
-export default FriendList;
+export default Friend;
