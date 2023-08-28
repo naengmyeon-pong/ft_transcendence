@@ -542,6 +542,9 @@ export class GameGateway implements OnGatewayDisconnect {
       if (this.isInviteeIntWaitingPage(userID)) {
         return false;
       }
+      if (this.isInviterAvailable(inviteGameInfo.inviter_id)) {
+        return false;
+      }
       this.changeInviteGameState(inviteGameInfo, true);
       this.createInviteGameRoom(inviteGameInfo);
     } else {
@@ -552,6 +555,15 @@ export class GameGateway implements OnGatewayDisconnect {
       .emit('invite_response', inviteGameInfo);
     return true;
   }
+
+  // 상대방이 게임이 가능한지를 확인
+  isInviterAvailable = (inviterID: string): boolean => {
+    const targetInfo = this.socketArray.getUserSocket(inviterID);
+    if (!targetInfo || targetInfo.is_gaming === true) {
+      return true;
+    }
+    return false;
+  };
 
   // 유저가 대기방에 있는지를 확인
   isInviteeIntWaitingPage = (userID: string): boolean => {
