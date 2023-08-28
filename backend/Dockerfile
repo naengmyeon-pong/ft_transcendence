@@ -6,7 +6,6 @@ WORKDIR /app
 
 COPY ./backend .
 COPY ./types ./types
-COPY ./.env ./.env
 
 RUN npm ci
 RUN npm run build

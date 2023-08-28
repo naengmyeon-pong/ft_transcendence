@@ -18,15 +18,11 @@ import {Namespace, Socket} from 'socket.io';
 })
 export class UserGateway implements OnGatewayConnection {
   private logger = new Logger('UserGateway');
-  constructor(
-    private jwtService: JwtService,
-    private socketArray: SocketArray
-  ) {}
+  constructor(private socketArray: SocketArray) {}
 
   @WebSocketServer() nsp: Namespace;
 
   handleConnection(@ConnectedSocket() socket: Socket) {
-    this.logger.log(`${socket.id} 웹소켓 연결`);
     const userID = socket.handshake.query.user_id as string;
 
     this.socketArray.addSocketArray({
@@ -34,18 +30,6 @@ export class UserGateway implements OnGatewayConnection {
       socket_id: socket.id,
       socket,
     });
+    this.logger.log(`${socket.id} 웹소켓 연결`);
   }
-
-  getUserID = (socket: Socket): string => {
-    try {
-      const jwt: string = socket.handshake.auth.token;
-      const decodedToken = this.jwtService.verify(jwt, {
-        secret: process.env.SIGNIN_JWT_SECRET_KEY,
-      });
-      return decodedToken.user_id;
-    } catch (e) {
-      this.logger.log('token expire');
-      socket.emit('token-expire');
-    }
-  };
 }

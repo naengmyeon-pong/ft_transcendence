@@ -14,6 +14,11 @@ export class DmService {
   ) {}
 
   async getDirectMessage(user_id: string, other_id: string) {
+    if (!user_id) {
+      throw new BadRequestException('유저의 아이디를 입력해주세요.');
+    } else if (!other_id) {
+      throw new BadRequestException('dm상대방의 아이디를 입력해주세요.');
+    }
     const directmessage = await this.dmRepository.find({
       select: {
         userId: true,
@@ -56,6 +61,9 @@ export class DmService {
     message: string,
     blockId?: string
   ) {
+    if (!target_id) {
+      throw new BadRequestException('상대유저의 아이디를 입력해주세요.');
+    }
     const dm = this.dmRepository.create({
       userId: user_id,
       someoneId: target_id,
@@ -67,8 +75,10 @@ export class DmService {
   }
 
   async directMessageList(user_id: string) {
+    if (!user_id) {
+      throw new BadRequestException('아이디를 입력해주세요.');
+    }
     const ret = [];
-
     const dm_list = await this.dmRepository
       .createQueryBuilder('dm')
       .select(['dm.userId', 'dm.someoneId', 'user_nickname', 'dm.message'])
