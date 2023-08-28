@@ -50,18 +50,20 @@ export default function ActionGameAlarm({
   // A가 최종적으로 누르는 수락
   function inviteResponTrue() {
     row.invite_game_info.state = true;
-    removeGameNoti();
+    console.log('row: ', row.invite_game_info);
     setInviteGameState(row.invite_game_info);
+    removeGameNoti();
     router.push('/main/game');
   }
 
   // A가 최종적으로 누르는 거절
   function inviteResponFalse() {
-    removeGameNoti();
+    console.log('row: ', row.invite_game_info);
     chat_socket?.emit('cancel_game', {
-      inviteGameInfo: invite_game_state,
+      inviteGameInfo: row.invite_game_info,
       is_inviter: true,
     });
+    removeGameNoti();
   }
 
   function cancelGame() {
