@@ -363,11 +363,11 @@ export class ChatService {
       chatroomId: room_id,
       userId: user_id,
     });
-    if (ban) {
-      throw new ConflictException('해당 채팅방에 입장하실 수 없습니다.');
-    }
     if (!room) {
       throw new NotFoundException('해당 채팅방은 존재하지 않습니다.');
+    }
+    if (ban) {
+      throw new ConflictException('해당 채팅방에 입장하실 수 없습니다.');
     }
     if (room.current_nums >= room.max_nums) {
       throw new ConflictException('해당 채팅방 인원이 꽉 찼습니다.');

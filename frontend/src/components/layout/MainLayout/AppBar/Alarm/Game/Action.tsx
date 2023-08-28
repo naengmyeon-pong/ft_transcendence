@@ -1,10 +1,13 @@
+import {useRouter} from 'next/router';
 import {useContext} from 'react';
+
+import {useRecoilState} from 'recoil';
+
+import {Box, Button, Typography} from '@mui/material';
+
 import {InviteGameEnum, InviteGameInfoProps} from '../AlarmProps';
 import {UserContext} from '../../../Context';
-import {useRouter} from 'next/router';
-import {useRecoilState} from 'recoil';
 import {inviteGameState} from '@/states/inviteGame';
-import {Box, Button, Typography} from '@mui/material';
 
 export default function ActionGameAlarm({
   row,
@@ -29,41 +32,61 @@ export default function ActionGameAlarm({
 
   // B가 누르는 수락
   function inviteTrue() {
-    row.invite_game_info.state = true;
-    chat_socket?.emit('invite_response', row.invite_game_info, (res: Boolean) => {
-      console.log(res);
-      if (res === true){
-        setInviteGameState(row.invite_game_info);
-        router.push('/main/game');
-        removeGameNoti();
-      }
-    });
+    if (
+      typeof row.invite_game_info === 'object' &&
+      row.invite_game_info !== null
+    ) {
+      row.invite_game_info.state = true;
+      chat_socket?.emit('invite_response', row.invite_game_info, (res: Boolean) => {
+        console.log(res);
+        if (res === true){
+          setInviteGameState(row.invite_game_info);
+          router.push('/main/game');
+          removeGameNoti();
+        }
+      });
+    }
   }
 
   // B가 누르는 거절
   function inViteFalse() {
     removeGameNoti();
-    row.invite_game_info.state = false;
-    chat_socket?.emit('invite_response', row.invite_game_info);
+    if (
+      typeof row.invite_game_info === 'object' &&
+      row.invite_game_info !== null
+    ) {
+      row.invite_game_info.state = false;
+      chat_socket?.emit('invite_response', row.invite_game_info);
+    }
   }
 
   // A가 최종적으로 누르는 수락
   function inviteResponTrue() {
-    row.invite_game_info.state = true;
-    console.log('row: ', row.invite_game_info);
-    setInviteGameState(row.invite_game_info);
-    removeGameNoti();
-    router.push('/main/game');
+    if (
+      typeof row.invite_game_info === 'object' &&
+      row.invite_game_info !== null
+    ) {
+      row.invite_game_info.state = true;
+      console.log('row: ', row.invite_game_info);
+      setInviteGameState(row.invite_game_info);
+      removeGameNoti();
+      router.push('/main/game');
+    }
   }
 
   // A가 최종적으로 누르는 거절
   function inviteResponFalse() {
-    console.log('row: ', row.invite_game_info);
-    chat_socket?.emit('cancel_game', {
-      inviteGameInfo: row.invite_game_info,
-      is_inviter: true,
-    });
-    removeGameNoti();
+    if (
+      typeof row.invite_game_info === 'object' &&
+      row.invite_game_info !== null
+    ) {
+      console.log('row: ', row.invite_game_info);
+      chat_socket?.emit('cancel_game', {
+        inviteGameInfo: row.invite_game_info,
+        is_inviter: true,
+      });
+      removeGameNoti();
+    }
   }
 
   function cancelGame() {
@@ -78,11 +101,12 @@ export default function ActionGameAlarm({
           <Button onClick={inViteFalse}>거절</Button>
         </Box>
       )}
-      {row.event_type === InviteGameEnum.INVITE_RESPON_FALSE && (
-        <Box
-          onClick={removeGameNoti}
-        >{`${row.invite_game_info.inviter_nickname}님이 게임초대를 거절하였습니다.`}</Box>
-      )}
+      {row.event_type === InviteGameEnum.INVITE_RESPON_FALSE &&
+        typeof row.invite_game_info !== 'string' && (
+          <Box
+            onClick={removeGameNoti}
+          >{`${row.invite_game_info.inviter_nickname}님이 게임초대를 거절하였습니다.`}</Box>
+        )}
       {row.event_type === InviteGameEnum.INVITE_RESPON_TRUE && (
         <Box>
           <Button onClick={inviteResponTrue}>수락</Button>
@@ -90,11 +114,12 @@ export default function ActionGameAlarm({
         </Box>
       )}
       {(row.event_type === InviteGameEnum.INVITER_OFF ||
-        row.event_type === InviteGameEnum.INVITEE_OFF) && (
-        <Typography onClick={cancelGame}>
-          {row.invite_game_info} 님이 게임을 취소하였습니다
-        </Typography>
-      )}
+        row.event_type === InviteGameEnum.INVITEE_OFF) &&
+        typeof row.invite_game_info === 'string' && (
+          <Typography onClick={cancelGame}>
+            {row.invite_game_info} 님이 게임을 취소하였습니다
+          </Typography>
+        )}
     </>
   );
 }

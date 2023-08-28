@@ -2,7 +2,7 @@
 
 import {useCallback, useContext, useEffect, useRef, useState} from 'react';
 
-import {useRecoilState} from 'recoil';
+import {useRecoilState, useSetRecoilState} from 'recoil';
 import axios from 'axios';
 
 import {Button, Grid} from '@mui/material';
@@ -16,7 +16,8 @@ import Pong from './Pong';
 import {profileState} from '@/states/profile';
 import apiManager from '@/api/apiManager';
 import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
-
+import {tokenExpiredExit} from '@/states/tokenExpired';
+import * as HTTP_STATUS from 'http-status';
 function Game() {
   const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
   const [gameType, setGameType] = useState<string>('');
@@ -31,6 +32,7 @@ function Game() {
   const {openAlertSnackbar} = useAlertSnackbar();
   const is_game_over_ref = useRef(false);
   const is_game_start_ref = useRef(false);
+  const setTokenExpiredExit = useSetRecoilState(tokenExpiredExit);
 
   // 게임이 시작전에 나가면 cancel_waiting
   const handleUnload = () => {
@@ -115,11 +117,15 @@ function Game() {
       setIsGameOver(true);
       is_game_over_ref.current = true;
       try {
-        const response = await apiManager.get('/user/user-info');
+        const response = await apiManager.get('/user');
         const {rank_score} = response.data;
         setProfileDataState({...profileDataState, rank_score});
       } catch (error) {
         if (axios.isAxiosError(error)) {
+          if (error.response?.status === HTTP_STATUS.UNAUTHORIZED) {
+            setTokenExpiredExit(true);
+            return;
+          }
           openAlertSnackbar({
             message: '프로필 정보를 불러오는데 실패했습니다.',
           });

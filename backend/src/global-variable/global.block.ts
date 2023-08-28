@@ -1,11 +1,11 @@
-import {Injectable} from '@nestjs/common';
-import {BlockRepository} from 'src/chat/chat.repository';
+import { Injectable } from '@nestjs/common';
+import { BlockRepository } from 'src/chat/chat.repository';
 
 // 나를 차단한 사람들 리스트
 @Injectable()
 export class Block {
   private block = new Map<string, Set<string>>();
-  constructor(private blockRepository: BlockRepository) {}
+  constructor(private blockRepository: BlockRepository) { }
 
   async setBlock() {
     const block_list = await this.blockRepository.find();
@@ -33,6 +33,12 @@ export class Block {
     const user = this.block.get(block_id);
     if (user) {
       user.delete(user_id);
+    }
+  }
+
+  removeUser(user_id: string): void {
+    if (this.block.get(user_id)) {
+      this.block.delete(user_id);
     }
   }
 }

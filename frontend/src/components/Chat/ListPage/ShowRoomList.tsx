@@ -54,7 +54,6 @@ function ShowRoomList({roomList, refersh}: RoomListProps) {
   const {openAlertSnackbar} = useAlertSnackbar();
   const setTokenExpiredExit = useSetRecoilState(tokenExpiredExit);
 
-  const handlePasswordModalOpen = () => setPasswordModal(true);
   const handlePasswordModalClose = () => setPasswordModal(false);
 
   const handleChangePage = (event: unknown, newPage: number) => {

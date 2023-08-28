@@ -1,20 +1,51 @@
-version: '3'
+version: "3"
 
 services:
   frontend:
     container_name: frontend
     build:
-      context: ./frontend
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: ./frontend/Dockerfile
     image: frontend
     ports:
       - 3000:3000
     restart: on-failure:3
-    volumes:
-      - /app/node_modules
-      - ./frontend:/app
     networks:
       - naengmyeon_pong_network
+
+  backend:
+    container_name: backend
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+    image: backend
+    ports:
+      - 3001:3001
+    restart: on-failure:3
+    networks:
+      - naengmyeon_pong_network
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+  db:
+    container_name: postgres
+    image: postgres:15.3-alpine3.18
+    ports:
+      - 5432:5432
+    restart: on-failure:3
+    networks:
+      - naengmyeon_pong_network
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      TZ: "Asia/Seoul"
+    env_file:
+      - .env
+
+volumes:
+  postgres-data:
 
 networks:
   naengmyeon_pong_network:

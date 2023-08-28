@@ -14,6 +14,10 @@ import {Logger} from '@nestjs/common';
 import {SocketArray} from '@/global-variable/global.socket';
 import {ChatMember} from '@/chat/chat.entity';
 import {Friend} from '@/global-variable/global.friend';
+import {FriendListRepository} from '@/chat/chat.repository';
+import {UserRepository} from '@/user/user.repository';
+import {DataSource, QueryRunner} from 'typeorm';
+import {User} from '@/user/user.entitiy';
 
 @WebSocketGateway({
   namespace: 'pong',
@@ -49,9 +53,7 @@ export class FriendGateway implements OnGatewayConnection, OnGatewayDisconnect {
       friends.forEach(e => {
         const login_user = this.socketArray.getUserSocket(e);
         if (login_user) {
-          socket
-            .to(login_user.socket_id)
-            .emit('update-friend-state', {userId: user_id, state});
+          socket.to(login_user.socket_id).emit('update-friend-list');
         }
       });
     }
