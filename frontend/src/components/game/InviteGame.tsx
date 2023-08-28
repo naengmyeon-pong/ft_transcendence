@@ -58,8 +58,10 @@ export default function InviteGame() {
     if (invite_game_state === null) {
       return;
     }
-    chat_socket?.emit('update_frame', invite_game_state.inviter_id);
-  }, [chat_socket, invite_game_state?.inviter_id]);
+    if (typeof invite_game_state === 'object') {
+      chat_socket?.emit('update_frame', invite_game_state.inviter_id);
+    }
+  }, [chat_socket, invite_game_state]);
 
   const exitCancelGame = useCallback(
     (rep: InviteGameInfo) => {
@@ -79,7 +81,7 @@ export default function InviteGame() {
   }, [chat_socket, setInviteGameState, invite_game_state]);
 
   useEffect(() => {
-    if (invite_game_state !== null) {
+    if (invite_game_state !== null && typeof invite_game_state === 'object') {
       sessionStorage.setItem('left_user', invite_game_state.inviter_nickname);
       sessionStorage.setItem('right_user', invite_game_state.invitee_nickname);
       sessionStorage.setItem('room_name', invite_game_state.inviter_id);
@@ -139,7 +141,6 @@ export default function InviteGame() {
   }, [
     chat_socket,
     user_id,
-    invite_game_state?.inviter_id,
     sendGameStartEvent,
     invite_game_state,
     exitCancelGame,
