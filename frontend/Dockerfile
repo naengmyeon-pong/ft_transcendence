@@ -4,12 +4,15 @@ RUN apk add --no-cache dumb-init
 
 WORKDIR /app
 
-COPY ./entrypoint.sh .
+COPY ./frontend /app
+COPY ./types /app/types
+COPY ./.env .
+
+RUN npm ci
+RUN npm run build
 
 EXPOSE 3000
 
-# Start dumb-init for PID 1
 ENTRYPOINT [ "/usr/bin/dumb-init", "--" ]
 
-# Start react in the foreground
-CMD [ "/bin/sh", "./entrypoint.sh" ]
+CMD ["npm", "run", "start"]

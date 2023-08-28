@@ -52,8 +52,11 @@ export default function InviteGame() {
   );
 
   const sendGameStartEvent = useCallback(() => {
+    if (invite_game_state === null) {
+      return;
+    }
     chat_socket?.emit('update_frame', invite_game_state.inviter_id);
-  }, [chat_socket, invite_game_state.inviter_id]);
+  }, [chat_socket, invite_game_state?.inviter_id]);
 
   const exitCancelGame = useCallback(
     (rep: InviteGameInfo) => {
@@ -72,9 +75,11 @@ export default function InviteGame() {
   }, [chat_socket, setInviteGameState, invite_game_state]);
 
   useEffect(() => {
-    sessionStorage.setItem('left_user', invite_game_state.inviter_nickname);
-    sessionStorage.setItem('right_user', invite_game_state.invitee_nickname);
-    sessionStorage.setItem('room_name', invite_game_state.inviter_id);
+    if (invite_game_state !== null) {
+      sessionStorage.setItem('left_user', invite_game_state.inviter_nickname);
+      sessionStorage.setItem('right_user', invite_game_state.invitee_nickname);
+      sessionStorage.setItem('room_name', invite_game_state.inviter_id);
+    }
 
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
@@ -131,11 +136,12 @@ export default function InviteGame() {
   }, [
     chat_socket,
     user_id,
-    invite_game_state.inviter_id,
+    invite_game_state?.inviter_id,
+    handleInviteGameInfo,
     sendGameStartEvent,
     invite_game_state,
     exitCancelGame,
   ]);
 
-  return <InviteGameView gameInfo={gameInfo} />;
+  return <>{gameInfo && <InviteGameView gameInfo={gameInfo} />}</>;
 }

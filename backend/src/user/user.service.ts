@@ -10,6 +10,8 @@ import {
 } from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
 import {JwtService} from '@nestjs/jwt';
+import {InjectRepository} from '@nestjs/typeorm';
+import {JwtService} from '@nestjs/jwt';
 
 import axios from 'axios';
 import * as bcrypt from 'bcryptjs';
@@ -25,7 +27,7 @@ import {Payload} from './payload';
 import {UpdateUserDto} from './dto/update-user.dto';
 import {SocketArray} from '@/global-variable/global.socket';
 import {SignUpService} from '@/signup/signup.service';
-import {OAuthUser} from '@/types/user/oauth';
+import {OAuthUser} from '@/types/user/oauth.interface';
 import {Friend} from '@/global-variable/global.friend';
 import {DataSource, QueryRunner} from 'typeorm';
 import {Block} from '@/global-variable/global.block';
@@ -41,11 +43,13 @@ export class UserService {
     private block: Block,
     private dataSource: DataSource
   ) {}
+  ) {}
 
   async findUser(user_id: string): Promise<User> {
     if (!user_id) {
       throw new BadRequestException('아이디를 입력해주세요.');
     }
+    const found = await this.userRepository.findOneBy({user_id});
     const found = await this.userRepository.findOneBy({user_id});
     if (!found) {
       throw new NotFoundException(`${user_id}는 유저가 아닙니다.`);

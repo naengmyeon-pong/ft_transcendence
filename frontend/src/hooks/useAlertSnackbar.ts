@@ -3,7 +3,7 @@ import {useCallback} from 'react';
 import {useRecoilState} from 'recoil';
 
 import {alertSnackbarState} from '@/states/alertSnackbar';
-import {OpenSnackbarType} from '@/types/AlertSnackbar';
+import {OpenSnackbarType} from '@/types/alertSnackbar';
 
 export const useAlertSnackbar = () => {
   const [alertSnackbarDataState, setAlertSnackbarDataState] =
