@@ -3,7 +3,6 @@ import {
   Body,
   Controller,
   Delete,
-  Param,
   Post,
   Patch,
   Request,
@@ -11,7 +10,6 @@ import {
   UseGuards,
   UploadedFile,
   Query,
-  Req,
   UseInterceptors,
 } from '@nestjs/common';
 import {AuthGuard} from '@nestjs/passport';
@@ -19,7 +17,6 @@ import {ApiTags, ApiOperation, ApiQuery, ApiResponse} from '@nestjs/swagger';
 import {FileInterceptor} from '@nestjs/platform-express';
 
 import {User} from './user.entitiy';
-import {UserDto} from './dto/user.dto';
 import {UserAuthDto} from './dto/userAuth.dto';
 import {UserService} from './user.service';
 import {UpdateUserDto} from './dto/update-user.dto';
@@ -92,13 +89,6 @@ export class UserController {
   @Get('/oauth')
   async getUserData(@Query('code') code: string): Promise<string | OAuthUser> {
     return await this.userService.getOAuthUser(code);
-  }
-
-  // req.user 를 그대로 반환했을 때, password까지 가는중. 수정해야할듯.
-  @Get('/user-info')
-  @UseGuards(AuthGuard('jwt'))
-  getUserInfo(@Request() req): Promise<string> {
-    return req.user;
   }
 
   @Get('/validation-token')

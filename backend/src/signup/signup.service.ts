@@ -47,6 +47,9 @@ export class SignUpService {
   }
 
   async getUserData(code: string): Promise<string> {
+    if (!code) {
+      throw new BadRequestException('code가 비어있습니다.');
+    }
     const api_uri = process.env.INTRA_API_URI;
     const accessToken = await this.getAccessToken(code);
 
@@ -64,7 +67,6 @@ export class SignUpService {
         const userAuth: IsUserAuth = this.userAuthRepository.create({
           user_id: response.data.login,
         });
-        // await this.userAuthRepository.save(userAuth);
         await query_runner.manager.getRepository(IsUserAuth).save(userAuth);
         const payload: Payload = {
           user_id: userAuth.user_id,
@@ -133,7 +135,7 @@ export class SignUpService {
   async create(userDto: UserDto, file: Express.Multer.File): Promise<void> {
     const {user_id, user_pw, user_nickname, user_image} = userDto;
     if (!user_id) {
-      throw new BadRequestException('유저아이디를 입력해주세요.');
+      throw new BadRequestException('아이디를 입력해주세요.');
     }
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(user_pw, salt);
@@ -150,9 +152,7 @@ export class SignUpService {
     // MEMO: 42이미지, 서버에서 저장하는 이미지가 따로 존재하므로 서버 주소를 붙여야 할듯 싶습니다
     const user = this.userRepository.create({
       user_id,
-      // TODO : hashed로 바꾸기
-      // user_pw: hashedPassword,
-      user_pw,
+      user_pw: hashedPassword,
       user_nickname,
       user_image: file
         ? `${process.env.NEXT_PUBLIC_BACKEND_SERVER}` + file.path.substr(11)
@@ -162,6 +162,11 @@ export class SignUpService {
   }
 
   async changePW(user_id: string, user_pw: string): Promise<void> {
+    if (!user_id) {
+      throw new BadRequestException('아이디를 입력해주세요.');
+    } else if (!user_pw) {
+      throw new BadRequestException('비밀번호를 입력해주세요.');
+    }
     const user = await this.userRepository.findOneBy({user_id});
     if (user) {
       const salt = await bcrypt.genSalt();
