@@ -191,7 +191,11 @@ function LoginPage() {
                 },
               }}
               onClick={() => {
-                setLoginState({is2faEnabled: false, isOAuthLogin: false});
+                setLoginState({
+                  user_id: '',
+                  is2faEnabled: false,
+                  isOAuthLogin: false,
+                });
               }}
             >
               <Svg42Logo />

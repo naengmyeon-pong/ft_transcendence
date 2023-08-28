@@ -6,8 +6,6 @@ WORKDIR /app
 
 COPY ./entrypoint.sh .
 
-# RUN npm install --force
-
 EXPOSE 3000
 
 # Start dumb-init for PID 1

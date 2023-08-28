@@ -4,14 +4,14 @@ RUN apk add --no-cache dumb-init
 
 WORKDIR /app
 
-COPY ./backend .
-COPY ./types ./types
-COPY ./.env ./.env
+COPY ./frontend /app
+COPY ./types /app/types
+COPY ./.env .
 
 RUN npm ci
 RUN npm run build
 
-EXPOSE 3001
+EXPOSE 3000
 
 ENTRYPOINT [ "/usr/bin/dumb-init", "--" ]
 

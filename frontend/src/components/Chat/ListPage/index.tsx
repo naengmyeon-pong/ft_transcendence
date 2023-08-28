@@ -1,21 +1,24 @@
 'use client';
-import React, {useCallback, useContext, useEffect, useState} from 'react';
-import RefreshIcon from '@mui/icons-material/Refresh';
 
+import {useCallback, useEffect, useState} from 'react';
+
+import axios from 'axios';
+import {useSetRecoilState} from 'recoil';
+import * as HTTP_STATUS from 'http-status';
+
+import RefreshIcon from '@mui/icons-material/Refresh';
 import {Box, Button, Modal} from '@mui/material';
+
 import ShowRoomList from './ShowRoomList';
 import CreateRoomForm from './CreateRoomForm';
-import {ChatListData} from '@/types/UserContext';
 import apiManager from '@/api/apiManager';
-import axios from 'axios';
 import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
-import * as HTTP_STATUS from 'http-status';
-import {useSetRecoilState} from 'recoil';
 import {tokenExpiredExit} from '@/states/tokenExpired';
+import {ChatListData} from '@/types/UserContext';
 
 function ChatList() {
   const [roomList, setRoomList] = useState<ChatListData[]>([]);
-  const [createModal, setCreateModal] = React.useState(false);
+  const [createModal, setCreateModal] = useState(false);
   const {openAlertSnackbar} = useAlertSnackbar();
   const setTokenExpiredExit = useSetRecoilState(tokenExpiredExit);
 
@@ -37,7 +40,7 @@ function ChatList() {
       }
       setRoomList([]);
     }
-  }, [setRoomList, openAlertSnackbar]);
+  }, [setRoomList, openAlertSnackbar, setTokenExpiredExit]);
 
   useEffect(() => {
     refreshChatList();

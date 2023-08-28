@@ -23,7 +23,7 @@ import {UserDto} from './dto/user.dto';
 import {UserAuthDto} from './dto/userAuth.dto';
 import {UserService} from './user.service';
 import {UpdateUserDto} from './dto/update-user.dto';
-import {OAuthUser} from '@/types/user/oauth';
+import {OAuthUser} from '@/types/user/oauth.interface';
 
 @Controller('user')
 @ApiTags('User')
