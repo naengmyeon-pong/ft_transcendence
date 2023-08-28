@@ -133,14 +133,13 @@ export default function InviteGame() {
       chat_socket?.off('inviter_cancel_game_betray', exitCancelGame);
       chat_socket?.off('start_game');
       if (start_geme_prev_unload.current && !is_inviter_game_cancel.current) {
-        console.log('??');
         chat_socket?.emit('invitee_cancel_game_back', invite_game_state);
       }
     };
   }, [
     chat_socket,
     user_id,
-    invite_game_state.inviter_id,
+    invite_game_state?.inviter_id,
     sendGameStartEvent,
     invite_game_state,
     exitCancelGame,

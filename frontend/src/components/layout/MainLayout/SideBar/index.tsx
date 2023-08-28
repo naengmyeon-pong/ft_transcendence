@@ -15,7 +15,6 @@ import DisplayButtonGroup from './DisplayButtonGroup';
 import DisplayList from './DisplayList';
 
 function SideBar() {
-  console.log('sidebar');
   // lstState: 0 = 차단 목록, 1 = 친구 목록, 2 = DM
   const [lstState, setLstState] = useState(1);
   const {chat_socket, block_users} = useContext(UserContext);

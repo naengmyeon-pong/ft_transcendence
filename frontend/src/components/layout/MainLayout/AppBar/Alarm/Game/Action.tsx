@@ -8,6 +8,7 @@ import {Box, Button, Typography} from '@mui/material';
 import {InviteGameEnum, InviteGameInfoProps} from '../AlarmProps';
 import {UserContext} from '../../../Context';
 import {inviteGameState} from '@/states/inviteGame';
+import {useAlertSnackbar} from '@/hooks/useAlertSnackbar';
 
 export default function ActionGameAlarm({
   row,
@@ -22,6 +23,7 @@ export default function ActionGameAlarm({
   const router = useRouter();
   const [invite_game_state, setInviteGameState] =
     useRecoilState(inviteGameState);
+  const {openAlertSnackbar} = useAlertSnackbar();
 
   function removeGameNoti() {
     setGameAlarm(prev => {
@@ -37,14 +39,19 @@ export default function ActionGameAlarm({
       row.invite_game_info !== null
     ) {
       row.invite_game_info.state = true;
-      chat_socket?.emit('invite_response', row.invite_game_info, (res: Boolean) => {
-        console.log(res);
-        if (res === true){
-          setInviteGameState(row.invite_game_info);
-          router.push('/main/game');
+      chat_socket?.emit(
+        'invite_response',
+        row.invite_game_info,
+        (res: Boolean) => {
+          if (res === true) {
+            setInviteGameState(row.invite_game_info);
+            router.push('/main/game');
+          } else {
+            openAlertSnackbar({message: '유효하지 않는 초대입니다'});
+          }
+          removeGameNoti();
         }
-        removeGameNoti();
-      });
+      );
     }
   }
 
@@ -67,7 +74,6 @@ export default function ActionGameAlarm({
       row.invite_game_info !== null
     ) {
       row.invite_game_info.state = true;
-      console.log('row: ', row.invite_game_info);
       setInviteGameState(row.invite_game_info);
       removeGameNoti();
       router.push('/main/game');
@@ -80,7 +86,6 @@ export default function ActionGameAlarm({
       typeof row.invite_game_info === 'object' &&
       row.invite_game_info !== null
     ) {
-      console.log('row: ', row.invite_game_info);
       chat_socket?.emit('cancel_game', {
         inviteGameInfo: row.invite_game_info,
         is_inviter: true,
